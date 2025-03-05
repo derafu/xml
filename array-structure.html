@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derafu: XML - Library for XML manipulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet" />
+    <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
+    </head>
+<body class="derafu-theme-earthstone">
+                <div id="header-container" class="sticky-top"></div>
+    
+            <div class="container">
+            <div class="row">
+                <main class="col-md-9">
+                    <div class="container py-4">
+    <div class="markdown-body"><h1><a id="content-xml-array-conversion-structure" href="array-structure.html#content-xml-array-conversion-structure" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>XML-Array Conversion Structure</h1>
+<p>The Derafu XML library uses a specific convention for representing the structure of XML documents as PHP arrays and vice versa. Understanding this structure is essential for effectively using the encoding and decoding features.</p>
+<ul class="table-of-contents">
+<li><a href="array-structure.html#content-basic-structure">Basic Structure</a></li>
+<li><a href="array-structure.html#content-nested-elements">Nested Elements</a></li>
+<li><a href="array-structure.html#content-attributes">Attributes</a></li>
+<li><a href="array-structure.html#content-repeated-elements">Repeated Elements</a></li>
+<li><a href="array-structure.html#content-complex-structures">Complex Structures</a></li>
+<li><a href="array-structure.html#content-special-cases">Special Cases</a>
+<ul>
+<li><a href="array-structure.html#content-empty-elements">Empty Elements</a></li>
+<li><a href="array-structure.html#content-skipping-elements">Skipping Elements</a></li>
+</ul>
+</li>
+<li><a href="array-structure.html#content-array-to-xml-encoding-rules">Array to XML Encoding Rules</a></li>
+<li><a href="array-structure.html#content-xml-to-array-decoding-rules">XML to Array Decoding Rules</a></li>
+<li><a href="array-structure.html#content-usage-examples">Usage Examples</a>
+<ul>
+<li><a href="array-structure.html#content-creating-complex-xml">Creating Complex XML</a></li>
+<li><a href="array-structure.html#content-processing-xml-into-arrays">Processing XML into Arrays</a></li>
+</ul>
+</li>
+<li><a href="array-structure.html#content-tips-for-working-with-the-array-structure">Tips for Working with the Array Structure</a></li>
+</ul>
+<h2><a id="content-basic-structure" href="array-structure.html#content-basic-structure" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Basic Structure</h2>
+<p>At its most basic level, an XML element with a value is represented as a key-value pair in the array:</p>
+<p>XML:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;element&gt;value&lt;/element&gt;
+</code></pre>
+<p>Array:</p>
+<pre><code class="line-numbers match-braces language-php">['element' =&gt; 'value']
+</code></pre>
+<h2><a id="content-nested-elements" href="array-structure.html#content-nested-elements" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Nested Elements</h2>
+<p>Nested elements are represented as nested arrays:</p>
+<p>XML:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;parent&gt;
+  &lt;child&gt;value&lt;/child&gt;
+&lt;/parent&gt;
+</code></pre>
+<p>Array:</p>
+<pre><code class="line-numbers match-braces language-php">[
+    'parent' =&gt; [
+        'child' =&gt; 'value'
+    ]
+]
+</code></pre>
+<h2><a id="content-attributes" href="array-structure.html#content-attributes" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Attributes</h2>
+<p>XML attributes are handled using the special <code>@attributes</code> key:</p>
+<p>XML:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;element id=&quot;123&quot; type=&quot;example&quot;&gt;value&lt;/element&gt;
+</code></pre>
+<p>Array:</p>
+<pre><code class="line-numbers match-braces language-php">[
+    'element' =&gt; [
+        '@attributes' =&gt; [
+            'id' =&gt; '123',
+            'type' =&gt; 'example'
+        ],
+        '@value' =&gt; 'value'
+    ]
+]
+</code></pre>
+<p>Note the use of <code>@value</code> to hold the element’s text content when attributes are present.</p>
+<h2><a id="content-repeated-elements" href="array-structure.html#content-repeated-elements" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Repeated Elements</h2>
+<p>Elements with the same name are collected into arrays:</p>
+<p>XML:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;parent&gt;
+  &lt;child&gt;value1&lt;/child&gt;
+  &lt;child&gt;value2&lt;/child&gt;
+  &lt;child&gt;value3&lt;/child&gt;
+&lt;/parent&gt;
+</code></pre>
+<p>Array:</p>
+<pre><code class="line-numbers match-braces language-php">[
+    'parent' =&gt; [
+        'child' =&gt; [
+            'value1',
+            'value2',
+            'value3'
+        ]
+    ]
+]
+</code></pre>
+<h2><a id="content-complex-structures" href="array-structure.html#content-complex-structures" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Complex Structures</h2>
+<p>The conventions can be combined to represent complex XML structures:</p>
+<p>XML:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;root&gt;
+  &lt;items&gt;
+    &lt;item id=&quot;1&quot;&gt;
+      &lt;name&gt;Item 1&lt;/name&gt;
+      &lt;price currency=&quot;USD&quot;&gt;19.99&lt;/price&gt;
+    &lt;/item&gt;
+    &lt;item id=&quot;2&quot;&gt;
+      &lt;name&gt;Item 2&lt;/name&gt;
+      &lt;price currency=&quot;EUR&quot;&gt;29.99&lt;/price&gt;
+    &lt;/item&gt;
+  &lt;/items&gt;
+  &lt;summary total=&quot;2&quot;&gt;Multiple items&lt;/summary&gt;
+&lt;/root&gt;
+</code></pre>
+<p>Array:</p>
+<pre><code class="line-numbers match-braces language-php">[
+    'root' =&gt; [
+        'items' =&gt; [
+            'item' =&gt; [
+                [
+                    '@attributes' =&gt; ['id' =&gt; '1'],
+                    'name' =&gt; 'Item 1',
+                    'price' =&gt; [
+                        '@attributes' =&gt; ['currency' =&gt; 'USD'],
+                        '@value' =&gt; '19.99'
+                    ]
+                ],
+                [
+                    '@attributes' =&gt; ['id' =&gt; '2'],
+                    'name' =&gt; 'Item 2',
+                    'price' =&gt; [
+                        '@attributes' =&gt; ['currency' =&gt; 'EUR'],
+                        '@value' =&gt; '29.99'
+                    ]
+                ]
+            ]
+        ],
+        'summary' =&gt; [
+            '@attributes' =&gt; ['total' =&gt; '2'],
+            '@value' =&gt; 'Multiple items'
+        ]
+    ]
+]
+</code></pre>
+<h2><a id="content-special-cases" href="array-structure.html#content-special-cases" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Special Cases</h2>
+<h3><a id="content-empty-elements" href="array-structure.html#content-empty-elements" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Empty Elements</h3>
+<p>Empty elements are represented as <code>null</code> or empty strings:</p>
+<p>XML:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;element&gt;&lt;/element&gt;
+</code></pre>
+<p>Array:</p>
+<pre><code class="line-numbers match-braces language-php">['element' =&gt; null]
+</code></pre>
+<p>or when creating XML:</p>
+<pre><code class="line-numbers match-braces language-php">['element' =&gt; '']
+</code></pre>
+<h3><a id="content-skipping-elements" href="array-structure.html#content-skipping-elements" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Skipping Elements</h3>
+<p>When creating XML, certain values cause an element to be skipped:</p>
+<pre><code class="line-numbers match-braces language-php">[
+    'included' =&gt; 'This will be in the XML',
+    'excluded' =&gt; null,       // This will be skipped.
+    'alsoExcluded' =&gt; false,  // This will be skipped.
+    'emptyArraySkipped' =&gt; [] // This will be skipped.
+]
+</code></pre>
+<h2><a id="content-array-to-xml-encoding-rules" href="array-structure.html#content-array-to-xml-encoding-rules" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Array to XML Encoding Rules</h2>
+<p>When using <code>XmlEncoder</code> to create XML from arrays, these rules apply:</p>
+<ol>
+<li>Simple key-value pairs become elements with text content.</li>
+<li>Nested arrays become nested elements.</li>
+<li>The special key <code>@attributes</code> defines attributes for the parent element.</li>
+<li>The special key <code>@value</code> defines the text content when attributes are present.</li>
+<li>Arrays of values create multiple elements with the same name.</li>
+<li>Null, false, and empty arrays are skipped (not included in the XML).</li>
+<li>Empty strings (’’) create empty elements.</li>
+</ol>
+<h2><a id="content-xml-to-array-decoding-rules" href="array-structure.html#content-xml-to-array-decoding-rules" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>XML to Array Decoding Rules</h2>
+<p>When using <code>XmlDecoder</code> to convert XML to arrays, these rules apply:</p>
+<ol>
+<li>Elements become keys in the array.</li>
+<li>Text content becomes the value of the key.</li>
+<li>Attributes are collected under the <code>@attributes</code> key.</li>
+<li>When attributes are present, text content is stored under the <code>@value</code> key.</li>
+<li>Multiple elements with the same name are collected into arrays.</li>
+<li>Empty elements become null values.</li>
+<li>Complex nested structures are preserved in the array hierarchy.</li>
+</ol>
+<h2><a id="content-usage-examples" href="array-structure.html#content-usage-examples" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Usage Examples</h2>
+<h3><a id="content-creating-complex-xml" href="array-structure.html#content-creating-complex-xml" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Creating Complex XML</h3>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\Service\XmlEncoder;
+
+$data = [
+    'invoice' =&gt; [
+        '@attributes' =&gt; [
+            'id' =&gt; 'INV-2025-001',
+            'date' =&gt; '2025-03-05'
+        ],
+        'customer' =&gt; [
+            'name' =&gt; 'Acme Inc.',
+            'address' =&gt; [
+                'street' =&gt; '123 Main St',
+                'city' =&gt; 'Anytown',
+                'zipcode' =&gt; '12345'
+            ]
+        ],
+        'items' =&gt; [
+            'item' =&gt; [
+                [
+                    '@attributes' =&gt; ['sku' =&gt; 'PROD1'],
+                    'description' =&gt; 'Product One',
+                    'quantity' =&gt; '2',
+                    'price' =&gt; '10.99'
+                ],
+                [
+                    '@attributes' =&gt; ['sku' =&gt; 'PROD2'],
+                    'description' =&gt; 'Product Two',
+                    'quantity' =&gt; '1',
+                    'price' =&gt; '24.99'
+                ]
+            ]
+        ],
+        'total' =&gt; '46.97'
+    ]
+];
+
+$encoder = new XmlEncoder();
+
+$xmlDocument = $encoder-&gt;encode($data);
+echo $xmlDocument-&gt;saveXml();
+</code></pre>
+<h3><a id="content-processing-xml-into-arrays" href="array-structure.html#content-processing-xml-into-arrays" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Processing XML into Arrays</h3>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\Service\XmlDecoder;
+
+$xmlString = '
+&lt;catalog&gt;
+    &lt;book id=&quot;bk101&quot;&gt;
+        &lt;author&gt;Gambardella, Matthew&lt;/author&gt;
+        &lt;title&gt;XML Developer\'s Guide&lt;/title&gt;
+        &lt;genre&gt;Computer&lt;/genre&gt;
+        &lt;price&gt;44.95&lt;/price&gt;
+        &lt;publish_date&gt;2025-01-15&lt;/publish_date&gt;
+    &lt;/book&gt;
+    &lt;book id=&quot;bk102&quot;&gt;
+        &lt;author&gt;Ralls, Kim&lt;/author&gt;
+        &lt;title&gt;Midnight Rain&lt;/title&gt;
+        &lt;genre&gt;Fantasy&lt;/genre&gt;
+        &lt;price&gt;5.95&lt;/price&gt;
+        &lt;publish_date&gt;2025-02-20&lt;/publish_date&gt;
+    &lt;/book&gt;
+&lt;/catalog&gt;';
+
+$document = new \Derafu\Xml\XmlDocument();
+$document-&gt;loadXml($xmlString);
+
+$decoder = new XmlDecoder();
+
+$array = $decoder-&gt;decode($document);
+
+// Access data directly.
+$firstBookTitle = $array['catalog']['book'][0]['title']; // &quot;XML Developer's Guide&quot;
+$secondBookPrice = $array['catalog']['book'][1]['price']; // &quot;5.95&quot;
+</code></pre>
+<h2><a id="content-tips-for-working-with-the-array-structure" href="array-structure.html#content-tips-for-working-with-the-array-structure" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Tips for Working with the Array Structure</h2>
+<ol>
+<li><strong>Plan Your Structure</strong>: When creating XML, plan your array structure carefully to match the desired XML output.</li>
+<li><strong>Handle Repeated Elements</strong>: Always use numeric arrays for repeated elements with the same name.</li>
+<li><strong>Use <code>@attributes</code> and <code>@value</code></strong>: Remember to use these special keys when working with elements that have both attributes and text content.</li>
+<li><strong>Validate Your Output</strong>: Always validate the generated XML against your schema if one exists.</li>
+<li><strong>Check for Empty Values</strong>: When processing arrays from XML, check for null values to handle empty elements properly.</li>
+</ol>
+</div>
+</div>
+                </main>
+                <div class="col-md-2 py-4">
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                              <div class="fw-bold">Package Info</div>
+                              <span class="smal text-muted">derafu/xml</span>
+                            </div>
+                        </li>
+                        <a href="index.html" class="list-group-item list-group-item-action ">
+                            README
+                        </a>
+                    </div>
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                            <div class="fw-bold">Docs</div>
+                            <span class="smal text-muted">Guides & Examples</span>
+                            </div>
+                        </li>
+                        <a href="array-structure.html" class="list-group-item list-group-item-action active">
+                            Array Structure
+                        </a>
+                        <a href="xml-document.html" class="list-group-item list-group-item-action ">
+                            XML Document
+                        </a>
+                        <a href="xpath-query.html" class="list-group-item list-group-item-action ">
+                            XPath Query
+                        </a>
+                        <a href="xml-service.html" class="list-group-item list-group-item-action ">
+                            XML Service
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+            <div id="footer-container"></div>
+<script src="https://derafu.org/foundation/js/derafu.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.js"></script>
+    </body>
+</html>

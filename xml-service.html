@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derafu: XML - Library for XML manipulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet" />
+    <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
+    </head>
+<body class="derafu-theme-earthstone">
+                <div id="header-container" class="sticky-top"></div>
+    
+            <div class="container">
+            <div class="row">
+                <main class="col-md-9">
+                    <div class="container py-4">
+    <div class="markdown-body"><h1><a id="content-xmlservice-documentation" href="xml-service.html#content-xmlservice-documentation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>XmlService Documentation</h1>
+<p>The <code>XmlService</code> class is the central component of the Derafu XML library, providing a unified interface for encoding, decoding, and validating XML documents. It follows a service-oriented architecture by delegating the actual work to specialized components.</p>
+<ul class="table-of-contents">
+<li><a href="xml-service.html#content-service-structure">Service Structure</a></li>
+<li><a href="xml-service.html#content-basic-usage">Basic Usage</a></li>
+<li><a href="xml-service.html#content-encoding-array-to-xml">Encoding (Array to XML)</a>
+<ul>
+<li><a href="xml-service.html#content-using-namespaces">Using Namespaces</a></li>
+</ul>
+</li>
+<li><a href="xml-service.html#content-decoding-xml-to-array">Decoding (XML to Array)</a>
+<ul>
+<li><a href="xml-service.html#content-handling-repeated-elements">Handling Repeated Elements</a></li>
+</ul>
+</li>
+<li><a href="xml-service.html#content-validation">Validation</a>
+<ul>
+<li><a href="xml-service.html#content-schema-auto-detection">Schema Auto-Detection</a></li>
+<li><a href="xml-service.html#content-error-translations">Error Translations</a></li>
+</ul>
+</li>
+<li><a href="xml-service.html#content-integration-example">Integration Example</a></li>
+</ul>
+<h2><a id="content-service-structure" href="xml-service.html#content-service-structure" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Service Structure</h2>
+<p>The <code>XmlService</code> relies on three key components:</p>
+<ol>
+<li><strong>XmlEncoder</strong>: Converts PHP arrays to XML documents.</li>
+<li><strong>XmlDecoder</strong>: Converts XML documents to PHP arrays.</li>
+<li><strong>XmlValidator</strong>: Validates XML documents against XSD schemas.</li>
+</ol>
+<h2><a id="content-basic-usage" href="xml-service.html#content-basic-usage" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Basic Usage</h2>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\Service\XmlEncoder;
+use Derafu\Xml\Service\XmlDecoder;
+use Derafu\Xml\Service\XmlValidator;
+use Derafu\Xml\Service\XmlService;
+
+// Initialize the components.
+$encoder = new XmlEncoder();
+$decoder = new XmlDecoder();
+$validator = new XmlValidator();
+
+// Create the service.
+$xmlService = new XmlService($encoder, $decoder, $validator);
+</code></pre>
+<h2><a id="content-encoding-array-to-xml" href="xml-service.html#content-encoding-array-to-xml" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Encoding (Array to XML)</h2>
+<p>The <code>encode()</code> method converts a PHP array to an XML document:</p>
+<pre><code class="line-numbers match-braces language-php">$data = [
+    'invoice' =&gt; [
+        '@attributes' =&gt; [
+            'id' =&gt; '12345',
+            'date' =&gt; '2025-03-05'
+        ],
+        'client' =&gt; [
+            'name' =&gt; 'Acme Corporation',
+            'tax_id' =&gt; '123456789'
+        ],
+        'items' =&gt; [
+            'item' =&gt; [
+                [
+                    '@attributes' =&gt; ['id' =&gt; '1'],
+                    'description' =&gt; 'Product A',
+                    'quantity' =&gt; '2',
+                    'price' =&gt; '19.99'
+                ],
+                [
+                    '@attributes' =&gt; ['id' =&gt; '2'],
+                    'description' =&gt; 'Product B',
+                    'quantity' =&gt; '1',
+                    'price' =&gt; '29.99'
+                ]
+            ]
+        ],
+        'total' =&gt; '69.97'
+    ]
+];
+
+$xmlDocument = $xmlService-&gt;encode($data);
+</code></pre>
+<p>This produces:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot;?&gt;
+&lt;invoice id=&quot;12345&quot; date=&quot;2025-03-05&quot;&gt;
+  &lt;client&gt;
+    &lt;name&gt;Acme Corporation&lt;/name&gt;
+    &lt;tax_id&gt;123456789&lt;/tax_id&gt;
+  &lt;/client&gt;
+  &lt;items&gt;
+    &lt;item id=&quot;1&quot;&gt;
+      &lt;description&gt;Product A&lt;/description&gt;
+      &lt;quantity&gt;2&lt;/quantity&gt;
+      &lt;price&gt;19.99&lt;/price&gt;
+    &lt;/item&gt;
+    &lt;item id=&quot;2&quot;&gt;
+      &lt;description&gt;Product B&lt;/description&gt;
+      &lt;quantity&gt;1&lt;/quantity&gt;
+      &lt;price&gt;29.99&lt;/price&gt;
+    &lt;/item&gt;
+  &lt;/items&gt;
+  &lt;total&gt;69.97&lt;/total&gt;
+&lt;/invoice&gt;
+</code></pre>
+<h3><a id="content-using-namespaces" href="xml-service.html#content-using-namespaces" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Using Namespaces</h3>
+<p>You can specify XML namespaces during encoding:</p>
+<pre><code class="line-numbers match-braces language-php">$namespace = ['http://example.com/invoice', 'inv'];
+$xmlDocument = $xmlService-&gt;encode($data, $namespace);
+</code></pre>
+<p>This generates:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;?xml version=&quot;1.0&quot; encoding=&quot;ISO-8859-1&quot;?&gt;
+&lt;inv:invoice id=&quot;12345&quot; date=&quot;2025-03-05&quot; xmlns:inv=&quot;http://example.com/invoice&quot;&gt;
+  &lt;!-- Content with namespace prefixes --&gt;
+&lt;/inv:invoice&gt;
+</code></pre>
+<h2><a id="content-decoding-xml-to-array" href="xml-service.html#content-decoding-xml-to-array" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Decoding (XML to Array)</h2>
+<p>The <code>decode()</code> method converts an XML document to a PHP array:</p>
+<pre><code class="line-numbers match-braces language-php">// Assuming $xmlDocument is a Derafu\Xml\XmlDocument instance.
+$array = $xmlService-&gt;decode($xmlDocument);
+
+// Or starting from a DOMElement.
+$element = $xmlDocument-&gt;getDocumentElement();
+$array = $xmlService-&gt;decode($element);
+</code></pre>
+<h3><a id="content-handling-repeated-elements" href="xml-service.html#content-handling-repeated-elements" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Handling Repeated Elements</h3>
+<p>By default, elements with the same name are collected into arrays:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;root&gt;
+  &lt;item&gt;Value 1&lt;/item&gt;
+  &lt;item&gt;Value 2&lt;/item&gt;
+  &lt;item&gt;Value 3&lt;/item&gt;
+&lt;/root&gt;
+</code></pre>
+<p>Becomes:</p>
+<pre><code class="line-numbers match-braces language-php">[
+    'root' =&gt; [
+        'item' =&gt; [
+            'Value 1',
+            'Value 2',
+            'Value 3'
+        ]
+    ]
+]
+</code></pre>
+<p>You can control this behavior with the <code>$twinsAsArray</code> parameter:</p>
+<pre><code class="line-numbers match-braces language-php">$array = $xmlService-&gt;decode($xmlDocument, null, twinsAsArray: true);
+</code></pre>
+<h2><a id="content-validation" href="xml-service.html#content-validation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Validation</h2>
+<p>The <code>validate()</code> method checks an XML document against an XSD schema:</p>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\Exception\XmlException;
+
+try {
+    $xmlService-&gt;validate($xmlDocument, '/path/to/schema.xsd');
+    echo &quot;XML is valid!&quot;;
+} catch (XmlException $e) {
+    echo &quot;Validation failed: &quot; . $e-&gt;getMessage();
+
+    // Get detailed error information.
+    $errors = $e-&gt;getErrors();
+    foreach ($errors as $error) {
+        echo &quot;- $error\n&quot;;
+    }
+}
+</code></pre>
+<h3><a id="content-schema-auto-detection" href="xml-service.html#content-schema-auto-detection" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Schema Auto-Detection</h3>
+<p>If the XML document includes a <code>schemaLocation</code> attribute, you can omit the schema path:</p>
+<pre><code class="line-numbers match-braces language-php">// XML with xsi:schemaLocation=&quot;http://example.com/ns schema.xsd&quot;
+try {
+    $xmlService-&gt;validate($xmlDocument); // Will use schema.xsd
+} catch (XmlException $e) {
+    // Handle validation error.
+}
+</code></pre>
+<h3><a id="content-error-translations" href="xml-service.html#content-error-translations" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Error Translations</h3>
+<p>The validator can translate technical libxml error messages into more user-friendly messages:</p>
+<pre><code class="line-numbers match-braces language-php">$translations = [
+    'element1' =&gt; 'Customer Info',
+    'element2' =&gt; 'Product Details'
+];
+
+try {
+    $xmlService-&gt;validate($xmlDocument, '/path/to/schema.xsd', $translations);
+} catch (XmlException $e) {
+    // Error messages will use the translated element names.
+}
+</code></pre>
+<h2><a id="content-integration-example" href="xml-service.html#content-integration-example" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Integration Example</h2>
+<p>This complete example shows how to use the XML service for a typical workflow:</p>
+<pre><code class="line-numbers match-braces language-php">// Initialize the service.
+$encoder = new XmlEncoder();
+$decoder = new XmlDecoder();
+$validator = new XmlValidator();
+$xmlService = new XmlService($encoder, $decoder, $validator);
+
+// Create XML from array.
+$data = ['root' =&gt; ['element' =&gt; 'value']];
+$xmlDocument = $xmlService-&gt;encode($data);
+
+// Save to a file.
+file_put_contents('document.xml', $xmlDocument-&gt;saveXml());
+
+// Load from a file.
+$loadedXml = new \Derafu\Xml\XmlDocument();
+$loadedXml-&gt;loadXml(file_get_contents('document.xml'));
+
+// Validate.
+try {
+    $xmlService-&gt;validate($loadedXml, 'schema.xsd');
+
+    // Convert back to array.
+    $array = $xmlService-&gt;decode($loadedXml);
+
+    // Process the data.
+    // ...
+
+} catch (\Derafu\Xml\Exception\XmlException $e) {
+    // Handle validation errors.
+}
+</code></pre>
+</div>
+</div>
+                </main>
+                <div class="col-md-2 py-4">
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                              <div class="fw-bold">Package Info</div>
+                              <span class="smal text-muted">derafu/xml</span>
+                            </div>
+                        </li>
+                        <a href="index.html" class="list-group-item list-group-item-action ">
+                            README
+                        </a>
+                    </div>
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                            <div class="fw-bold">Docs</div>
+                            <span class="smal text-muted">Guides & Examples</span>
+                            </div>
+                        </li>
+                        <a href="array-structure.html" class="list-group-item list-group-item-action ">
+                            Array Structure
+                        </a>
+                        <a href="xml-document.html" class="list-group-item list-group-item-action ">
+                            XML Document
+                        </a>
+                        <a href="xpath-query.html" class="list-group-item list-group-item-action ">
+                            XPath Query
+                        </a>
+                        <a href="xml-service.html" class="list-group-item list-group-item-action active">
+                            XML Service
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+            <div id="footer-container"></div>
+<script src="https://derafu.org/foundation/js/derafu.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.js"></script>
+    </body>
+</html>

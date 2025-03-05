@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derafu: XML - Library for XML manipulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet" />
+    <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
+    </head>
+<body class="derafu-theme-earthstone">
+                <div id="header-container" class="sticky-top"></div>
+    
+            <div class="container">
+            <div class="row">
+                <main class="col-md-9">
+                    <div class="container py-4">
+    <div class="markdown-body"><h1><a id="content-derafu-xml---library-for-xml-manipulation" href="index.html#content-derafu-xml---library-for-xml-manipulation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Derafu: XML - Library for XML manipulation</h1>
+<p><a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://github.com/derafu/xml/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://github.com/derafu/xml/actions/workflows/ci.yml/badge.svg?branch=main&amp;event=push" alt="CI Workflow" /></a>
+<a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a></p>
+<p>A comprehensive PHP library for XML manipulation, providing robust tools for encoding, decoding, validating, and querying XML documents.</p>
+<h2><a id="content-features" href="index.html#content-features" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Features</h2>
+<ul>
+<li><strong>Conversion</strong>: Transform between XML and PHP arrays in both directions.</li>
+<li><strong>Validation</strong>: Validate XML documents against XSD schemas.</li>
+<li><strong>Querying</strong>: Powerful XPath querying with parameter support.</li>
+<li><strong>Canonicalization</strong>: Support for C14N and ISO-8859-1 encoding.</li>
+<li><strong>Encoding</strong>: Proper handling of character encoding between UTF-8 and ISO-8859-1.</li>
+<li><strong>Special Characters</strong>: Automatic handling of XML special characters and entities.</li>
+</ul>
+<h2><a id="content-installation" href="index.html#content-installation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Installation</h2>
+<pre><code class="line-numbers match-braces language-bash">composer require derafu/xml
+</code></pre>
+<h2><a id="content-basic-usage" href="index.html#content-basic-usage" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Basic Usage</h2>
+<h3><a id="content-creating-xml-from-an-array" href="index.html#content-creating-xml-from-an-array" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Creating XML from an Array</h3>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\Service\XmlEncoder;
+
+$encoder = new XmlEncoder();
+
+// Create an array to convert to XML.
+$data = [
+    'root' =&gt; [
+        'element1' =&gt; 'value1',
+        'element2' =&gt; 'value2',
+        'element3' =&gt; [
+            '@attributes' =&gt; [
+                'attr1' =&gt; 'attrValue',
+            ],
+            '@value' =&gt; 'value3',
+        ],
+        'repeatedElement' =&gt; ['value4', 'value5', 'value6'],
+    ],
+];
+
+// Convert the array to XML.
+$xmlDocument = $encoder-&gt;encode($data);
+
+// Save as XML string.
+$xmlString = $xmlDocument-&gt;saveXml();
+
+// Get the XML without the XML declaration.
+$xmlContent = $xmlDocument-&gt;getXml();
+
+// Get a canonicalized version of the XML.
+$c14nXml = $xmlDocument-&gt;C14N();
+
+// Get a canonicalized version with ISO-8859-1 encoding.
+$isoXml = $xmlDocument-&gt;C14NWithIso88591Encoding();
+</code></pre>
+<h3><a id="content-converting-xml-to-an-array" href="index.html#content-converting-xml-to-an-array" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Converting XML to an Array</h3>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\Service\XmlDecoder;
+use Derafu\Xml\XmlDocument;
+
+$decoder = new XmlDecoder();
+
+// Load an existing XML string.
+$xmlContent = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;root&gt;&lt;element&gt;value&lt;/element&gt;&lt;/root&gt;';
+$document = new XmlDocument();
+$document-&gt;loadXml($xmlContent);
+
+// Convert to an array.
+$array = $decoder-&gt;decode($document);
+
+// Now $array contains ['root' =&gt; ['element' =&gt; 'value']]
+</code></pre>
+<h3><a id="content-working-with-xpath" href="index.html#content-working-with-xpath" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Working with XPath</h3>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\XPathQuery;
+
+$xmlContent = '&lt;?xml version=&quot;1.0&quot;?&gt;&lt;root&gt;&lt;item id=&quot;1&quot;&gt;First&lt;/item&gt;&lt;item id=&quot;2&quot;&gt;Second&lt;/item&gt;&lt;/root&gt;';
+
+// Create XPath query instance.
+$query = new XPathQuery($xmlContent);
+
+// Get a specific value.
+$value = $query-&gt;getValue('/root/item[@id=&quot;2&quot;]'); // &quot;Second&quot;
+
+// Get multiple values.
+$values = $query-&gt;getValues('/root/item'); // [&quot;First&quot;, &quot;Second&quot;]
+
+// Get structured array.
+$array = $query-&gt;get('/root');
+// Result: ['item' =&gt; ['First', 'Second']]
+</code></pre>
+<h3><a id="content-xml-validation" href="index.html#content-xml-validation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>XML Validation</h3>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\Exception\XmlException;
+use Derafu\Xml\Service\XmlValidator;
+
+$validator = new XmlValidator();
+
+// Validate an XML document against a schema.
+try {
+    $validator-&gt;validate($xmlDocument, '/path/to/schema.xsd');
+    echo &quot;XML is valid!&quot;;
+} catch (XmlException $e) {
+    echo &quot;Validation failed: &quot; . $e-&gt;getMessage();
+    $errors = $e-&gt;getErrors(); // Get detailed error information.
+}
+</code></pre>
+<h2><a id="content-advanced-usage" href="index.html#content-advanced-usage" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Advanced Usage</h2>
+<h3><a id="content-working-with-namespaces" href="index.html#content-working-with-namespaces" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Working with Namespaces</h3>
+<pre><code class="line-numbers match-braces language-php">// Create XPath query with namespace support.
+$namespaces = ['ns' =&gt; 'http://example.com/namespace'];
+$query = new XPathQuery($xmlContent, $namespaces);
+
+// Query with namespace.
+$result = $query-&gt;get('//ns:Element');
+</code></pre>
+<h3><a id="content-array-structure-for-xml-creation" href="index.html#content-array-structure-for-xml-creation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Array Structure for XML Creation</h3>
+<p>When creating XML from arrays, the structure follows these conventions:</p>
+<ul>
+<li>Simple key-value pairs become element nodes.</li>
+<li>Use <code>@attributes</code> for node attributes.</li>
+<li>Use <code>@value</code> for node text content when attributes are present.</li>
+<li>Arrays of values create repeated nodes with the same name.</li>
+</ul>
+<p>Example:</p>
+<pre><code class="line-numbers match-braces language-php">$data = [
+    'root' =&gt; [
+        'element' =&gt; [
+            '@attributes' =&gt; ['id' =&gt; '123'],
+            '@value' =&gt; 'content',
+        ],
+        'items' =&gt; [
+            'item' =&gt; ['value1', 'value2', 'value3'],
+        ],
+    ],
+];
+</code></pre>
+<p>Produces:</p>
+<pre><code class="line-numbers match-braces language-xml">&lt;root&gt;
+  &lt;element id=&quot;123&quot;&gt;content&lt;/element&gt;
+  &lt;items&gt;
+    &lt;item&gt;value1&lt;/item&gt;
+    &lt;item&gt;value2&lt;/item&gt;
+    &lt;item&gt;value3&lt;/item&gt;
+  &lt;/items&gt;
+&lt;/root&gt;
+</code></pre>
+<h2><a id="content-contributing" href="index.html#content-contributing" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Contributing</h2>
+<p>Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.</p>
+<h2><a id="content-license" href="index.html#content-license" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>License</h2>
+<p>This package is open-sourced software licensed under the <a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT">MIT license</a>.</p>
+</div>
+</div>
+                </main>
+                <div class="col-md-2 py-4">
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                              <div class="fw-bold">Package Info</div>
+                              <span class="smal text-muted">derafu/xml</span>
+                            </div>
+                        </li>
+                        <a href="index.html" class="list-group-item list-group-item-action active">
+                            README
+                        </a>
+                    </div>
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                            <div class="fw-bold">Docs</div>
+                            <span class="smal text-muted">Guides & Examples</span>
+                            </div>
+                        </li>
+                        <a href="array-structure.html" class="list-group-item list-group-item-action ">
+                            Array Structure
+                        </a>
+                        <a href="xml-document.html" class="list-group-item list-group-item-action ">
+                            XML Document
+                        </a>
+                        <a href="xpath-query.html" class="list-group-item list-group-item-action ">
+                            XPath Query
+                        </a>
+                        <a href="xml-service.html" class="list-group-item list-group-item-action ">
+                            XML Service
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+            <div id="footer-container"></div>
+<script src="https://derafu.org/foundation/js/derafu.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.js"></script>
+    </body>
+</html>

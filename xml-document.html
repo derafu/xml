@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derafu: XML - Library for XML manipulation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet" />
+    <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
+    </head>
+<body class="derafu-theme-earthstone">
+                <div id="header-container" class="sticky-top"></div>
+    
+            <div class="container">
+            <div class="row">
+                <main class="col-md-9">
+                    <div class="container py-4">
+    <div class="markdown-body"><h1><a id="content-xmldocument-documentation" href="xml-document.html#content-xmldocument-documentation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>XmlDocument Documentation</h1>
+<p>The <code>XmlDocument</code> class extends PHP’s native <code>DOMDocument</code> with additional functionality for XML manipulation, transformation, and querying. This class is the core component for working with XML documents in the Derafu XML library.</p>
+<ul class="table-of-contents">
+<li><a href="xml-document.html#content-key-features">Key Features</a></li>
+<li><a href="xml-document.html#content-basic-usage">Basic Usage</a>
+<ul>
+<li><a href="xml-document.html#content-creating-a-new-document">Creating a New Document</a></li>
+<li><a href="xml-document.html#content-loading-xml-content">Loading XML Content</a></li>
+<li><a href="xml-document.html#content-accessing-document-information">Accessing Document Information</a></li>
+<li><a href="xml-document.html#content-saving-and-serializing">Saving and Serializing</a></li>
+</ul>
+</li>
+<li><a href="xml-document.html#content-xpath-querying">XPath Querying</a></li>
+<li><a href="xml-document.html#content-array-conversion">Array Conversion</a></li>
+<li><a href="xml-document.html#content-working-with-xml-digital-signatures">Working with XML Digital Signatures</a></li>
+<li><a href="xml-document.html#content-handling-special-characters-and-entities">Handling Special Characters and Entities</a></li>
+<li><a href="xml-document.html#content-advanced-canonicalization">Advanced Canonicalization</a>
+<ul>
+<li><a href="xml-document.html#content-working-with-specific-nodes">Working with Specific Nodes</a></li>
+<li><a href="xml-document.html#content-differences-between-canonicalization-methods">Differences Between Canonicalization Methods</a></li>
+</ul>
+</li>
+<li><a href="xml-document.html#content-error-handling">Error Handling</a></li>
+<li><a href="xml-document.html#content-performance-considerations">Performance Considerations</a></li>
+</ul>
+<h2><a id="content-key-features" href="xml-document.html#content-key-features" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Key Features</h2>
+<ul>
+<li>Extended XML loading with character encoding handling.</li>
+<li>Simplified access to XML metadata (namespace, schema).</li>
+<li>Canonicalization support with encoding options.</li>
+<li>XPath query integration.</li>
+<li>Array conversion capabilities.</li>
+<li>Signature node handling for XML digital signatures.</li>
+</ul>
+<h2><a id="content-basic-usage" href="xml-document.html#content-basic-usage" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Basic Usage</h2>
+<h3><a id="content-creating-a-new-document" href="xml-document.html#content-creating-a-new-document" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Creating a New Document</h3>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\XmlDocument;
+
+// Create with default version (1.0) and encoding (ISO-8859-1).
+$document = new XmlDocument();
+
+// Or specify version and encoding.
+$document = new XmlDocument('1.0', 'UTF-8');
+</code></pre>
+<h3><a id="content-loading-xml-content" href="xml-document.html#content-loading-xml-content" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Loading XML Content</h3>
+<pre><code class="line-numbers match-braces language-php">// Load from a string.
+$xmlString = '&lt;root&gt;&lt;element&gt;value&lt;/element&gt;&lt;/root&gt;';
+$document-&gt;loadXml($xmlString);
+
+// The method handles encoding conversion automatically.
+$utf8Xml = '&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&lt;root&gt;&lt;element&gt;Árbol&lt;/element&gt;&lt;/root&gt;';
+$document-&gt;loadXml($utf8Xml); // Will convert to ISO-8859-1 if needed.
+</code></pre>
+<h3><a id="content-accessing-document-information" href="xml-document.html#content-accessing-document-information" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Accessing Document Information</h3>
+<pre><code class="line-numbers match-braces language-php">// Get the root element name.
+$rootName = $document-&gt;getName(); // e.g., &quot;root&quot;
+
+// Get the XML namespace (if any).
+$namespace = $document-&gt;getNamespace(); // e.g., &quot;http://example.com&quot;
+
+// Get the schema location (if any).
+$schema = $document-&gt;getSchema(); // e.g., &quot;schema.xsd&quot;
+</code></pre>
+<h3><a id="content-saving-and-serializing" href="xml-document.html#content-saving-and-serializing" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Saving and Serializing</h3>
+<pre><code class="line-numbers match-braces language-php">// Get the complete XML document with declaration.
+$xmlString = $document-&gt;saveXml();
+
+// Get only the XML content without the declaration.
+$xmlContent = $document-&gt;getXml();
+
+// Get the canonicalized (C14N) version.
+$canonXml = $document-&gt;C14N();
+
+// Get canonicalized version with ISO-8859-1 encoding.
+$isoCanonXml = $document-&gt;C14NWithIso88591Encoding();
+
+// Get flattened canonicalized version (whitespace removed between tags).
+$flatXml = $document-&gt;C14NWithIso88591EncodingFlattened();
+</code></pre>
+<h2><a id="content-xpath-querying" href="xml-document.html#content-xpath-querying" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>XPath Querying</h2>
+<p>The XmlDocument class has integrated XPath querying capabilities:</p>
+<pre><code class="line-numbers match-braces language-php">// Execute an XPath query and get result as string or array.
+$result = $document-&gt;query('/root/element');
+
+// Get DOMNodeList from an XPath query.
+$nodes = $document-&gt;getNodes('/root/element');
+
+// Use parameters in XPath queries.
+$params = ['id' =&gt; '123'];
+$result = $document-&gt;query('/root/element[@id=:id]', $params);
+</code></pre>
+<h2><a id="content-array-conversion" href="xml-document.html#content-array-conversion" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Array Conversion</h2>
+<pre><code class="line-numbers match-braces language-php">// Convert the entire document to an array.
+$array = $document-&gt;toArray();
+
+// Access a specific part using dot notation.
+$value = $document-&gt;get('root.element');
+
+// With a default value if not found.
+$value = $document-&gt;get('root.missing', 'default value');
+</code></pre>
+<h2><a id="content-working-with-xml-digital-signatures" href="xml-document.html#content-working-with-xml-digital-signatures" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Working with XML Digital Signatures</h2>
+<p>If the document contains an XML digital signature, you can extract it:</p>
+<pre><code class="line-numbers match-braces language-php">// Get the signature node as XML.
+$signatureXml = $document-&gt;getSignatureNodeXml();
+
+// Returns null if no signature is present.
+if ($signatureXml !== null) {
+    // Process signature...
+}
+</code></pre>
+<h2><a id="content-handling-special-characters-and-entities" href="xml-document.html#content-handling-special-characters-and-entities" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Handling Special Characters and Entities</h2>
+<p>The <code>XmlDocument</code> class works with the <code>XmlHelper</code> to properly handle special characters and entities:</p>
+<pre><code class="line-numbers match-braces language-php">// When saving XML, entities are handled correctly.
+$document-&gt;loadXml('&lt;root&gt;&lt;element&gt;Text with &amp; &lt; &gt; &quot; \'&lt;/element&gt;&lt;/root&gt;');
+$xml = $document-&gt;saveXml();
+// Produces: &lt;root&gt;&lt;element&gt;Text with &amp;amp; &amp;lt; &amp;gt; &amp;quot; &amp;apos;&lt;/element&gt;&lt;/root&gt;
+</code></pre>
+<h2><a id="content-advanced-canonicalization" href="xml-document.html#content-advanced-canonicalization" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Advanced Canonicalization</h2>
+<h3><a id="content-working-with-specific-nodes" href="xml-document.html#content-working-with-specific-nodes" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Working with Specific Nodes</h3>
+<p>You can apply canonicalization to specific parts of the document:</p>
+<pre><code class="line-numbers match-braces language-php">// Canonicalize only a portion of the document.
+$canonXml = $document-&gt;C14NWithIso88591Encoding('/root/section');
+</code></pre>
+<h3><a id="content-differences-between-canonicalization-methods" href="xml-document.html#content-differences-between-canonicalization-methods" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Differences Between Canonicalization Methods</h3>
+<p>The class offers several canonicalization methods:</p>
+<ol>
+<li><strong>C14N()</strong>: Standard canonicalization, always outputs UTF-8.</li>
+<li><strong>C14NWithIso88591Encoding()</strong>: Canonicalization with conversion to ISO-8859-1.</li>
+<li><strong>C14NWithIso88591EncodingFlattened()</strong>: ISO-8859-1 canonicalization with whitespace removal.</li>
+</ol>
+<p>These methods are particularly useful when working with digital signatures or when XML needs to be processed by systems with specific encoding requirements.</p>
+<h2><a id="content-error-handling" href="xml-document.html#content-error-handling" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Error Handling</h2>
+<p>The <code>loadXml()</code> method throws descriptive exceptions when it encounters errors:</p>
+<pre><code class="line-numbers match-braces language-php">use Derafu\Xml\Exception\XmlException;
+
+try {
+    $document-&gt;loadXml($potentiallyInvalidXml);
+} catch (XmlException $e) {
+    echo &quot;Error loading XML: &quot; . $e-&gt;getMessage();
+    $errors = $e-&gt;getErrors(); // Get detailed error information if available.
+}
+</code></pre>
+<h2><a id="content-performance-considerations" href="xml-document.html#content-performance-considerations" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Performance Considerations</h2>
+<ul>
+<li>When working with large XML documents, prefer using XPath queries to extract specific sections rather than converting the entire document to an array.</li>
+<li>The canonicalization methods perform more processing, so use them only when needed.</li>
+<li>The <code>getXml()</code> method is more efficient than <code>saveXml()</code> when you only need the XML content without the declaration.</li>
+</ul>
+</div>
+</div>
+                </main>
+                <div class="col-md-2 py-4">
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                              <div class="fw-bold">Package Info</div>
+                              <span class="smal text-muted">derafu/xml</span>
+                            </div>
+                        </li>
+                        <a href="index.html" class="list-group-item list-group-item-action ">
+                            README
+                        </a>
+                    </div>
+                    <div class="list-group mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div class="ms-2 me-auto">
+                            <div class="fw-bold">Docs</div>
+                            <span class="smal text-muted">Guides & Examples</span>
+                            </div>
+                        </li>
+                        <a href="array-structure.html" class="list-group-item list-group-item-action ">
+                            Array Structure
+                        </a>
+                        <a href="xml-document.html" class="list-group-item list-group-item-action active">
+                            XML Document
+                        </a>
+                        <a href="xpath-query.html" class="list-group-item list-group-item-action ">
+                            XPath Query
+                        </a>
+                        <a href="xml-service.html" class="list-group-item list-group-item-action ">
+                            XML Service
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+            <div id="footer-container"></div>
+<script src="https://derafu.org/foundation/js/derafu.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.js"></script>
+    </body>
+</html>
