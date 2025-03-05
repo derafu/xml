@@ -22,7 +22,7 @@ use DOMElement;
 /**
  * Service to work with XML documents.
  */
-class XmlService implements XmlServiceInterface
+final class XmlService implements XmlServiceInterface
 {
     public function __construct(
         private readonly XmlEncoderInterface $encoder,

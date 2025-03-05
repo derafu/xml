@@ -23,7 +23,7 @@ use InvalidArgumentException;
 /**
  * Class that creates an XML document from a PHP array.
  */
-class XmlEncoder implements XmlEncoderInterface
+final class XmlEncoder implements XmlEncoderInterface
 {
     /**
      * Rules for converting a PHP array to XML and vice versa.

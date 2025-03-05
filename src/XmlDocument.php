@@ -22,7 +22,7 @@ use DOMNodeList;
 /**
  * Class that represents an XML document.
  */
-class XmlDocument extends DOMDocument implements XmlDocumentInterface
+final class XmlDocument extends DOMDocument implements XmlDocumentInterface
 {
     /**
      * Instance to facilitate XML handling using XPath.

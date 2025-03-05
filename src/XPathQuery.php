@@ -22,7 +22,7 @@ use LogicException;
 /**
  * Class to facilitate XML handling using XPath.
  */
-class XPathQuery
+final class XPathQuery
 {
     /**
      * Instance of the XML document.

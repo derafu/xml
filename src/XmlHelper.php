@@ -20,7 +20,7 @@ use InvalidArgumentException;
 /**
  * Class with utilities to work with XML strings.
  */
-class XmlHelper
+final class XmlHelper
 {
     /**
      * Executes an XPath query on an XML document.

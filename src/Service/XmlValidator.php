@@ -19,7 +19,7 @@ use Derafu\Xml\Exception\XmlException;
 /**
  * Class for the validation of XML and error handling.
  */
-class XmlValidator implements XmlValidatorInterface
+final class XmlValidator implements XmlValidatorInterface
 {
     /**
      * Default translations, and transformations, of the errors of libxml.
@@ -34,41 +34,41 @@ class XmlValidator implements XmlValidatorInterface
         '\': '
             => '\' (línea %(line)s): ',
         ': [facet \'pattern\'] The value'
-            => ': tiene el valor',
+            => ': has the value',
         ': This element is not expected. Expected is one of'
-            => ': no era el esperado, el campo esperado era alguno de los siguientes',
+            => ': was not expected, the expected was one of the following',
         ': This element is not expected. Expected is'
-            => ': no era el esperado, el campo esperado era',
+            => ': was not expected, the expected was',
         'is not accepted by the pattern'
-            => 'el que no es válido según la expresión regular (patrón)',
+            => 'is not valid according to the regular expression (pattern)',
         'is not a valid value of the local atomic type'
-            => 'no es un valor válido para el tipo de dato del campo',
+            => 'is not a valid value for the field type',
         'is not a valid value of the atomic type'
-            => 'no es un valor válido, se requiere un valor de tipo',
+            => 'is not a valid value for the field type',
         ': [facet \'maxLength\'] The value has a length of '
-            => ': el valor del campo tiene un largo de ',
+            => ': the value of the field has a length of ',
         '; this exceeds the allowed maximum length of '
-            => ' caracteres excediendo el largo máximo permitido de ',
+            => ' characters exceeding the maximum allowed length of ',
         ': [facet \'enumeration\'] The value '
-            => ': el valor ',
+            => ': the value ',
         'is not an element of the set'
-            => 'no es válido, debe ser alguno de los valores siguientes',
+            => 'is not valid, it must be one of the following values',
         '[facet \'minLength\'] The value has a length of'
-            => 'el valor del campo tiene un largo de ',
+            => 'the value of the field has a length of ',
         '; this underruns the allowed minimum length of'
-            => ' y el largo mínimo requerido es',
+            => ' and the minimum required length is',
         'Missing child element(s). Expected is'
-            => 'debe tener en su interior, nivel inferior, el campo',
+            => 'must have inside, lower level, the field',
         'Character content other than whitespace is not allowed because the content type is \'element-only\''
-            => 'el valor del campo es inválido',
+            => 'the value of the field is invalid',
         'Element'
-            => 'Campo',
+            => 'Field',
         ' ( '
             => ' \'',
         ' ).'
             => '\'.',
         'No matching global declaration available for the validation root'
-            => 'El nodo raíz del XML no coincide con lo esperado en la definición del esquema',
+            => 'The root node of the XML does not match what is expected in the schema definition',
     ];
 
     /**
@@ -107,7 +107,7 @@ class XmlValidator implements XmlValidatorInterface
             ;
             throw new XmlException(
                 sprintf(
-                    'La validación del XML falló usando el esquema %s.',
+                    'The XML validation failed using the schema %s.',
                     basename($schemaPath)
                 ),
                 $errors

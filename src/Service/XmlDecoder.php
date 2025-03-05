@@ -21,7 +21,7 @@ use DOMText;
 /**
  * Class that creates a PHP array from an XML document.
  */
-class XmlDecoder implements XmlDecoderInterface
+final class XmlDecoder implements XmlDecoderInterface
 {
     /**
      * {@inheritDoc}
