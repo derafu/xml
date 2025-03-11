@@ -1,7 +1,11 @@
 # Derafu: XML - Library for XML manipulation
 
-[![CI Workflow](https://github.com/derafu/xml/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/derafu/xml/actions/workflows/ci.yml?query=branch%3Amain)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![GitHub last commit](https://img.shields.io/github/last-commit/derafu/xml/main)
+![CI Workflow](https://github.com/derafu/xml/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/derafu/xml)
+![GitHub Issues](https://img.shields.io/github/issues-raw/derafu/xml)
+![Total Downloads](https://poser.pugx.org/derafu/xml/downloads)
+![Monthly Downloads](https://poser.pugx.org/derafu/xml/d/monthly)
 
 A comprehensive PHP library for XML manipulation, providing robust tools for encoding, decoding, validating, and querying XML documents.
 
