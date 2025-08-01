@@ -56,15 +56,19 @@ final class XmlHelper
     /**
      * Sanitizes the values that are assigned to the tags of the XML.
      *
-     * @param string $xml Text to assign as value to the XML node.
+     * @param string $value Text to assign as value to the XML node.
      * @return string Sanitized text.
      */
-    public static function sanitize(string $xml): string
+    public static function sanitize(string $value): string
     {
         // If no text is passed or it is a number, do nothing.
-        if (!$xml || is_numeric($xml)) {
-            return $xml;
+        if (!$value || is_numeric($value)) {
+            return $value;
         }
+
+        // Remove control characters (ASCII 0x00-0x1F and 0x7F) that can cause
+        // problems in XML-DSIG.
+        $value = preg_replace('/[\x00-\x1F\x7F]/', '', $value);
 
         // Convert "predefined entities" of XML.
         $replace = [
@@ -79,26 +83,26 @@ final class XmlHelper
             '&apos;' => '\'',
             '&#39;' => '\'',
         ];
-        $xml = str_replace(array_keys($replace), array_values($replace), $xml);
+        $value = str_replace(array_keys($replace), array_values($replace), $value);
 
         // This is on purpose, the replacements must be done again.
-        $xml = str_replace('&', '&amp;', $xml);
+        $value = str_replace('&', '&amp;', $value);
 
-        /*$xml = str_replace(
+        /*$value = str_replace(
             ['"', '\''],
             ['&quot;', '&apos;'],
-            $xml
+            $value
         );*/
 
         // Return the sanitized text.
-        return $xml;
+        return $value;
     }
 
     /**
      * Fixes the entities '&apos;' and '&quot;' in the XML.
      *
-     * The correction is only done within the content of the XML tags, but not
-     * in the attributes of the tags.
+     * The correction is done in the content of the XML tags, and also in the
+     * attributes of the tags.
      *
      * @param string $xml XML to fix.
      * @return string Fixed XML.
@@ -115,18 +119,49 @@ final class XmlHelper
         $newXml = '';
         $n_chars = strlen($xml);
         $convert = false;
+        $inAttribute = false;
+        $attributeDelimiter = null;
 
         for ($i = 0; $i < $n_chars; ++$i) {
-            if ($xml[$i] === '>') {
+            $char = $xml[$i];
+
+            // Detect when we enter/exit attribute values.
+            if (
+                !$convert
+                && $char === '='
+                && $i + 1 < $n_chars
+                && ($xml[$i + 1] === '"' || $xml[$i + 1] === "'")
+            ) {
+                $inAttribute = true;
+                $attributeDelimiter = $xml[$i + 1];
+                $i++; // Skip the delimiter.
+                $newXml .= $char . $attributeDelimiter;
+                continue;
+            }
+
+            // Detect when we exit attribute values.
+            if ($inAttribute && $char === $attributeDelimiter) {
+                $inAttribute = false;
+                $attributeDelimiter = null;
+                $newXml .= $char;
+                continue;
+            }
+
+            // Toggle convert mode for tag content.
+            if ($char === '>') {
                 $convert = true;
             }
-            if ($xml[$i] === '<') {
+            if ($char === '<') {
                 $convert = false;
             }
-            $newXml .= $convert
-                ? str_replace($replaceFrom, $replaceTo, $xml[$i])
-                : $xml[$i]
-            ;
+
+            // Only convert entities if we're in tag content and not in an
+            // attribute.
+            if ($convert && !$inAttribute) {
+                $newXml .= str_replace($replaceFrom, $replaceTo, $char);
+            } else {
+                $newXml .= $char;
+            }
         }
 
         return $newXml;
