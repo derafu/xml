@@ -296,4 +296,12 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     {
         return $this->documentElement;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
+    }
 }

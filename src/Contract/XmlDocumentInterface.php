@@ -15,11 +15,12 @@ namespace Derafu\Xml\Contract;
 use Derafu\Xml\Exception\XmlException;
 use DOMNode;
 use DOMNodeList;
+use JsonSerializable;
 
 /**
  * Interface for the class that represents an XML document.
  */
-interface XmlDocumentInterface extends DOMDocumentInterface
+interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
 {
     /**
      * Returns the name of the root tag of the XML.
