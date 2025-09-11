@@ -235,9 +235,27 @@ final class XPathQuery
     {
         if ($node->hasChildNodes()) {
             $children = [];
+            $nodeCounts = [];
+
             foreach ($node->childNodes as $child) {
                 if ($child->nodeType === XML_ELEMENT_NODE) {
-                    $children[$child->nodeName] = $this->processNode($child);
+                    $nodeName = $child->nodeName;
+
+                    // Count occurrences of each node name.
+                    $nodeCounts[$nodeName] = ($nodeCounts[$nodeName] ?? 0) + 1;
+
+                    // If this is the first occurrence, store it directly.
+                    if ($nodeCounts[$nodeName] === 1) {
+                        $children[$nodeName] = $this->processNode($child);
+                    } else {
+                        // If this is a duplicate node name, convert to array.
+                        if ($nodeCounts[$nodeName] === 2) {
+                            // Convert the existing single value to an array.
+                            $children[$nodeName] = [$children[$nodeName]];
+                        }
+                        // Add the new value to the array.
+                        $children[$nodeName][] = $this->processNode($child);
+                    }
                 }
             }
 

@@ -328,14 +328,14 @@ class XPathQueryTest extends TestCase
     {
         $xmlContent = <<<XML
         <DTE xmlns="http://www.sii.cl/SiiDte" version="1.0">
-        <Documento ID="LibreDTE_76192083-9_T33F1">
-            <Encabezado>
-            <Emisor>
-                <RUTEmisor>76192083-9</RUTEmisor>
-                <RznSoc>SASCO 'Testing' SpA</RznSoc>
-            </Emisor>
-            </Encabezado>
-        </Documento>
+            <Documento ID="LibreDTE_76192083-9_T33F1">
+                <Encabezado>
+                    <Emisor>
+                        <RUTEmisor>76192083-9</RUTEmisor>
+                        <RznSoc>SASCO 'Testing' SpA</RznSoc>
+                    </Emisor>
+                </Encabezado>
+            </Documento>
         </DTE>
         XML;
 
@@ -355,14 +355,14 @@ class XPathQueryTest extends TestCase
     {
         $xmlContent = <<<XML
         <DTE xmlns="http://www.sii.cl/SiiDte" version="1.0">
-        <Documento ID="LibreDTE_76192083-9_T33F1">
-            <Encabezado>
-            <Emisor>
-                <RUTEmisor>76192083-9</RUTEmisor>
-                <RznSoc>SASCO "Testing" SpA</RznSoc>
-            </Emisor>
-            </Encabezado>
-        </Documento>
+            <Documento ID="LibreDTE_76192083-9_T33F1">
+                <Encabezado>
+                    <Emisor>
+                        <RUTEmisor>76192083-9</RUTEmisor>
+                        <RznSoc>SASCO "Testing" SpA</RznSoc>
+                    </Emisor>
+                </Encabezado>
+            </Documento>
         </DTE>
         XML;
 
@@ -382,14 +382,14 @@ class XPathQueryTest extends TestCase
     {
         $xmlContent = <<<XML
         <DTE xmlns="http://www.sii.cl/SiiDte" version="1.0">
-        <Documento ID="LibreDTE_76192083-9_T33F1">
-            <Encabezado>
-            <Emisor>
-                <RUTEmisor>76192083-9</RUTEmisor>
-                <RznSoc>SASCO 'Mixed' "Testing" SpA</RznSoc>
-            </Emisor>
-            </Encabezado>
-        </Documento>
+            <Documento ID="LibreDTE_76192083-9_T33F1">
+                <Encabezado>
+                    <Emisor>
+                        <RUTEmisor>76192083-9</RUTEmisor>
+                        <RznSoc>SASCO 'Mixed' "Testing" SpA</RznSoc>
+                    </Emisor>
+                </Encabezado>
+            </Documento>
         </DTE>
         XML;
 
@@ -409,14 +409,14 @@ class XPathQueryTest extends TestCase
     {
         $xmlContent = <<<XML
         <DTE xmlns="http://www.sii.cl/SiiDte" version="1.0">
-        <Documento ID="LibreDTE_76192083-9_T33F1">
-            <Encabezado>
-            <Emisor>
-                <RUTEmisor>76192083-9</RUTEmisor>
-                <RznSoc>SASCO Testing SpA</RznSoc>
-            </Emisor>
-            </Encabezado>
-        </Documento>
+            <Documento ID="LibreDTE_76192083-9_T33F1">
+                <Encabezado>
+                    <Emisor>
+                        <RUTEmisor>76192083-9</RUTEmisor>
+                        <RznSoc>SASCO Testing SpA</RznSoc>
+                    </Emisor>
+                </Encabezado>
+            </Documento>
         </DTE>
         XML;
 
@@ -479,5 +479,82 @@ class XPathQueryTest extends TestCase
         $this->assertCount(3, $result); // Hay 3 nodos en 'IdDoc': TipoDTE, Folio y FchEmis.
         $this->assertContains('33', $result);
         $this->assertContains('1', $result);
+    }
+
+    public function testXmlWithMultipleNodesWithTheSameName(): void
+    {
+        $xmlContent = <<<XML
+        <DTE xmlns="http://www.sii.cl/SiiDte" version="1.0">
+            <Documento ID="LibreDTE_76192083-9_T33F1">
+                <Encabezado>
+                    <Emisor>
+                        <RUTEmisor>76192083-9</RUTEmisor>
+                        <RznSoc>SASCO Testing SpA</RznSoc>
+                    </Emisor>
+                </Encabezado>
+                <Detalle>
+                    <NroLinDet>1</NroLinDet>
+                    <NmbItem>Producto A</NmbItem>
+                    <QtyItem>2</QtyItem>
+                    <PrcItem>1000</PrcItem>
+                    <MontoItem>2000</MontoItem>
+                </Detalle>
+                <Detalle>
+                    <NroLinDet>2</NroLinDet>
+                    <NmbItem>Producto B</NmbItem>
+                    <QtyItem>1</QtyItem>
+                    <PrcItem>1500</PrcItem>
+                    <MontoItem>1500</MontoItem>
+                </Detalle>
+                <Detalle>
+                    <NroLinDet>3</NroLinDet>
+                    <NmbItem>Producto C</NmbItem>
+                    <QtyItem>3</QtyItem>
+                    <PrcItem>500</PrcItem>
+                    <MontoItem>1500</MontoItem>
+                </Detalle>
+            </Documento>
+        </DTE>
+        XML;
+
+        $query = new XPathQuery(
+            $xmlContent,
+            ['ns' => 'http://www.sii.cl/SiiDte']
+        );
+        $result = $query->get('/');
+
+        // Verificar que el resultado es un array.
+        $this->assertIsArray($result);
+
+        // Verificar que existe la estructura DTE > Documento > Detalle.
+        $this->assertArrayHasKey('DTE', $result);
+        $this->assertIsArray($result['DTE']);
+        $this->assertArrayHasKey('Documento', (array) $result['DTE']);
+        $this->assertIsArray($result['DTE']['Documento']);
+        $this->assertArrayHasKey('Detalle', (array) $result['DTE']['Documento']);
+
+        // Verificar que Detalle es un array con 3 elementos.
+        $detalle = (array) $result['DTE']['Documento']['Detalle'];
+        $this->assertIsArray($detalle);
+        $this->assertCount(3, $detalle);
+
+        // Verificar el contenido de cada nodo Detalle.
+        $this->assertSame('1', $detalle[0]['NroLinDet']);
+        $this->assertSame('Producto A', $detalle[0]['NmbItem']);
+        $this->assertSame('2', $detalle[0]['QtyItem']);
+        $this->assertSame('1000', $detalle[0]['PrcItem']);
+        $this->assertSame('2000', $detalle[0]['MontoItem']);
+
+        $this->assertSame('2', $detalle[1]['NroLinDet']);
+        $this->assertSame('Producto B', $detalle[1]['NmbItem']);
+        $this->assertSame('1', $detalle[1]['QtyItem']);
+        $this->assertSame('1500', $detalle[1]['PrcItem']);
+        $this->assertSame('1500', $detalle[1]['MontoItem']);
+
+        $this->assertSame('3', $detalle[2]['NroLinDet']);
+        $this->assertSame('Producto C', $detalle[2]['NmbItem']);
+        $this->assertSame('3', $detalle[2]['QtyItem']);
+        $this->assertSame('500', $detalle[2]['PrcItem']);
+        $this->assertSame('1500', $detalle[2]['MontoItem']);
     }
 }
