@@ -126,19 +126,19 @@ final class XmlDecoder implements XmlDecoderInterface
 
                     // Check if the child node is scalar. If it is, add it
                     // directly to the list.
-                    $textContent = trim($child->textContent);
-                    if ($textContent !== '') {
+                    if ($child->childElementCount === 0) {
+                        $textContent = trim($child->textContent);
                         $data[$key][$child->tagName][] = $textContent;
                     }
                     // If the child node is scalar, not a list of nodes, it is
                     // built as if it were a normal array with the call to
                     // decode().
                     else {
-                        $siguiente = count($data[$key][$child->tagName]);
-                        $data[$key][$child->tagName][$siguiente] = [];
+                        $nextIndex = count($data[$key][$child->tagName]);
+                        $data[$key][$child->tagName][$nextIndex] = [];
                         self::decode(
                             $child,
-                            $data[$key][$child->tagName][$siguiente],
+                            $data[$key][$child->tagName][$nextIndex],
                             true
                         );
                     }

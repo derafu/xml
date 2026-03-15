@@ -72,6 +72,18 @@ return [
             'expected' => ['root' => ['item' => ['value1', 'value2', 'value3']]],
             'expectedException' => null,
         ],
+        // Case with multiple repeated complex nodes (each node has children).
+        'repeated_complex_nodes' => [
+            'data' => ['root' => ['item' => [
+                ['id' => '1', 'name' => 'A'],
+                ['id' => '2', 'name' => 'B'],
+            ]]],
+            'expected' => ['root' => ['item' => [
+                0 => ['id' => '1', 'name' => 'A'],
+                1 => ['id' => '2', 'name' => 'B'],
+            ]]],
+            'expectedException' => null,
+        ],
     ],
 
     // Casos para testArrayToXmlSaveXml().
@@ -301,6 +313,15 @@ return [
         'repeated_nodes' => [
             'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><item>value1</item><item>value2</item><item>value3</item></root>',
             'expected' => ['root' => ['item' => ['value1', 'value2', 'value3']]],
+            'expectedException' => null,
+        ],
+        // Case with multiple repeated complex nodes (each node has children).
+        'repeated_complex_nodes' => [
+            'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><item><id>1</id><name>A</name></item><item><id>2</id><name>B</name></item></root>',
+            'expected' => ['root' => ['item' => [
+                0 => ['id' => '1', 'name' => 'A'],
+                1 => ['id' => '2', 'name' => 'B'],
+            ]]],
             'expectedException' => null,
         ],
     ],
