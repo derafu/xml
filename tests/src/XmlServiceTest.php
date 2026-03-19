@@ -156,13 +156,15 @@ class XmlServiceTest extends TestCase
     public function testArrayToXmlSaveXml(
         array $data,
         string $expected,
-        ?string $expectedException
+        ?string $expectedException,
+        string $encoding = 'UTF-8'
     ): void {
         if ($expectedException) {
             $this->expectException($expectedException);
         }
 
         $xml = $this->xmlService->encode($data);
+        $xml->setEncoding($encoding);
         $xmlString = $xml->saveXml();
 
         // Validar contenido.

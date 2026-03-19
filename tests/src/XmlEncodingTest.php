@@ -163,8 +163,8 @@ class XmlEncodingTest extends TestCase
     {
         $data = ['documento' => $this->expectedValues];
 
-        $doc = new XmlDocument('1.0', 'UTF-8');
-        $encoded = $this->xmlService->encode($data, null, null, $doc);
+        $encoded = $this->xmlService->encode($data);
+        $encoded->setEncoding('UTF-8');
         $xml = $encoded->saveXml();
 
         // Header declares UTF-8.
@@ -201,8 +201,8 @@ class XmlEncodingTest extends TestCase
     {
         $data = ['documento' => $this->expectedValues];
 
-        $doc = new XmlDocument('1.0', 'ISO-8859-1');
-        $encoded = $this->xmlService->encode($data, null, null, $doc);
+        $encoded = $this->xmlService->encode($data);
+        $encoded->setEncoding('ISO-8859-1');
         $xml = $encoded->saveXml();
 
         // Header declares ISO-8859-1.
@@ -226,6 +226,100 @@ class XmlEncodingTest extends TestCase
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Case 4: ISO-8859-1 multiple roundtrips (load → save → load, repeated)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies that running multiple load → save → load cycles on an
+     * ISO-8859-1 document does not accumulate corruption.
+     *
+     * A single cycle is already covered by testIso88591RoundtripPreservesData().
+     * This test runs three additional cycles to confirm there is no drift in
+     * encoding declaration, byte sequences, or decoded values.
+     */
+    public function testIso88591MultipleRoundtripsPreserveData(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml($this->iso88591Xml);
+
+        for ($i = 0; $i < 3; $i++) {
+            $saved = $doc->saveXml();
+            $doc = new XmlDocument();
+            $doc->loadXml($saved);
+        }
+
+        // Encoding declaration must still be ISO-8859-1 after 3 cycles.
+        $this->assertSame('ISO-8859-1', $doc->encoding);
+
+        $saved = $doc->saveXml();
+
+        // ñ must still be the ISO-8859-1 byte 0xF1 — not UTF-8 0xC3 0xB1.
+        $this->assertStringContainsString("\xF1", $saved);
+        $this->assertStringNotContainsString("\xC3\xB1", $saved);
+
+        // Decoded values must match the original expected UTF-8 strings.
+        $decoded = $this->xmlService->decode($doc);
+        foreach ($this->expectedValues as $field => $expected) {
+            $this->assertSame($expected, $decoded['documento'][$field]);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Case 5: Characters outside ISO-8859-1 saved as ISO-8859-1
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies what happens when characters outside the ISO-8859-1 range are
+     * serialized with that encoding.
+     *
+     * ISO-8859-1 covers U+0000–U+00FF. Characters above that range (e.g. the
+     * euro sign '€' at U+20AC, or '™' at U+2122) have no direct byte
+     * representation in ISO-8859-1. libxml handles this correctly by emitting
+     * numeric character references (NCRs) such as &#8364; for '€', rather
+     * than substituting with '?' or dropping the character.
+     *
+     * Consequence: data is NOT lost. A load → decode cycle on the ISO-8859-1
+     * output recovers the original characters, because XML parsers decode NCRs
+     * back to Unicode codepoints regardless of the document encoding.
+     *
+     * This test documents and pins that behavior so any regression (e.g.
+     * libxml starting to drop or corrupt these characters) is immediately
+     * visible.
+     */
+    public function testCharactersOutsideIso88591AreEncodedAsNcrWhenSavedAsIso88591(): void
+    {
+        $data = ['root' => [
+            'euro'  => 'Precio: 100€',  // U+20AC — not in ISO-8859-1
+            'trade' => 'Marca™',         // U+2122 — not in ISO-8859-1
+        ]];
+
+        $doc = $this->xmlService->encode($data);
+
+        // UTF-8: characters appear as raw UTF-8 bytes in the serialized XML.
+        $doc->setEncoding('UTF-8');
+        $utf8Xml = $doc->saveXml();
+        $this->assertStringContainsString('€', $utf8Xml);
+        $this->assertStringContainsString('™', $utf8Xml);
+
+        // ISO-8859-1: characters that cannot be encoded directly are emitted
+        // as numeric character references (&#8364; for €, &#8482; for ™).
+        $doc->setEncoding('ISO-8859-1');
+        $isoXml = $doc->saveXml();
+        $this->assertStringNotContainsString('€', $isoXml);
+        $this->assertStringNotContainsString('™', $isoXml);
+        $this->assertStringContainsString('&#8364;', $isoXml);  // € as NCR
+        $this->assertStringContainsString('&#8482;', $isoXml);  // ™ as NCR
+
+        // After a load → decode cycle the original values are fully recovered,
+        // because XML parsers resolve NCRs back to Unicode codepoints.
+        $doc2 = new XmlDocument();
+        $doc2->loadXml($isoXml);
+        $decoded = $this->xmlService->decode($doc2);
+        $this->assertSame('Precio: 100€', $decoded['root']['euro']);
+        $this->assertSame('Marca™', $decoded['root']['trade']);
+    }
+
     /**
      * Verifies that encoding the same PHP array as UTF-8 and as ISO-8859-1
      * produces different byte sequences but the same decoded data.
@@ -237,11 +331,11 @@ class XmlEncodingTest extends TestCase
     {
         $data = ['documento' => $this->expectedValues];
 
-        $docUtf8 = new XmlDocument('1.0', 'UTF-8');
-        $encodedUtf8 = $this->xmlService->encode($data, null, null, $docUtf8);
+        $encodedUtf8 = $this->xmlService->encode($data);
+        $encodedUtf8->setEncoding('UTF-8');
 
-        $docIso = new XmlDocument('1.0', 'ISO-8859-1');
-        $encodedIso = $this->xmlService->encode($data, null, null, $docIso);
+        $encodedIso = $this->xmlService->encode($data);
+        $encodedIso->setEncoding('ISO-8859-1');
 
         // The serialized XML bytes are different.
         $this->assertNotSame($encodedUtf8->saveXml(), $encodedIso->saveXml());

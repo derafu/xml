@@ -33,26 +33,34 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     private XPathQuery $xPathQuery;
 
     /**
-     * XML representation as an array.
-     *
-     * @var array
-     */
-    private array $array;
-
-    /**
      * Constructor of the XML document.
      *
-     * @param string $version XML version.
-     * @param string $encoding XML encoding.
+     * The parameters `encoding` and `version` are used to generate the XML
+     * header when saving the XML. If the XmlDocument is instantiated for
+     * loading an XML string, this parameters are ignored and will be determined
+     * by the header of the XML string.
+     *
+     * @param string $encoding XML encoding to generate the XML header.
+     * @param string $version XML version to generate the XML header.
      */
     public function __construct(
-        string $version = '1.0',
-        string $encoding = 'ISO-8859-1'
+        string $encoding = 'UTF-8',
+        string $version = '1.0'
     ) {
         parent::__construct($version, $encoding);
 
         $this->formatOutput = true;
         $this->preserveWhiteSpace = true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setEncoding(string $encoding): static
+    {
+        $this->encoding = $encoding;
+
+        return $this;
     }
 
     /**
@@ -255,11 +263,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function toArray(): array
     {
-        if (!isset($this->array)) {
-            $this->array = $this->query('/');
-        }
-
-        return $this->array;
+        return $this->query('/');
     }
 
     /**

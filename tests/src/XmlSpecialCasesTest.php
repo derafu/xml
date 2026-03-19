@@ -113,9 +113,9 @@ class XmlSpecialCasesTest extends TestCase
         return self::dataProvider('testC14NEncodingValidation');
     }
 
-    public static function digitalSignatureCompatibilityDataProvider(): array
+    public static function exportedXmlCompatibilityWithIso88591EncodingDataProvider(): array
     {
-        return self::dataProvider('testDigitalSignatureCompatibility');
+        return self::dataProvider('testExportedXmlCompatibilityWithIso88591Encoding');
     }
 
     /**
@@ -139,6 +139,7 @@ class XmlSpecialCasesTest extends TestCase
         $this->assertSame($expected, $arrayData);
 
         // Verify that the encoding is ISO-8859-1.
+        $xml->setEncoding('ISO-8859-1');
         $xmlString = $xml->saveXml();
         $this->assertSame(
             'ISO-8859-1',
@@ -325,8 +326,8 @@ class XmlSpecialCasesTest extends TestCase
     /**
      * Verifies specific compatibility with SII XML-DSIG.
      */
-    #[DataProvider('digitalSignatureCompatibilityDataProvider')]
-    public function testDigitalSignatureCompatibility(
+    #[DataProvider('exportedXmlCompatibilityWithIso88591EncodingDataProvider')]
+    public function testExportedXmlCompatibilityWithIso88591Encoding(
         array $data,
         array $expected,
         ?string $expectedException
@@ -341,7 +342,8 @@ class XmlSpecialCasesTest extends TestCase
         // Validate structure.
         $this->assertSame($expected, $arrayData);
 
-        // Verify that the XML is valid for electronic signature.
+        // Verify that the XML is valid with ISO-8859-1 encoding.
+        $xml->setEncoding('ISO-8859-1');
         $xmlString = $xml->saveXml();
         $this->assertStringContainsString('encoding="ISO-8859-1"', $xmlString);
 
@@ -373,6 +375,7 @@ class XmlSpecialCasesTest extends TestCase
 
             try {
                 $xml = $this->xmlService->encode($data);
+                $xml->setEncoding('ISO-8859-1');
                 $xmlString = $xml->saveXml();
 
                 // If no exception is thrown, verify that the character is not in
@@ -475,6 +478,7 @@ class XmlSpecialCasesTest extends TestCase
         ]];
 
         $xml = $this->xmlService->encode($data);
+        $xml->setEncoding('ISO-8859-1');
         $xmlString = $xml->saveXml();
 
         // Verify that the declared encoding is ISO-8859-1.

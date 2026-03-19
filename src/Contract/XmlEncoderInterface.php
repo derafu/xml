@@ -12,8 +12,6 @@ declare(strict_types=1);
 
 namespace Derafu\Xml\Contract;
 
-use DOMElement;
-
 /**
  * Interface for the class that encodes a PHP array to XML.
  */
@@ -25,17 +23,7 @@ interface XmlEncoderInterface
      *
      * @param array $data The array with the data that will be used to generate
      * XML.
-     * @param array|null $namespace The namespace for the XML (URI and prefix).
-     * @param DOMElement|null $parent The parent element for the nodes, or null
-     * to be the root.
-     * @param XmlDocumentInterface $doc The root XML document that will be
-     * generated.
      * @return XmlDocumentInterface
      */
-    public function encode(
-        array $data,
-        ?array $namespace = null,
-        ?DOMElement $parent = null,
-        ?XmlDocumentInterface $doc = null
-    ): XmlDocumentInterface;
+    public function encode(array $data): XmlDocumentInterface;
 }

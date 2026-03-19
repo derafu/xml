@@ -23,6 +23,14 @@ use JsonSerializable;
 interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
 {
     /**
+     * Sets the encoding of the XML document.
+     *
+     * @param string $encoding The encoding of the XML document.
+     * @return static
+     */
+    public function setEncoding(string $encoding): static;
+
+    /**
      * Returns the name of the root tag of the XML.
      *
      * @return string The name of the root tag.
@@ -46,9 +54,6 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
 
     /**
      * Loads an XML string into the XML document instance.
-     *
-     * Must encode the XML to ISO-8859-1 if is UTF-8 and whas created the
-     * instance with the encoding ISO-8859-1 (default behavior).
      *
      * @param string $source The string with the XML to load.
      * @param int $options The options for loading the XML.
@@ -144,9 +149,10 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
      * Queries the XML array using a selector.
      *
      * @param string $selector The selector for the query to the XML array.
+     * @param mixed $default The default value to return if the selector is not found.
      * @return mixed The result of the selector query to the array.
      */
-    public function get(string $selector): mixed;
+    public function get(string $selector, mixed $default = null): mixed;
 
     /**
      * Returns the data of the XML in an array structure.

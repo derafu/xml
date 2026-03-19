@@ -43,26 +43,28 @@ final class XmlEncoder implements XmlEncoderInterface
     /**
      * {@inheritDoc}
      */
-    public function encode(
+    public function encode(array $data): XmlDocumentInterface
+    {
+        $doc = new XmlDocument();
+
+        $this->encodeNode($data, $doc, $doc);
+
+        return $doc;
+    }
+
+    /**
+     * Recursively encodes an array into XML nodes and appends them to a parent.
+     *
+     * @param array $data The array with the data to encode.
+     * @param XmlDocumentInterface $doc The root XML document.
+     * @param DOMNode $parent The parent node to append nodes to.
+     * @return void
+     */
+    private function encodeNode(
         array $data,
-        ?array $namespace = null,
-        ?DOMElement $parent = null,
-        ?XmlDocumentInterface $doc = null
-    ): XmlDocumentInterface {
-        // If there is no complete XML document (from root, not a node), then
-        // it is created, since it will be needed to create the future nodes.
-        if ($doc === null) {
-            $doc = new XmlDocument();
-        }
-
-        // If there is no parent element, then it is being requested to create
-        // the XML document from 0 (from the root node).
-        if ($parent === null) {
-            $parent = $doc;
-        }
-
-        // Iterate the first level of the array to find the tags that must be
-        // added to the XML document.
+        XmlDocumentInterface $doc,
+        DOMNode $parent,
+    ): void {
         foreach ($data as $key => $value) {
 
             // If the index is '@attributes' then the value of this index is an
@@ -97,13 +99,7 @@ final class XmlEncoder implements XmlEncoderInterface
                 // Only the node is created if it has child nodes. The node will
                 // not be created if an empty array (without children) is passed.
                 if (!empty($value)) {
-                    $this->nodeAddChilds(
-                        $doc,
-                        $parent,
-                        $key,
-                        $value,
-                        $namespace
-                    );
+                    $this->nodeAddChilds($doc, $parent, $key, $value);
                 }
             }
 
@@ -111,19 +107,10 @@ final class XmlEncoder implements XmlEncoderInterface
             // node is created and the value is assigned directly.
             else {
                 if (!$this->skipValue($value)) {
-                    $this->nodeAddValue(
-                        $doc,
-                        $parent,
-                        $key,
-                        (string) $value,
-                        $namespace
-                    );
+                    $this->nodeAddValue($doc, $parent, $key, (string) $value);
                 }
             }
         }
-
-        // Return the generated XML document.
-        return $doc;
     }
 
     /**
@@ -162,7 +149,6 @@ final class XmlEncoder implements XmlEncoderInterface
      * @param DOMNode $parent Node parent to which the child nodes will be added.
      * @param string $tagName Name of the child node tag.
      * @param array $childs Array of data of the child nodes.
-     * @param array|null $namespace XML namespace (URI and prefix).
      * @return void
      * @throws XmlEncoderException If a child node is not an array.
      */
@@ -171,7 +157,6 @@ final class XmlEncoder implements XmlEncoderInterface
         DOMNode $parent,
         string $tagName,
         array $childs,
-        ?array $namespace = null,
     ): void {
         $keys = array_keys($childs);
         if (!is_int($keys[0])) {
@@ -196,30 +181,15 @@ final class XmlEncoder implements XmlEncoderInterface
                     ));
                 }
 
-                // Add child nodes of the child node (add associative to the
-                // node $tagName).
-                $Node = $namespace
-                    ? $doc->createElementNS(
-                        $namespace[0],
-                        $namespace[1] . ':' . $tagName
-                    )
-                    : $doc->createElement($tagName)
-                ;
+                $Node = $doc->createElement($tagName);
                 $parent->appendChild($Node);
-                $this->encode($child, $namespace, $Node, $doc);
+                $this->encodeNode($child, $doc, $Node);
             }
             // If the child is not an array, it is simply a duplicate node that
             // must be added at the same level as the parent node.
             else {
                 $value = XmlHelper::sanitize((string) $child);
-                $Node = $namespace
-                    ? $doc->createElementNS(
-                        $namespace[0],
-                        $namespace[1] . ':' . $tagName,
-                        $value
-                    )
-                    : $doc->createElement($tagName, $value)
-                ;
+                $Node = $doc->createElement($tagName, $value);
                 $parent->appendChild($Node);
             }
         }
@@ -232,7 +202,6 @@ final class XmlEncoder implements XmlEncoderInterface
      * @param DOMNode $parent Node parent to which the node will be added.
      * @param string $tagName Name of the child node tag.
      * @param string $value Value of the child node.
-     * @param array|null $namespace XML namespace (URI and prefix).
      * @return void
      */
     private function nodeAddValue(
@@ -240,17 +209,9 @@ final class XmlEncoder implements XmlEncoderInterface
         DOMNode $parent,
         string $tagName,
         string $value,
-        ?array $namespace = null,
     ): void {
         $value = XmlHelper::sanitize($value);
-        $Node = $namespace
-            ? $doc->createElementNS(
-                $namespace[0],
-                $namespace[1] . ':' . $tagName,
-                $value
-            )
-            : $doc->createElement($tagName, $value)
-        ;
+        $Node = $doc->createElement($tagName, $value);
         $parent->appendChild($Node);
     }
 
@@ -268,19 +229,4 @@ final class XmlEncoder implements XmlEncoderInterface
             true
         );
     }
-
-    /**
-     * Checks if a value must generate an empty XML node.
-     *
-     * @param mixed $value Value to check.
-     * @return bool `true` if the value must generate an empty node, `false` otherwise.
-     */
-    // private function createWithEmptyValue(mixed $value): bool
-    // {
-    //     return in_array(
-    //         $value,
-    //         $this->rules['node_values']['generate_empty'],
-    //         true
-    //     );
-    // }
 }

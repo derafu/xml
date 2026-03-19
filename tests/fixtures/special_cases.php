@@ -290,8 +290,8 @@ return [
         ],
     ],
 
-    // Cases for testDigitalSignatureCompatibility().
-    'testDigitalSignatureCompatibility' => [
+    // Cases for testExportedXmlCompatibilityWithIso88591Encoding().
+    'testExportedXmlCompatibilityWithIso88591Encoding' => [
         // Specific compatibility with SII XML-DSIG.
         'sii_document_structure' => [
             'data' => ['DTE' => [

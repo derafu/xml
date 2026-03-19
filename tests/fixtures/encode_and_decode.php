@@ -91,7 +91,7 @@ return [
         // Caso simple con un solo elemento.
         'simple_element' => [
             'data' => ['root' => ['element' => 'value']],
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>'
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>'
                         . "\n<root>\n  <element>value</element>\n</root>\n",
             'expectedException' => null,
         ],
@@ -102,7 +102,7 @@ return [
                 'element2' => 'value2',
                 'element3' => 'value3',
             ]],
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>'
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>'
                         . "\n<root>\n  <element1>value1</element1>\n"
                         . "  <element2>value2</element2>\n"
                         . "  <element3>value3</element3>\n</root>\n",
@@ -111,13 +111,14 @@ return [
         // Arreglo con caracteres especiales que deben escaparse.
         'special_characters' => [
             'data' => ['root' => ['element' => 'Special: & < > " \'']],
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>'
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>'
                         . "\n<root>\n  <element>Special: &amp; &lt; &gt; &quot; &apos;</element>\n</root>\n",
             'expectedException' => null,
         ],
         // Arreglo con caracteres en UTF-8 que deben convertirse a ISO-8859-1.
         'utf8_to_iso' => [
             'data' => ['root' => ['element' => 'Árbol']],
+            'encoding' => 'ISO-8859-1',
             'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>'
                         . "\n<root>\n  <element>" . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8') . "</element>\n</root>\n",
             'expectedException' => null,
@@ -125,31 +126,31 @@ return [
         // Arreglo inválido (vacío). No genera excepción, pero no es válido.
         'invalid_array' => [
             'data' => [],
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n",
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>' . "\n",
             'expectedException' => null,
         ],
         // Caso con atributos en los nodos.
         'element_with_attributes' => [
             'data' => ['root' => ['element' => ['@attributes' => ['attr1' => 'value1'], '@value' => 'content']]],
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n<root>\n  <element attr1=\"value1\">content</element>\n</root>\n",
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>' . "\n<root>\n  <element attr1=\"value1\">content</element>\n</root>\n",
             'expectedException' => null,
         ],
         // Caso con nodos vacíos.
         'empty_node' => [
             'data' => ['root' => ['element' => '']],
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n<root>\n  <element/>\n</root>\n",
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>' . "\n<root>\n  <element/>\n</root>\n",
             'expectedException' => null,
         ],
         // Caso con múltiples valores repetidos.
         'repeated_nodes' => [
             'data' => ['root' => ['item' => ['value1', 'value2', 'value3']]],
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n<root>\n  <item>value1</item>\n  <item>value2</item>\n  <item>value3</item>\n</root>\n",
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>' . "\n<root>\n  <item>value1</item>\n  <item>value2</item>\n  <item>value3</item>\n</root>\n",
             'expectedException' => null,
         ],
         // Control de espacios en blanco.
         'whitespace_control' => [
             'data' => ['root' => ['element' => '  value  ']],
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n<root>\n  <element>  value  </element>\n</root>\n",
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>' . "\n<root>\n  <element>  value  </element>\n</root>\n",
             'expectedException' => null,
         ],
     ],

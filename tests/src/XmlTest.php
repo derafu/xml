@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsXml;
 
 use Derafu\Xml\Exception\XmlException;
+use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
@@ -20,6 +21,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlDocument::class)]
+#[CoversClass(XmlDecoder::class)]
 #[CoversClass(XmlException::class)]
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XPathQuery::class)]
@@ -222,6 +224,42 @@ class XmlTest extends TestCase
 
         $expectedXml = '<element2>Other Value</element2>';
         $this->assertSame($expectedXml, $flattenedXml);
+    }
+
+    /**
+     * Verifica que un elemento raíz vacío (self-closing) se carga correctamente.
+     *
+     * Un documento como <root/> es XML válido. El elemento raíz existe pero no
+     * tiene hijos ni atributos. Esto prueba que el parser no lo rechaza y que
+     * getName() funciona sin contenido interior.
+     */
+    public function testLoadEmptySelfClosingRoot(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root/>');
+
+        $this->assertSame('root', $doc->getName());
+        $this->assertFalse($doc->documentElement->hasChildNodes());
+        $this->assertFalse($doc->documentElement->hasAttributes());
+    }
+
+    /**
+     * Verifica que un elemento raíz vacío con etiqueta de cierre explícita se
+     * carga y serializa correctamente, y que decode() retorna null para él.
+     *
+     * <root></root> y <root/> son semánticamente equivalentes en XML. Aquí se
+     * verifica además que el decoder los trata igual: retorna ['root' => null].
+     */
+    public function testLoadEmptyRootWithExplicitClosingTag(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root></root>');
+
+        $this->assertSame('root', $doc->getName());
+        $this->assertFalse($doc->documentElement->hasAttributes());
+
+        $decoded = (new XmlDecoder())->decode($doc);
+        $this->assertSame(['root' => null], $decoded);
     }
 
     /**

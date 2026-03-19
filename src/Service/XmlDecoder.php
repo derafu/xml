@@ -26,29 +26,42 @@ final class XmlDecoder implements XmlDecoderInterface
     /**
      * {@inheritDoc}
      */
-    public function decode(
-        XmlDocumentInterface|DOMElement $documentElement,
-        ?array &$data = null,
-        bool $twinsAsArray = false
-    ): array {
-        // If no tagElement is passed, search one, if not one is obtained, stop
-        // the generation.
+    public function decode(XmlDocumentInterface|DOMElement $documentElement): array
+    {
         $tagElement = $documentElement instanceof DOMElement
             ? $documentElement
             : $documentElement->getDocumentElement()
         ;
+
         if ($tagElement === null) {
             return [];
         }
 
-        // Index in the array that represents the tag. Also it is a shorter
-        // variable name :)
+        $data = [$tagElement->tagName => null];
+
+        $this->decodeNode($tagElement, $data, false);
+
+        return $data;
+    }
+
+    /**
+     * Recursively decodes a DOM element into a PHP array.
+     *
+     * @param DOMElement $tagElement The element to decode.
+     * @param array &$data The array being populated.
+     * @param bool $twinsAsArray Whether to insert children at the current level
+     * instead of nesting them under the element key (used internally when
+     * processing items inside a list of twin nodes).
+     * @return void
+     */
+    private function decodeNode(
+        DOMElement $tagElement,
+        array|null &$data,
+        bool $twinsAsArray,
+    ): void {
         $key = $tagElement->tagName;
 
-        // If there is no destination array for the data, create an array with
-        // the index of the main node with an empty value.
         if ($data === null) {
-            //$data = [$key => self::getEmptyValue()];
             $data = [$key => null];
         }
 
@@ -63,16 +76,13 @@ final class XmlDecoder implements XmlDecoderInterface
 
         // If the tagElement has child nodes, add them to the value of the tag.
         if ($tagElement->hasChildNodes()) {
-            self::arrayAddChilds(
+            $this->arrayAddChilds(
                 $data,
                 $tagElement,
                 $tagElement->childNodes,
                 $twinsAsArray
             );
         }
-
-        // Return the data of the XML document as an array.
-        return $data;
     }
 
     /**
@@ -103,19 +113,19 @@ final class XmlDecoder implements XmlDecoderInterface
                     } elseif ($childs->length === 1 && empty($data[$key])) {
                         $data[$key] = $textContent;
                     } else {
-                        $array[$key]['@value'] = $textContent;
+                        $data[$key]['@value'] = $textContent;
                     }
                 }
             } elseif ($child instanceof DOMElement) {
-                $n_twinsNodes = self::nodeCountTwins(
+                $n_twinsNodes = $this->nodeCountTwins(
                     $tagElement,
                     $child->tagName
                 );
                 if ($n_twinsNodes === 1) {
                     if ($twinsAsArray) {
-                        self::decode($child, $data);
+                        $this->decodeNode($child, $data, false);
                     } else {
-                        self::decode($child, $data[$key]);
+                        $this->decodeNode($child, $data[$key], false);
                     }
                 } else {
                     // Create a list for the child node, because it has several
@@ -130,13 +140,12 @@ final class XmlDecoder implements XmlDecoderInterface
                         $textContent = trim($child->textContent);
                         $data[$key][$child->tagName][] = $textContent;
                     }
-                    // If the child node is scalar, not a list of nodes, it is
-                    // built as if it were a normal array with the call to
-                    // decode().
+                    // If the child node is not scalar, it is built as if it
+                    // were a normal array with the recursive call to decodeNode().
                     else {
                         $nextIndex = count($data[$key][$child->tagName]);
                         $data[$key][$child->tagName][$nextIndex] = [];
-                        self::decode(
+                        $this->decodeNode(
                             $child,
                             $data[$key][$child->tagName][$nextIndex],
                             true

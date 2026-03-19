@@ -34,13 +34,9 @@ final class XmlService implements XmlServiceInterface
     /**
      * {@inheritDoc}
      */
-    public function encode(
-        array $data,
-        ?array $namespace = null,
-        ?DOMElement $parent = null,
-        ?XmlDocumentInterface $doc = null
-    ): XmlDocumentInterface {
-        return $this->encoder->encode($data, $namespace, $parent, $doc);
+    public function encode(array $data): XmlDocumentInterface
+    {
+        return $this->encoder->encode($data);
     }
 
     /**
@@ -48,10 +44,8 @@ final class XmlService implements XmlServiceInterface
      */
     public function decode(
         XmlDocumentInterface|DOMElement $documentElement,
-        ?array &$data = null,
-        bool $twinsAsArray = false
     ): array {
-        return $this->decoder->decode($documentElement, $data, $twinsAsArray);
+        return $this->decoder->decode($documentElement);
     }
 
     /**
