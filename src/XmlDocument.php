@@ -66,6 +66,26 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     /**
      * {@inheritDoc}
      */
+    public function setFormatOutput(bool $formatOutput): static
+    {
+        $this->formatOutput = $formatOutput;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setPreserveWhiteSpace(bool $preserveWhiteSpace): static
+    {
+        $this->preserveWhiteSpace = $preserveWhiteSpace;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getName(): string
     {
         return $this->documentElement->tagName;

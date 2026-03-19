@@ -31,6 +31,22 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
     public function setEncoding(string $encoding): static;
 
     /**
+     * Sets the format output of the XML document.
+     *
+     * @param bool $formatOutput The format output of the XML document.
+     * @return static
+     */
+    public function setFormatOutput(bool $formatOutput): static;
+
+    /**
+     * Sets the preserve white space of the XML document.
+     *
+     * @param bool $preserveWhiteSpace The preserve white space of the XML document.
+     * @return static
+     */
+    public function setPreserveWhiteSpace(bool $preserveWhiteSpace): static;
+
+    /**
      * Returns the name of the root tag of the XML.
      *
      * @return string The name of the root tag.
