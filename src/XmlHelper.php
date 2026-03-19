@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace Derafu\Xml;
 
+use Derafu\Xml\Exception\XmlQueryException;
 use DOMDocument;
 use DOMNodeList;
 use DOMXPath;
-use InvalidArgumentException;
 
 /**
  * Class with utilities to work with XML strings.
@@ -44,7 +44,7 @@ final class XmlHelper
         $result = @$xpath->query($expression);
 
         if ($result === false) {
-            throw new InvalidArgumentException(sprintf(
+            throw new XmlQueryException(sprintf(
                 'Invalid XPath expression: %s',
                 $expression
             ));

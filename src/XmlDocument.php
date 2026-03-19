@@ -13,7 +13,8 @@ declare(strict_types=1);
 namespace Derafu\Xml;
 
 use Derafu\Xml\Contract\XmlDocumentInterface;
-use Derafu\Xml\Exception\XmlException;
+use Derafu\Xml\Exception\XmlParseException;
+use Derafu\Xml\Exception\XmlQueryException;
 use DOMDocument;
 use DOMElement;
 use DOMNode;
@@ -95,37 +96,9 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     {
         // If there is no XML string in the source, then an exception is thrown.
         if (empty($source)) {
-            throw new XmlException(
+            throw new XmlParseException(
                 'The XML content that you want to load is empty.'
             );
-        }
-
-        // Convert the XML if necessary.
-        preg_match(
-            '/<\?xml\s+version="([^"]+)"\s+encoding="([^"]+)"\?>/',
-            $source,
-            $matches
-        );
-        //$version = $matches[1] ?? $this->xmlVersion;
-        $encoding = strtoupper($matches[2] ?? $this->encoding);
-        if ($encoding === 'UTF-8' && $this->encoding === 'ISO-8859-1') {
-            $source = mb_convert_encoding($source, 'ISO-8859-1', 'UTF-8');
-            $source = str_replace(
-                ' encoding="UTF-8"?>',
-                ' encoding="ISO-8859-1"?>',
-                $source
-            );
-        }
-
-        // If the XML that will be loaded does not start with the XML tag, it
-        // is added. This is 100% necessary because if it comes in a different
-        // encoding to UTF-8 (the most normal) and does not come with this tag
-        // opening the XML, it will complain that the encoding is missing when
-        // loading.
-        if (!str_starts_with($source, '<?xml')) {
-            $source = '<?xml version="1.0" encoding="' . $encoding . '"?>'
-                . "\n" . $source
-            ;
         }
 
         // Get the current state of libxml and change it before loading the XML
@@ -141,7 +114,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
         libxml_use_internal_errors($useInternalErrors);
 
         if (!$status) {
-            throw new XmlException('Error al cargar el XML.', $errors);
+            throw new XmlParseException('Error al cargar el XML.', $errors);
         }
 
         // Return the status of the XML loading.
@@ -183,7 +156,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
         if ($xpath) {
             $node = $this->getNodes($xpath)->item(0);
             if (!$node) {
-                throw new XmlException(sprintf(
+                throw new XmlQueryException(sprintf(
                     'No fue posible obtener el nodo con el XPath %s.',
                     $xpath
                 ));

@@ -12,13 +12,20 @@ declare(strict_types=1);
 
 namespace Derafu\TestsXml;
 
+use Derafu\Xml\Exception\XmlParseException;
+use Derafu\Xml\Exception\XmlQueryException;
+use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
 use DOMDocument;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XPathQuery::class)]
+#[CoversClass(XmlParseException::class)]
+#[CoversClass(XmlQueryException::class)]
+#[CoversClass(XmlDocument::class)]
+#[CoversClass(XmlHelper::class)]
 class XPathQueryTest extends TestCase
 {
     private string $validXml;
@@ -135,13 +142,13 @@ class XPathQueryTest extends TestCase
     {
         $query = new XPathQuery($this->validXml);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(XmlQueryException::class);
         $query->getNodes('//root@invalid_xpath]');
     }
 
     public function testLoadMalformedXmlThrowsException(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(XmlParseException::class);
         new XPathQuery($this->invalidXml);
     }
 
@@ -215,7 +222,7 @@ class XPathQueryTest extends TestCase
     {
         $query = new XPathQuery($this->nestedXml);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(XmlQueryException::class);
         $this->expectExceptionMessage(
             'An error occurred while executing the XPath expression'
         );
@@ -262,7 +269,7 @@ class XPathQueryTest extends TestCase
 
     public function testInvalidQueryThrowsException(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(XmlQueryException::class);
 
         $query = new XPathQuery(
             $this->xmlNamespaceAndParams,
@@ -306,7 +313,7 @@ class XPathQueryTest extends TestCase
 
     public function testInvalidXmlThrowsException(): void
     {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(XmlParseException::class);
 
         new XPathQuery('<invalid><xml>', ['ns' => 'http://www.sii.cl/SiiDte']);
     }

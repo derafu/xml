@@ -12,14 +12,15 @@ declare(strict_types=1);
 
 namespace Derafu\TestsXml;
 
+use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\XmlHelper;
 use DOMDocument;
 use DOMNodeList;
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlHelper::class)]
+#[CoversClass(XmlQueryException::class)]
 class XmlHelperTest extends TestCase
 {
     public function testXmlXpath(): void
@@ -64,7 +65,7 @@ class XmlHelperTest extends TestCase
         $doc = new DOMDocument();
         $doc->loadXml($xmlContent);
 
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(XmlQueryException::class);
         $result = XmlHelper::xpath($doc, '//*invalid_xpath');
     }
 

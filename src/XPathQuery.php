@@ -12,12 +12,13 @@ declare(strict_types=1);
 
 namespace Derafu\Xml;
 
+use Derafu\Xml\Contract\XmlDocumentInterface;
+use Derafu\Xml\Exception\XmlParseException;
+use Derafu\Xml\Exception\XmlQueryException;
 use DOMDocument;
 use DOMNode;
 use DOMNodeList;
 use DOMXPath;
-use InvalidArgumentException;
-use LogicException;
 
 /**
  * Class to facilitate XML handling using XPath.
@@ -48,18 +49,18 @@ final class XPathQuery
     /**
      * Constructor that receives the XML document and prepares XPath.
      *
-     * @param string|DOMDocument $xml XML document.
+     * @param string|XmlDocumentInterface|DOMDocument $xml XML document.
      * @param array $namespaces Associative array with prefix and URI.
      */
     public function __construct(
-        string|DOMDocument $xml,
+        string|XmlDocumentInterface|DOMDocument $xml,
         array $namespaces = []
     ) {
         // Assign the DOM document instance.
-        if ($xml instanceof DOMDocument) {
+        if ($xml instanceof XmlDocumentInterface || $xml instanceof DOMDocument) {
             $this->dom = $xml;
         } else {
-            $this->dom = new DOMDocument();
+            $this->dom = new XmlDocument();
             $this->loadXml($xml);
         }
 
@@ -194,8 +195,8 @@ final class XPathQuery
                 $contextNode,
                 $this->registerNodeNS
             ));
-        } catch (LogicException $e) {
-            throw new InvalidArgumentException(sprintf(
+        } catch (XmlQueryException $e) {
+            throw new XmlQueryException(sprintf(
                 'An error occurred while executing the XPath expression: %s. %s',
                 $query,
                 $e->getMessage()
@@ -213,14 +214,9 @@ final class XPathQuery
      */
     private function loadXml(string $xml): static
     {
-        try {
-            $this->execute(fn () => $this->dom->loadXml($xml));
-        } catch (LogicException $e) {
-            throw new InvalidArgumentException(sprintf(
-                'The provided XML is not valid: %s',
-                $e->getMessage()
-            ));
-        }
+        // XmlDocument::loadXml() throws XmlParseException if the XML is
+        // empty or malformed, propagating it directly to the caller.
+        $this->dom->loadXml($xml);
 
         return $this;
     }
@@ -346,7 +342,7 @@ final class XPathQuery
             libxml_use_internal_errors($use_errors);
 
             $message = $error ?: 'Ocurrió un error en XPathQuery.';
-            throw new LogicException($message);
+            throw new XmlQueryException($message);
         }
 
         libxml_clear_errors();

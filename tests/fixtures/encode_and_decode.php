@@ -354,9 +354,8 @@ return [
         // XML en UTF-8 con caracteres especiales (ej. tildes, ñ).
         'utf8_characters' => [
             'xmlContent' => '<?xml version="1.0" encoding="UTF-8"?><root><element>Árbol</element></root>',
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n" . '<root>'
-                . "\n" . '  <element>' . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8')
-                . '</element>' . "\n" . '</root>' . "\n",
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<root>'
+                . "\n" . '  <element>Árbol</element>' . "\n" . '</root>' . "\n",
             'expectedException' => null,
         ],
         // XML en ISO-8859-1 con caracteres especiales (ej. tildes, ñ).

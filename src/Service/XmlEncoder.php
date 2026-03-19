@@ -14,11 +14,11 @@ namespace Derafu\Xml\Service;
 
 use Derafu\Xml\Contract\XmlDocumentInterface;
 use Derafu\Xml\Contract\XmlEncoderInterface;
+use Derafu\Xml\Exception\XmlEncoderException;
 use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
 use DOMElement;
 use DOMNode;
-use InvalidArgumentException;
 
 /**
  * Class that creates an XML document from a PHP array.
@@ -132,14 +132,14 @@ final class XmlEncoder implements XmlEncoderInterface
      * @param DOMElement $node Node to which the attributes will be added.
      * @param array $attributes Array of attributes (key => value).
      * @return void
-     * @throws InvalidArgumentException If an attribute value is an array.
+     * @throws XmlEncoderException If an attribute value is an array.
      */
     private function nodeAddAttributes(DOMElement $node, array $attributes): void
     {
         foreach ($attributes as $attribute => $value) {
             // If the attribute value is an array, it cannot be assigned.
             if (is_array($value)) {
-                throw new InvalidArgumentException(sprintf(
+                throw new XmlEncoderException(sprintf(
                     'The type of data of the value entered for the attribute "%s" of the node "%s" is incorrect (cannot be an array). The value is: %s',
                     $attribute,
                     $node->tagName,
@@ -164,7 +164,7 @@ final class XmlEncoder implements XmlEncoderInterface
      * @param array $childs Array of data of the child nodes.
      * @param array|null $namespace XML namespace (URI and prefix).
      * @return void
-     * @throws InvalidArgumentException If a child node is not an array.
+     * @throws XmlEncoderException If a child node is not an array.
      */
     private function nodeAddChilds(
         XmlDocumentInterface $doc,
@@ -189,7 +189,7 @@ final class XmlEncoder implements XmlEncoderInterface
 
                 // If the array is not associative (with new nodes) error.
                 if (isset($child[0])) {
-                    throw new InvalidArgumentException(sprintf(
+                    throw new XmlEncoderException(sprintf(
                         'The node "%s" allows including arrays, but they must be arrays with other nodes. The current value is incorrect: %s',
                         $tagName,
                         json_encode($child)
