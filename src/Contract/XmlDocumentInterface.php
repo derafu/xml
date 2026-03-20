@@ -23,6 +23,13 @@ use JsonSerializable;
 interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
 {
     /**
+     * Returns the encoding of the XML document.
+     *
+     * @return string The encoding of the XML document.
+     */
+    public function getEncoding(): string;
+
+    /**
      * Sets the encoding of the XML document.
      *
      * @param string $encoding The encoding of the XML document.
@@ -102,33 +109,33 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
     public function getXml(): string;
 
     /**
-     * Returns the canonicalized XML string with the correct encoding
-     * (ISO-8859-1).
+     * Returns the canonicalized XML string respecting the document's encoding.
      *
      * This basically uses C14N(), but C14N() always returns the XML in UTF-8
-     * encoding. So this method allows getting it with the correct ISO-8859-1
-     * encoding. Also, XML entities are corrected.
+     * encoding. So this method converts the result to the encoding declared in
+     * the XML document (e.g., ISO-8859-1). If no encoding is declared, UTF-8
+     * is used. Also, XML entities are corrected.
      *
      * @param string|null $xpath The XPath to query the XML and extract only a
      * part, from a specific tag/node.
      * @return string The canonicalized XML string.
      * @throws XmlException If a XPath is passed and not found.
      */
-    public function C14NWithIso88591Encoding(?string $xpath = null): string;
+    public function C14NEncoded(?string $xpath = null): string;
 
     /**
-     * Returns the canonicalized XML string with the correct encoding
-     * (ISO-8859-1) and flattened.
+     * Returns the canonicalized XML string respecting the document's encoding
+     * and flattened.
      *
-     * This is a wrapper of C14NWithIso88591Encoding() that flattens the
-     * resulting XML.
+     * This is a wrapper of C14NEncoded() that flattens the resulting XML by
+     * removing whitespace between tags.
      *
      * @param string|null $xpath The XPath to query the XML and extract only a
      * part, from a specific tag/node.
      * @return string The canonicalized XML string and flattened.
      * @throws XmlException If a XPath is passed and not found.
      */
-    public function C14NWithIso88591EncodingFlattened(?string $xpath = null): string;
+    public function C14NEncodedFlattened(?string $xpath = null): string;
 
     /**
      * Gets the XML string of the electronic signature node.

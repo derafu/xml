@@ -184,10 +184,10 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que el método C14NWithIso88591Encoding() aplane correctamente el
+     * Verifica que el método C14NEncoded() aplane correctamente el
      * documento XML.
      */
-    public function testXmlC14NWithIso88591Encoding(): void
+    public function testXmlC14NEncoded(): void
     {
         $xmlContent = <<<XML
         <root>
@@ -198,17 +198,17 @@ class XmlTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml($xmlContent);
 
-        $flattenedXml = $doc->C14NWithIso88591EncodingFlattened();
+        $flattenedXml = $doc->C14NEncodedFlattened();
 
         $expectedXml = '<root><element>Value</element></root>';
         $this->assertSame($expectedXml, $flattenedXml);
     }
 
     /**
-     * Verifica que C14NWithIso88591Encoding() funcione correctamente cuando se
+     * Verifica que C14NEncoded() funcione correctamente cuando se
      * proporciona una expresión XPath.
      */
-    public function testXmlC14NWithIso88591EncodingWithXPath(): void
+    public function testXmlC14NEncodedWithXPath(): void
     {
         $xmlContent = <<<XML
         <root>
@@ -220,7 +220,7 @@ class XmlTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml($xmlContent);
 
-        $flattenedXml = $doc->C14NWithIso88591Encoding('//element2');
+        $flattenedXml = $doc->C14NEncoded('//element2');
 
         $expectedXml = '<element2>Other Value</element2>';
         $this->assertSame($expectedXml, $flattenedXml);
@@ -263,10 +263,10 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que C14NWithIso88591Encoding() retorne false cuando la expresión
+     * Verifica que C14NEncoded() retorne false cuando la expresión
      * XPath no coincide con ningún nodo.
      */
-    public function testXmlC14NWithIso88591EncodingXPathNotFound(): void
+    public function testXmlC14NEncodedXPathNotFound(): void
     {
         $this->expectException(XmlException::class);
 
@@ -279,6 +279,6 @@ class XmlTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml($xmlContent);
 
-        $xml = $doc->C14NWithIso88591Encoding('//nonexistent');
+        $xml = $doc->C14NEncoded('//nonexistent');
     }
 }

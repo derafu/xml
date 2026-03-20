@@ -213,8 +213,8 @@ return [
         ],
     ],
 
-    // Casos para testArrayToXmlC14NWithIso88591Encoding().
-    'testArrayToXmlC14NWithIso88591Encoding' => [
+    // Casos para testArrayToXmlC14NEncoded().
+    'testArrayToXmlC14NEncoded' => [
         // Caso simple con un solo elemento.
         'simple_element' => [
             'data' => ['root' => ['element' => 'value']],
@@ -242,6 +242,7 @@ return [
         // Arreglo con caracteres en UTF-8 que deben convertirse a ISO-8859-1.
         'utf8_to_iso' => [
             'data' => ['root' => ['element' => 'Árbol']],
+            'encoding' => 'ISO-8859-1',
             'expected' => '<root><element>' . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8') . '</element></root>',
             'expectedException' => null,
         ],
@@ -415,8 +416,8 @@ return [
         ],
     ],
 
-    // Casos para testXmlToC14NWithIso88591Encoding().
-    'testXmlToC14NWithIso88591Encoding' => [
+    // Casos para testXmlToC14NEncoded().
+    'testXmlToC14NEncoded' => [
         // XML simple con un solo elemento (ISO-8859-1).
         'simple_element_iso' => [
             'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><element>value</element></root>',
@@ -438,12 +439,14 @@ return [
         // XML en UTF-8 con caracteres especiales (ej. tildes, ñ) debe convertise a ISO-8859-1.
         'utf8_characters' => [
             'xmlContent' => '<?xml version="1.0" encoding="UTF-8"?><root><element>Árbol</element></root>',
+            'encoding' => 'ISO-8859-1',
             'expected' => '<root><element>' . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8') . '</element></root>',
             'expectedException' => null,
         ],
         // XML en ISO-8859-1 con caracteres especiales (ej. tildes, ñ) debe mantenerse como ISO-8859-1.
         'iso_characters' => [
             'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><element>' . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8') . '</element></root>',
+            'encoding' => 'ISO-8859-1',
             'expected' => '<root><element>' . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8') . '</element></root>',
             'expectedException' => null,
         ],

@@ -230,15 +230,17 @@ class XmlSpecialCasesTest extends TestCase
     public function testC14NWithSpecialCharacters(
         array $data,
         string $expected,
-        ?string $expectedException
+        ?string $expectedException,
+        string $encoding = 'UTF-8'
     ): void {
         if ($expectedException) {
             $this->expectException($expectedException);
         }
 
         $xml = $this->xmlService->encode($data);
-        $c14n = $xml->C14NWithIso88591Encoding();
-        $c14n = XmlHelper::fixEntities($c14n);
+        $xml->setEncoding($encoding);
+        $c14n = $xml->C14NEncoded();
+        $c14n = XmlHelper::fixEntities($c14n); // TODO: Necessary?
 
         // Validate canonicalized content.
         $this->assertSame($expected, $c14n);
@@ -284,15 +286,17 @@ class XmlSpecialCasesTest extends TestCase
     public function testC14NEncodingValidation(
         array $data,
         string $expected,
-        ?string $expectedException
+        ?string $expectedException,
+        string $encoding = 'UTF-8'
     ): void {
         if ($expectedException) {
             $this->expectException($expectedException);
         }
 
         $xml = $this->xmlService->encode($data);
-        $c14n = $xml->C14NWithIso88591Encoding();
-        $c14n = XmlHelper::fixEntities($c14n);
+        $xml->setEncoding($encoding);
+        $c14n = $xml->C14NEncoded();
+        $c14n = XmlHelper::fixEntities($c14n); // TODO: Necessary?
 
         // Validate canonicalized content.
         $this->assertSame($expected, $c14n);
@@ -348,7 +352,7 @@ class XmlSpecialCasesTest extends TestCase
         $this->assertStringContainsString('encoding="ISO-8859-1"', $xmlString);
 
         // Verify canonicalization for DSIG.
-        $c14n = $xml->C14NWithIso88591Encoding();
+        $c14n = $xml->C14NEncoded();
         $this->assertSame(
             'ISO-8859-1',
             mb_detect_encoding($c14n, 'ISO-8859-1', true)
@@ -433,7 +437,7 @@ class XmlSpecialCasesTest extends TestCase
         ]];
 
         $xml = $this->xmlService->encode($data);
-        $c14n = $xml->C14NWithIso88591Encoding();
+        $c14n = $xml->C14NEncoded();
         $c14n = XmlHelper::fixEntities($c14n);
 
         // Verify that it is compatible with XML-DSIG.
@@ -496,7 +500,7 @@ class XmlSpecialCasesTest extends TestCase
         // This is the expected behavior for SII XML-DSIG compatibility.
 
         // Verify canonicalization.
-        $c14n = $xml->C14NWithIso88591Encoding();
+        $c14n = $xml->C14NEncoded();
         $this->assertSame(
             'ISO-8859-1',
             mb_detect_encoding($c14n, 'ISO-8859-1', true)

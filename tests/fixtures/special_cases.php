@@ -202,7 +202,7 @@ return [
     // Cases for testC14NWithSpecialCharacters().
     'testC14NWithSpecialCharacters' => [
         // Canonicalization with special characters for XML-DSIG.
-        // NOTE: C14NWithIso88591Encoding() converts to ISO-8859-1,
+        // NOTE: C14NEncoded() converts to ISO-8859-1 if the encoding is ISO-8859-1,
         // so accented characters become substitution characters.
         'accented_chars_in_c14n' => [
             'data' => ['root' => [
@@ -211,6 +211,7 @@ return [
                     '@value' => 'Contenido con áéíóú ñ',
                 ],
             ]],
+            'encoding' => 'ISO-8859-1',
             'expected' => '<root><element id="F33T1" version="1.0">Contenido con ' . mb_convert_encoding('áéíóú ñ', 'ISO-8859-1', 'UTF-8') . '</element></root>',
             'expectedException' => null,
         ],
@@ -231,7 +232,7 @@ return [
                     '@value' => 'Árbol con ñ y áéíóú & < > " \'',
                 ],
             ]],
-            'expected' => '<root><element fecha="2025-01-03" id="F33T1">' . mb_convert_encoding('Árbol con ñ y áéíóú', 'ISO-8859-1', 'UTF-8') . ' &amp; &lt; &gt; &quot; &apos;</element></root>',
+            'expected' => '<root><element fecha="2025-01-03" id="F33T1">' . 'Árbol con ñ y áéíóú' . ' &amp; &lt; &gt; &quot; &apos;</element></root>',
             'expectedException' => null,
         ],
     ],
@@ -271,11 +272,11 @@ return [
     // Cases for testC14NEncodingValidation().
     'testC14NEncodingValidation' => [
         // Encoding validation in canonicalization.
-        // NOTE: C14NWithIso88591Encoding() converts to ISO-8859-1,
+        // NOTE: C14NEncoded() converts to ISO-8859-1 if the encoding is ISO-8859-1,
         // so accented characters become substitution characters.
         'accented_chars_encoding' => [
             'data' => ['root' => ['element' => 'Árbol con ñ y áéíóú']],
-            'expected' => '<root><element>' . mb_convert_encoding('Árbol con ñ y áéíóú', 'ISO-8859-1', 'UTF-8') . '</element></root>',
+            'expected' => '<root><element>' . 'Árbol con ñ y áéíóú' . '</element></root>',
             'expectedException' => null,
         ],
         'special_chars_encoding' => [
@@ -285,6 +286,7 @@ return [
         ],
         'mixed_chars_encoding' => [
             'data' => ['root' => ['element' => 'Árbol con ñ y & < > " \'']],
+            'encoding' => 'ISO-8859-1',
             'expected' => '<root><element>' . mb_convert_encoding('Árbol con ñ y', 'ISO-8859-1', 'UTF-8') . ' &amp; &lt; &gt; &quot; &apos;</element></root>',
             'expectedException' => null,
         ],

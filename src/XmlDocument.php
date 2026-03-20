@@ -56,6 +56,14 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     /**
      * {@inheritDoc}
      */
+    public function getEncoding(): string
+    {
+        return strtoupper($this->encoding ?: 'UTF-8');
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function setEncoding(string $encoding): static
     {
         $this->encoding = $encoding;
@@ -178,7 +186,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     /**
      * {@inheritDoc}
      */
-    public function C14NWithIso88591Encoding(?string $xpath = null): string
+    public function C14NEncoded(?string $xpath = null): string
     {
         // If an XPath is provided, filter the nodes.
         if ($xpath) {
@@ -199,9 +207,12 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
         // Fix XML entities.
         $xml = XmlHelper::fixEntities($xml);
 
-        // Convert the flattened XML from UTF-8 to ISO-8859-1.
-        // Required because C14N() always delivers data in UTF-8.
-        $xml = mb_convert_encoding($xml, 'ISO-8859-1', 'UTF-8');
+        // C14N() always delivers data in UTF-8. Convert to the document's
+        // declared encoding if it differs from UTF-8.
+        $encoding = $this->getEncoding();
+        if ($encoding !== 'UTF-8') {
+            $xml = mb_convert_encoding($xml, $encoding, 'UTF-8');
+        }
 
         // Return the canonicalized XML.
         return $xml;
@@ -210,10 +221,10 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     /**
      * {@inheritDoc}
      */
-    public function C14NWithIso88591EncodingFlattened(?string $xpath = null): string
+    public function C14NEncodedFlattened(?string $xpath = null): string
     {
-        // Get the canonicalized XML encoded in ISO8859-1.
-        $xml = $this->C14NWithIso88591Encoding($xpath);
+        // Get the canonicalized XML in the document's encoding.
+        $xml = $this->C14NEncoded($xpath);
 
         // Remove the spaces between tags.
         $xml = preg_replace("/>\s+</", '><', $xml);

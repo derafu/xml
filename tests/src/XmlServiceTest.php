@@ -99,9 +99,9 @@ class XmlServiceTest extends TestCase
         return self::dataProvider('testArrayToXmlC14N');
     }
 
-    public static function arrayToXmlC14NWithIso88591EncodingDataProvider(): array
+    public static function arrayToXmlC14NEncodedDataProvider(): array
     {
-        return self::dataProvider('testArrayToXmlC14NWithIso88591Encoding');
+        return self::dataProvider('testArrayToXmlC14NEncoded');
     }
 
     public static function xmlToArrayDataProvider(): array
@@ -119,9 +119,9 @@ class XmlServiceTest extends TestCase
         return self::dataProvider('testXmlToC14N');
     }
 
-    public static function xmlToC14NWithIso88591EncodingDataProvider(): array
+    public static function xmlToC14NEncodedDataProvider(): array
     {
-        return self::dataProvider('testXmlToC14NWithIso88591Encoding');
+        return self::dataProvider('testXmlToC14NEncoded');
     }
 
     /**
@@ -201,21 +201,23 @@ class XmlServiceTest extends TestCase
 
     /**
      * Convierte un arreglo a un Xml y lo guarda como un string XML
-     * con testArrayToXmlC14NWithIso88591Encoding(), asegurando que la codificación
+     * con testArrayToXmlC14NEncoded(), asegurando que la codificación
      * y contenido son correctos.
      */
-    #[DataProvider('arrayToXmlC14NWithIso88591EncodingDataProvider')]
-    public function testArrayToXmlC14NWithIso88591Encoding(
+    #[DataProvider('arrayToXmlC14NEncodedDataProvider')]
+    public function testArrayToXmlC14NEncoded(
         array $data,
         string $expected,
-        ?string $expectedException
+        ?string $expectedException,
+        string $encoding = 'UTF-8'
     ): void {
         if ($expectedException) {
             $this->expectException($expectedException);
         }
 
         $xml = $this->xmlService->encode($data);
-        $xmlString = $xml->C14NWithIso88591Encoding();
+        $xml->setEncoding($encoding);
+        $xmlString = $xml->C14NEncoded();
 
         // Validar contenido.
         $this->assertSame($expected, $xmlString);
@@ -306,14 +308,15 @@ class XmlServiceTest extends TestCase
 
     /**
      * Convierte un string XML a un Xml y lo guarda como un string XML
-     * con C14NWithIso88591Encoding(), asegurando que la codificación y contenido
+     * con C14NEncoded(), asegurando que la codificación y contenido
      * son correctos.
      */
-    #[DataProvider('xmlToC14NWithIso88591EncodingDataProvider')]
-    public function testXmlToC14NWithIso88591Encoding(
+    #[DataProvider('xmlToC14NEncodedDataProvider')]
+    public function testXmlToC14NEncoded(
         string $xmlContent,
         string $expected,
-        ?string $expectedException
+        ?string $expectedException,
+        string $encoding = 'UTF-8'
     ): void {
         if ($expectedException) {
             $this->expectException($expectedException);
@@ -321,15 +324,16 @@ class XmlServiceTest extends TestCase
 
         $doc = new XmlDocument();
         $doc->loadXml($xmlContent);
-        $xmlString = $doc->C14NWithIso88591Encoding();
+        $doc->setEncoding($encoding);
+        $xmlString = $doc->C14NEncoded();
 
         // Validar contenido.
         $this->assertSame($expected, $xmlString);
 
         // Validar codificación.
         $this->assertSame(
-            'ISO-8859-1',
-            mb_detect_encoding($xmlString, 'ISO-8859-1', true)
+            $encoding,
+            mb_detect_encoding($xmlString, $encoding, true)
         );
     }
 
