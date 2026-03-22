@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Xml\Contract;
 
 use Derafu\Xml\Exception\XmlException;
+use DOMElement;
 use DOMNode;
 use DOMNodeList;
 use JsonSerializable;
@@ -52,6 +53,14 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
      * @return static
      */
     public function setPreserveWhiteSpace(bool $preserveWhiteSpace): static;
+
+    /**
+     * Returns the root element instance of the document.
+     *
+     * @return DOMElement|null The root element instance of the document or
+     * `null` if it is not present.
+     */
+    public function getDocumentElement(): ?DOMElement;
 
     /**
      * Returns the name of the root tag of the XML.

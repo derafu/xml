@@ -94,6 +94,14 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     /**
      * {@inheritDoc}
      */
+    public function getDocumentElement(): ?DOMElement
+    {
+        return $this->documentElement;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getName(): string
     {
         return $this->documentElement->tagName;
@@ -295,14 +303,6 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     public function toArray(): array
     {
         return $this->query('/');
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getDocumentElement(): ?DOMElement
-    {
-        return $this->documentElement;
     }
 
     /**
