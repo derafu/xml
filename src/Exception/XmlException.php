@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Xml\Exception;
 
+use Derafu\Xml\Contract\XmlDocumentInterface;
 use Exception;
 use LibXMLError;
 use Throwable;
@@ -22,33 +23,28 @@ use Throwable;
 class XmlException extends Exception
 {
     /**
-     * Array with the errors.
-     *
-     * @var array
-     */
-    private array $errors;
-
-    /**
      * Constructor of the exception.
      *
      * @param string $message The exception message.
      * @param array $errors The array with the errors.
      * @param int $code The exception code (optional).
      * @param Throwable|null $previous The previous exception (optional).
+     * @param XmlDocumentInterface|null $xmlDocument The XML document that
+     * caused the exception or `null` if it is not present in the exception.
      */
     public function __construct(
         string $message,
-        array $errors = [],
+        private array $errors = [],
         int $code = 0,
-        ?Throwable $previous = null
+        ?Throwable $previous = null,
+        private ?XmlDocumentInterface $xmlDocument = null
     ) {
         $message = trim(sprintf(
             '%s %s',
             $message,
-            implode(' ', $this->libXmlErrorToString($errors))
+            implode(' ', $this->libXmlErrorToString($this->errors))
         ));
 
-        $this->errors = $errors;
         parent::__construct($message, $code, $previous);
     }
 
@@ -60,6 +56,17 @@ class XmlException extends Exception
     public function getErrors(): array
     {
         return $this->errors;
+    }
+
+    /**
+     * Gets the XML document that caused the exception.
+     *
+     * @return XmlDocumentInterface|null The XML document that caused the
+     * exception or `null` if it is not present in the exception.
+     */
+    public function getXmlDocument(): ?XmlDocumentInterface
+    {
+        return $this->xmlDocument;
     }
 
     /**
