@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsXml;
 
 use Derafu\Xml\Exception\XmlException;
+use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
@@ -25,6 +26,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlException::class)]
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XPathQuery::class)]
+#[CoversClass(XmlQueryException::class)]
 class XmlTest extends TestCase
 {
     /**
