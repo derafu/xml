@@ -1,0 +1,23 @@
+services:
+
+    # Default configuration for services.
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    # Derafu XML Service (entry point for the library).
+    Derafu\Xml\Contract\XmlServiceInterface:
+        class: Derafu\Xml\Service\XmlService
+
+    # Derafu XML Encoder Service (creates an XML document from a PHP array).
+    Derafu\Xml\Contract\XmlEncoderInterface:
+        class: Derafu\Xml\Service\XmlEncoder
+
+    # Derafu XML Decoder Service (creates a PHP array from an XML document).
+    Derafu\Xml\Contract\XmlDecoderInterface:
+        class: Derafu\Xml\Service\XmlDecoder
+
+    # Derafu XML Validator Service (validates an XML document).
+    Derafu\Xml\Contract\XmlValidatorInterface:
+        class: Derafu\Xml\Service\XmlValidator
