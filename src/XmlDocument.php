@@ -312,4 +312,37 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     {
         return $this->toArray();
     }
+
+    /**
+     * Returns the data to be serialized by PHP's serialize() function.
+     *
+     * Stores the full XML string (including the XML declaration with encoding
+     * and version) so that the document can be completely reconstructed upon
+     * unserialization, preserving encoding, structure, and content.
+     *
+     * @return array{xml: string}
+     */
+    public function __serialize(): array
+    {
+        return ['xml' => $this->saveXml()];
+    }
+
+    /**
+     * Restores the document from the data produced by __serialize().
+     *
+     * Calls the parent DOMDocument constructor to allocate the internal C
+     * structure, reapplies the default output settings, then reloads the XML
+     * string (which carries its own encoding declaration).
+     *
+     * @param array{xml: string} $data Data produced by __serialize().
+     */
+    public function __unserialize(array $data): void
+    {
+        parent::__construct();
+
+        $this->formatOutput = true;
+        $this->preserveWhiteSpace = true;
+
+        $this->loadXml($data['xml']);
+    }
 }
