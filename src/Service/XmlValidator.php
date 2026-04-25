@@ -90,7 +90,7 @@ final class XmlValidator implements XmlValidatorInterface
         $useInternalErrors = libxml_use_internal_errors(true);
 
         // Validate the XML document.
-        $isValid = $xml->schemaValidate($schemaPath);
+        $isValid = $xml->getDomDocument()->schemaValidate($schemaPath);
 
         // Get errors, clear them and restore the state of errors of libxml.
         $errors = libxml_get_errors();

@@ -79,7 +79,7 @@ class XmlEncodingTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml($this->iso88591Xml);
 
-        $this->assertSame('ISO-8859-1', $doc->encoding);
+        $this->assertSame('ISO-8859-1', $doc->getEncoding());
 
         $saved = $doc->saveXml();
 
@@ -250,7 +250,7 @@ class XmlEncodingTest extends TestCase
         }
 
         // Encoding declaration must still be ISO-8859-1 after 3 cycles.
-        $this->assertSame('ISO-8859-1', $doc->encoding);
+        $this->assertSame('ISO-8859-1', $doc->getEncoding());
 
         $saved = $doc->saveXml();
 

@@ -13,7 +13,6 @@ declare(strict_types=1);
 namespace Derafu\Xml;
 
 use Derafu\Xml\Contract\XmlDocumentInterface;
-use Derafu\Xml\Exception\XmlParseException;
 use Derafu\Xml\Exception\XmlQueryException;
 use DOMDocument;
 use DOMNode;
@@ -57,11 +56,14 @@ final class XPathQuery
         array $namespaces = []
     ) {
         // Assign the DOM document instance.
-        if ($xml instanceof XmlDocumentInterface || $xml instanceof DOMDocument) {
+        if ($xml instanceof XmlDocumentInterface) {
+            $this->dom = $xml->getDomDocument();
+        } elseif ($xml instanceof DOMDocument) {
             $this->dom = $xml;
         } else {
-            $this->dom = new XmlDocument();
-            $this->loadXml($xml);
+            $xmlDoc = new XmlDocument();
+            $xmlDoc->loadXml($xml);
+            $this->dom = $xmlDoc->getDomDocument();
         }
 
         // Create the XPath instance over the DOM document.
@@ -204,21 +206,6 @@ final class XPathQuery
         }
 
         return $nodes;
-    }
-
-    /**
-     * Loads an XML string into the $dom attribute.
-     *
-     * @param string $xml
-     * @return static
-     */
-    private function loadXml(string $xml): static
-    {
-        // XmlDocument::loadXml() throws XmlParseException if the XML is
-        // empty or malformed, propagating it directly to the caller.
-        $this->dom->loadXml($xml);
-
-        return $this;
     }
 
     /**

@@ -23,8 +23,15 @@ use DOMNodeList;
 /**
  * Class that represents an XML document.
  */
-final class XmlDocument extends DOMDocument implements XmlDocumentInterface
+final class XmlDocument implements XmlDocumentInterface
 {
+    /**
+     * Underlying DOM document.
+     *
+     * @var DOMDocument
+     */
+    private DOMDocument $dom;
+
     /**
      * Instance to facilitate XML handling using XPath.
      *
@@ -47,10 +54,18 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
         string $encoding = 'UTF-8',
         string $version = '1.0'
     ) {
-        parent::__construct($version, $encoding);
+        $this->dom = new DOMDocument($version, $encoding);
 
-        $this->formatOutput = true;
-        $this->preserveWhiteSpace = true;
+        $this->dom->formatOutput = true;
+        $this->dom->preserveWhiteSpace = true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getDomDocument(): DOMDocument
+    {
+        return $this->dom;
     }
 
     /**
@@ -58,7 +73,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function getEncoding(): string
     {
-        return strtoupper($this->encoding ?: 'UTF-8');
+        return strtoupper($this->dom->encoding ?: 'UTF-8');
     }
 
     /**
@@ -66,7 +81,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function setEncoding(string $encoding): static
     {
-        $this->encoding = $encoding;
+        $this->dom->encoding = $encoding;
 
         return $this;
     }
@@ -76,7 +91,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function setFormatOutput(bool $formatOutput): static
     {
-        $this->formatOutput = $formatOutput;
+        $this->dom->formatOutput = $formatOutput;
 
         return $this;
     }
@@ -86,7 +101,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function setPreserveWhiteSpace(bool $preserveWhiteSpace): static
     {
-        $this->preserveWhiteSpace = $preserveWhiteSpace;
+        $this->dom->preserveWhiteSpace = $preserveWhiteSpace;
 
         return $this;
     }
@@ -96,7 +111,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function getDocumentElement(): ?DOMElement
     {
-        return $this->documentElement;
+        return $this->dom->documentElement;
     }
 
     /**
@@ -104,7 +119,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function getName(): string
     {
-        return $this->documentElement->tagName;
+        return $this->dom->documentElement->tagName;
     }
 
     /**
@@ -112,7 +127,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function getNamespace(): ?string
     {
-        $namespace = $this->documentElement->getAttribute('xmlns');
+        $namespace = $this->dom->documentElement->getAttribute('xmlns');
 
         return $namespace !== '' ? $namespace : null;
     }
@@ -122,7 +137,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function getSchema(): ?string
     {
-        $schemaLocation = $this->documentElement->getAttribute(
+        $schemaLocation = $this->dom->documentElement->getAttribute(
             'xsi:schemaLocation'
         );
 
@@ -150,7 +165,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
         $useInternalErrors = libxml_use_internal_errors(true);
 
         // Load the XML.
-        $status = parent::loadXml($source, $options);
+        $status = $this->dom->loadXml($source, $options);
 
         // Get errors, clear them and restore the libxml error state.
         $errors = libxml_get_errors();
@@ -171,7 +186,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function saveXml(?DOMNode $node = null, int $options = 0): string
     {
-        $xml = parent::saveXml($node, $options);
+        $xml = $this->dom->saveXml($node, $options);
 
         return XmlHelper::fixEntities($xml);
     }
@@ -209,7 +224,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
         }
         // Use C14N() for the entire document if no XPath is specified.
         else {
-            $xml = $this->C14N();
+            $xml = $this->dom->C14N();
         }
 
         // Fix XML entities.
@@ -246,7 +261,7 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
      */
     public function getSignatureNodeXml(): ?string
     {
-        $tag = $this->documentElement->tagName;
+        $tag = $this->dom->documentElement->tagName;
         $xpath = '/' . $tag . '/Signature';
         $signatureElement = $this->getNodes($xpath)->item(0);
 
@@ -314,6 +329,18 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function C14N(
+        bool $exclusive = false,
+        bool $withComments = false,
+        ?array $xpath = null,
+        ?array $nsPrefixes = null
+    ): string|false {
+        return $this->dom->C14N($exclusive, $withComments, $xpath, $nsPrefixes);
+    }
+
+    /**
      * Returns the data to be serialized by PHP's serialize() function.
      *
      * Stores the full XML string (including the XML declaration with encoding
@@ -330,18 +357,17 @@ final class XmlDocument extends DOMDocument implements XmlDocumentInterface
     /**
      * Restores the document from the data produced by __serialize().
      *
-     * Calls the parent DOMDocument constructor to allocate the internal C
-     * structure, reapplies the default output settings, then reloads the XML
-     * string (which carries its own encoding declaration).
+     * Allocates a fresh DOMDocument, reapplies the default output settings,
+     * then reloads the XML string (which carries its own encoding declaration).
      *
      * @param array{xml: string} $data Data produced by __serialize().
      */
     public function __unserialize(array $data): void
     {
-        parent::__construct();
+        $this->dom = new DOMDocument();
 
-        $this->formatOutput = true;
-        $this->preserveWhiteSpace = true;
+        $this->dom->formatOutput = true;
+        $this->dom->preserveWhiteSpace = true;
 
         $this->loadXml($data['xml']);
     }

@@ -44,7 +44,7 @@ class XmlTest extends TestCase
         $result = $doc->loadXml($xmlContent);
 
         $this->assertTrue($result);
-        $this->assertSame('root', $doc->documentElement->tagName);
+        $this->assertSame('root', $doc->getDomDocument()->documentElement->tagName);
     }
 
     /**
@@ -241,8 +241,8 @@ class XmlTest extends TestCase
         $doc->loadXml('<root/>');
 
         $this->assertSame('root', $doc->getName());
-        $this->assertFalse($doc->documentElement->hasChildNodes());
-        $this->assertFalse($doc->documentElement->hasAttributes());
+        $this->assertFalse($doc->getDomDocument()->documentElement->hasChildNodes());
+        $this->assertFalse($doc->getDomDocument()->documentElement->hasAttributes());
     }
 
     /**
@@ -258,10 +258,100 @@ class XmlTest extends TestCase
         $doc->loadXml('<root></root>');
 
         $this->assertSame('root', $doc->getName());
-        $this->assertFalse($doc->documentElement->hasAttributes());
+        $this->assertFalse($doc->getDomDocument()->documentElement->hasAttributes());
 
         $decoded = (new XmlDecoder())->decode($doc);
         $this->assertSame(['root' => null], $decoded);
+    }
+
+    /**
+     * Verifica que get() retorna el valor correcto con selector de puntos.
+     */
+    public function testGetWithDotNotation(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root><child><value>42</value></child></root>');
+
+        $this->assertSame('42', $doc->get('root.child.value'));
+    }
+
+    /**
+     * Verifica que get() retorna null cuando el selector no existe.
+     */
+    public function testGetReturnsNullForMissingKey(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root><child>val</child></root>');
+
+        $this->assertNull($doc->get('root.nonexistent'));
+    }
+
+    /**
+     * Verifica que get() retorna el default proporcionado cuando el selector no existe.
+     */
+    public function testGetReturnsCustomDefaultForMissingKey(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root><child>val</child></root>');
+
+        $this->assertSame('fallback', $doc->get('root.nonexistent', 'fallback'));
+    }
+
+    /**
+     * Verifica que getSignatureNodeXml() retorna el XML canonicalizado del nodo
+     * Signature cuando existe como hijo directo del root.
+     */
+    public function testGetSignatureNodeXmlReturnsCanonicalXml(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml(
+            '<root><Signature><SignedInfo>data</SignedInfo></Signature></root>'
+        );
+
+        $result = $doc->getSignatureNodeXml();
+
+        $this->assertNotNull($result);
+        $this->assertStringContainsString('<Signature>', $result);
+        $this->assertStringContainsString('<SignedInfo>data</SignedInfo>', $result);
+    }
+
+    /**
+     * Verifica que getSignatureNodeXml() retorna null cuando no hay nodo Signature.
+     */
+    public function testGetSignatureNodeXmlReturnsNullWhenAbsent(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root><element>Value</element></root>');
+
+        $this->assertNull($doc->getSignatureNodeXml());
+    }
+
+    /**
+     * Verifica que setFormatOutput() es fluent y propaga el valor al DOMDocument interno.
+     */
+    public function testSetFormatOutput(): void
+    {
+        $doc = new XmlDocument();
+
+        $this->assertSame($doc, $doc->setFormatOutput(false));
+        $this->assertFalse($doc->getDomDocument()->formatOutput);
+
+        $doc->setFormatOutput(true);
+        $this->assertTrue($doc->getDomDocument()->formatOutput);
+    }
+
+    /**
+     * Verifica que setPreserveWhiteSpace() es fluent y propaga el valor al DOMDocument interno.
+     */
+    public function testSetPreserveWhiteSpace(): void
+    {
+        $doc = new XmlDocument();
+
+        $this->assertSame($doc, $doc->setPreserveWhiteSpace(false));
+        $this->assertFalse($doc->getDomDocument()->preserveWhiteSpace);
+
+        $doc->setPreserveWhiteSpace(true);
+        $this->assertTrue($doc->getDomDocument()->preserveWhiteSpace);
     }
 
     /**

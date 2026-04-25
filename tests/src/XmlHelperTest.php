@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsXml;
 
 use Derafu\Xml\Exception\XmlQueryException;
+use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
 use DOMDocument;
 use DOMNodeList;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XmlQueryException::class)]
+#[CoversClass(XmlDocument::class)]
 class XmlHelperTest extends TestCase
 {
     public function testXmlXpath(): void
@@ -33,6 +35,25 @@ class XmlHelperTest extends TestCase
         XML;
 
         $doc = new DOMDocument();
+        $doc->loadXml($xmlContent);
+
+        $result = XmlHelper::xpath($doc, '//element1');
+
+        $this->assertInstanceOf(DOMNodeList::class, $result);
+        $this->assertSame(1, $result->length);
+        $this->assertSame('Value 1', $result->item(0)->textContent);
+    }
+
+    public function testXmlXpathWithXmlDocument(): void
+    {
+        $xmlContent = <<<XML
+        <root>
+            <element1>Value 1</element1>
+            <element2>Value 2</element2>
+        </root>
+        XML;
+
+        $doc = new XmlDocument();
         $doc->loadXml($xmlContent);
 
         $result = XmlHelper::xpath($doc, '//element1');

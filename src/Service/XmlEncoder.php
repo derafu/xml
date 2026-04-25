@@ -47,7 +47,7 @@ final class XmlEncoder implements XmlEncoderInterface
     {
         $doc = new XmlDocument();
 
-        $this->encodeNode($data, $doc, $doc);
+        $this->encodeNode($data, $doc, $doc->getDomDocument());
 
         return $doc;
     }
@@ -181,7 +181,7 @@ final class XmlEncoder implements XmlEncoderInterface
                     ));
                 }
 
-                $Node = $doc->createElement($tagName);
+                $Node = $doc->getDomDocument()->createElement($tagName);
                 $parent->appendChild($Node);
                 $this->encodeNode($child, $doc, $Node);
             }
@@ -189,7 +189,7 @@ final class XmlEncoder implements XmlEncoderInterface
             // must be added at the same level as the parent node.
             else {
                 $value = XmlHelper::sanitize((string) $child);
-                $Node = $doc->createElement($tagName, $value);
+                $Node = $doc->getDomDocument()->createElement($tagName, $value);
                 $parent->appendChild($Node);
             }
         }
@@ -211,7 +211,7 @@ final class XmlEncoder implements XmlEncoderInterface
         string $value,
     ): void {
         $value = XmlHelper::sanitize($value);
-        $Node = $doc->createElement($tagName, $value);
+        $Node = $doc->getDomDocument()->createElement($tagName, $value);
         $parent->appendChild($Node);
     }
 

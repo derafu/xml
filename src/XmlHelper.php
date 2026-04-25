@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Xml;
 
+use Derafu\Xml\Contract\XmlDocumentInterface;
 use Derafu\Xml\Exception\XmlQueryException;
 use DOMDocument;
 use DOMNodeList;
@@ -25,17 +26,19 @@ final class XmlHelper
     /**
      * Executes an XPath query on an XML document.
      *
-     * @param string|DOMDocument $xml XML document to query.
+     * @param string|DOMDocument|XmlDocumentInterface $xml XML document to query.
      * @param string $expression XPath expression to execute on the XML.
      * @return DOMNodeList Nodes resulting from the XPath query.
      */
     public static function xpath(
-        string|DOMDocument $xml,
+        string|DOMDocument|XmlDocumentInterface $xml,
         string $expression
     ): DOMNodeList {
         if (is_string($xml)) {
             $document = new DOMDocument();
             $document->loadXml($xml);
+        } elseif ($xml instanceof XmlDocumentInterface) {
+            $document = $xml->getDomDocument();
         } else {
             $document = $xml;
         }
