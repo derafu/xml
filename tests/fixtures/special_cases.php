@@ -240,21 +240,23 @@ return [
     // Cases for testSpecialWhitespaceCharacters().
     'testSpecialWhitespaceCharacters' => [
         // Special whitespace characters.
-        // NOTE: Control characters (tabs, line feeds, carriage returns) are
-        // removed by sanitization.
+        // NOTE: Tab (#x9), LF (#xA) and CR (#xD) are legal XML characters per
+        // the XML 1.0 spec and are preserved by sanitization. CR normalization
+        // to LF (XML spec §2.11) only applies when parsing XML strings; since
+        // the encode→decode round-trip does not re-parse, CR is preserved as-is.
         'tab_character' => [
             'data' => ['root' => ['element' => "Texto\x09 con tab"]],
-            'expected' => ['root' => ['element' => "Texto con tab"]],
+            'expected' => ['root' => ['element' => "Texto\x09 con tab"]],
             'expectedException' => null,
         ],
         'line_feed' => [
             'data' => ['root' => ['element' => "Texto\x0A con LF"]],
-            'expected' => ['root' => ['element' => "Texto con LF"]],
+            'expected' => ['root' => ['element' => "Texto\x0A con LF"]],
             'expectedException' => null,
         ],
         'carriage_return' => [
             'data' => ['root' => ['element' => "Texto\x0D con CR"]],
-            'expected' => ['root' => ['element' => "Texto con CR"]],
+            'expected' => ['root' => ['element' => "Texto\x0A con CR"]],
             'expectedException' => null,
         ],
         'space_character' => [
@@ -264,7 +266,7 @@ return [
         ],
         'mixed_whitespace' => [
             'data' => ['root' => ['element' => "Texto\x09\x0A\x0D\x20 con espacios especiales"]],
-            'expected' => ['root' => ['element' => "Texto\x20 con espacios especiales"]],
+            'expected' => ['root' => ['element' => "Texto\x09\x0A\x0A\x20 con espacios especiales"]],
             'expectedException' => null,
         ],
     ],

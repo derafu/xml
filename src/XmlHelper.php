@@ -69,9 +69,12 @@ final class XmlHelper
             return $value;
         }
 
-        // Remove control characters (ASCII 0x00-0x1F and 0x7F) that can cause
-        // problems in XML-DSIG.
-        $value = preg_replace('/[\x00-\x1F\x7F]/', '', $value);
+        // Remove control characters that are illegal in XML 1.0 (everything
+        // outside #x9 | #xA | #xD | [#x20-...]). Tab and LF are preserved
+        // as-is. CR is normalized to LF per XML spec §2.11 (parsers would
+        // convert it anyway, and leaving it would serialize as &#13;).
+        $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value);
+        $value = str_replace("\x0D", "\x0A", $value);
 
         // Convert "predefined entities" of XML.
         $replace = [
