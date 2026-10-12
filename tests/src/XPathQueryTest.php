@@ -169,7 +169,7 @@ class XPathQueryTest extends TestCase
         $this->assertSame(
             'firma_base64',
             $result,
-            'Debe devolver el valor del nodo FRMA.'
+            'Should return the value of the FRMA node.'
         );
     }
 
@@ -192,7 +192,7 @@ class XPathQueryTest extends TestCase
         $this->assertSame(
             $expected,
             $result,
-            'Debe devolver la estructura jerárquica completa de CAF.'
+            'Should return the complete hierarchical structure of CAF.'
         );
     }
 
@@ -214,7 +214,7 @@ class XPathQueryTest extends TestCase
         $this->assertSame(
             $expected,
             $result,
-            'Debe devolver un arreglo de valores para nodos repetidos.'
+            'Should return an array of values for repeated nodes.'
         );
     }
 
@@ -235,7 +235,7 @@ class XPathQueryTest extends TestCase
         $query = new XPathQuery($this->nestedXml);
         $result = $query->get('//NonexistentNode');
 
-        $this->assertNull($result, 'Debe devolver null si el nodo no existe.');
+        $this->assertNull($result, 'Should return null if the node does not exist.');
     }
 
     public function testNamespaceHandling(): void
@@ -330,7 +330,7 @@ class XPathQueryTest extends TestCase
         $this->assertStringContainsString('DTE', $dom->saveXml());
     }
 
-    // Caso con comillas simples en el valor (valor coincide con el nodo XML).
+    // Case with single quotes in the value (value matches the XML node).
     public function testResolveQueryWithEscapedValuesSimpleQuotes(): void
     {
         $xmlContent = <<<XML
@@ -357,7 +357,7 @@ class XPathQueryTest extends TestCase
         $this->assertSame("SASCO 'Testing' SpA", $result);
     }
 
-    // Caso con comillas dobles en el valor.
+    // Case with double quotes in the value.
     public function testResolveQueryWithEscapedValuesDobuleQuotes(): void
     {
         $xmlContent = <<<XML
@@ -384,7 +384,7 @@ class XPathQueryTest extends TestCase
         $this->assertSame('SASCO "Testing" SpA', $result);
     }
 
-    // Caso con comillas simples y dobles mezcladas.
+    // Case with mixed single and double quotes.
     public function testResolveQueryWithEscapedValuesMixedQuotes(): void
     {
         $xmlContent = <<<XML
@@ -411,7 +411,7 @@ class XPathQueryTest extends TestCase
         $this->assertSame('SASCO \'Mixed\' "Testing" SpA', $result);
     }
 
-    // Caso sin comillas (valor básico).
+    // Case without quotes (basic value).
     public function testResolveQueryWithEscapedValuesWithoutQuotes(): void
     {
         $xmlContent = <<<XML
@@ -445,10 +445,10 @@ class XPathQueryTest extends TestCase
             ['ns' => 'http://www.sii.cl/SiiDte']
         );
 
-        // Obtener el nodo 'Encabezado' como contexto
+        // Obtain the 'Encabezado' node as context
         $contextNode = $query->getNodes('//ns:Encabezado')->item(0);
 
-        // Consultar desde el contexto del nodo 'Encabezado'
+        // Query from the 'Encabezado' node context
         $result = $query->get('ns:IdDoc/ns:TipoDTE', contextNode: $contextNode);
         $this->assertSame('33', $result);
 
@@ -463,10 +463,10 @@ class XPathQueryTest extends TestCase
             ['ns' => 'http://www.sii.cl/SiiDte']
         );
 
-        // Obtener el nodo 'Encabezado' como contexto
+        // Obtain the 'Encabezado' node as context
         $contextNode = $query->getNodes('//ns:Encabezado')->item(0);
 
-        // Intentar consultar un nodo que no existe desde el contexto
+        // Attempt to query a node that does not exist from the context
         $result = $query->get('ns:NonExistentNode', contextNode: $contextNode);
         $this->assertNull($result);
     }
@@ -478,12 +478,12 @@ class XPathQueryTest extends TestCase
             ['ns' => 'http://www.sii.cl/SiiDte']
         );
 
-        // Obtener el nodo 'Encabezado' como contexto
+        // Obtain the 'Encabezado' node as context
         $contextNode = $query->getNodes('//ns:Encabezado')->item(0);
 
-        // Consultar varios nodos desde el contexto
+        // Query multiple nodes from the context
         $result = $query->getValues('ns:IdDoc/ns:*', contextNode: $contextNode);
-        $this->assertCount(3, $result); // Hay 3 nodos en 'IdDoc': TipoDTE, Folio y FchEmis.
+        $this->assertCount(3, $result); // There are 3 nodes in 'IdDoc': TipoDTE, Folio and FchEmis.
         $this->assertContains('33', $result);
         $this->assertContains('1', $result);
     }
@@ -530,22 +530,21 @@ class XPathQueryTest extends TestCase
         );
         $result = $query->get('/');
 
-        // Verificar que el resultado es un array.
+        // Verify that the result is an array.
         $this->assertIsArray($result);
 
-        // Verificar que existe la estructura DTE > Documento > Detalle.
+        // Verify that the DTE > Documento > Detalle structure exists.
         $this->assertArrayHasKey('DTE', $result);
         $this->assertIsArray($result['DTE']);
         $this->assertArrayHasKey('Documento', (array) $result['DTE']);
         $this->assertIsArray($result['DTE']['Documento']);
         $this->assertArrayHasKey('Detalle', (array) $result['DTE']['Documento']);
 
-        // Verificar que Detalle es un array con 3 elementos.
+        // Verify that Detalle is an array with 3 elements.
         $detalle = (array) $result['DTE']['Documento']['Detalle'];
-        $this->assertIsArray($detalle);
         $this->assertCount(3, $detalle);
 
-        // Verificar el contenido de cada nodo Detalle.
+        // Verify the content of each Detalle node.
         $this->assertSame('1', $detalle[0]['NroLinDet']);
         $this->assertSame('Producto A', $detalle[0]['NmbItem']);
         $this->assertSame('2', $detalle[0]['QtyItem']);

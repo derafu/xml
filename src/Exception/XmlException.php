@@ -12,8 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\Xml\Exception;
 
+use Derafu\Translation\Exception\Core\TranslatableException as Exception;
 use Derafu\Xml\Contract\XmlDocumentInterface;
-use Exception;
 use LibXMLError;
 use Throwable;
 

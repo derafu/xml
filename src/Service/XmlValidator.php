@@ -32,7 +32,7 @@ final class XmlValidator implements XmlValidatorInterface
      */
     private array $defaultLibxmlTranslations = [
         '\': '
-            => '\' (línea %(line)s): ',
+            => '\' (line %(line)s): ',
         ': [facet \'pattern\'] The value'
             => ': has the value',
         ': This element is not expected. Expected is one of'

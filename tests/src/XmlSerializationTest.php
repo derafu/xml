@@ -54,8 +54,8 @@ class XmlSerializationTest extends TestCase
     // -------------------------------------------------------------------------
 
     /**
-     * Verifica que un XmlDocument UTF-8 se puede serializar y deserializar
-     * preservando la codificación y el contenido.
+     * Verifies that a UTF-8 XmlDocument can be serialized and unserialized
+     * preserving encoding and content.
      */
     public function testUtf8DocumentPreservesContentAfterSerializeUnserialize(): void
     {
@@ -74,13 +74,13 @@ class XmlSerializationTest extends TestCase
     }
 
     /**
-     * Verifica que el XML byte-a-byte es idéntico antes y después de un ciclo
-     * serialize/unserialize en un documento UTF-8 con caracteres especiales.
+     * Verifies that the XML is byte-for-byte identical before and after a
+     * serialize/unserialize cycle in a UTF-8 document with special characters.
      *
-     * - ñ (U+00F1) debe estar como secuencia UTF-8 (0xC3 0xB1), nunca como
-     *   byte ISO-8859-1 (0xF1).
-     * - á (U+00E1) debe estar como secuencia UTF-8 (0xC3 0xA1), nunca como
-     *   byte ISO-8859-1 (0xE1).
+     * - ñ (U+00F1) must be as UTF-8 sequence (0xC3 0xB1), never as
+     *   ISO-8859-1 byte (0xF1).
+     * - á (U+00E1) must be as UTF-8 sequence (0xC3 0xA1), never as
+     *   ISO-8859-1 byte (0xE1).
      */
     public function testUtf8DocumentWithSpecialCharactersPreservesBytes(): void
     {
@@ -97,11 +97,11 @@ class XmlSerializationTest extends TestCase
 
         $this->assertSame($xmlBefore, $xmlAfter);
 
-        // ñ como secuencia UTF-8 (0xC3 0xB1), nunca como byte ISO-8859-1 (0xF1).
+        // ñ as UTF-8 sequence (0xC3 0xB1), never as ISO-8859-1 byte (0xF1).
         $this->assertStringContainsString("\xC3\xB1", $xmlAfter);
         $this->assertStringNotContainsString("\xF1", $xmlAfter);
 
-        // á como secuencia UTF-8 (0xC3 0xA1), nunca como byte ISO-8859-1 (0xE1).
+        // á as UTF-8 sequence (0xC3 0xA1), never as ISO-8859-1 byte (0xE1).
         $this->assertStringContainsString("\xC3\xA1", $xmlAfter);
         $this->assertStringNotContainsString("\xE1", $xmlAfter);
     }
@@ -111,13 +111,13 @@ class XmlSerializationTest extends TestCase
     // -------------------------------------------------------------------------
 
     /**
-     * Verifica que un XmlDocument cargado desde bytes ISO-8859-1 reales
-     * preserva la declaración de codificación después de serialize/unserialize.
+     * Verifies that an XmlDocument loaded from real ISO-8859-1 bytes
+     * preserves the encoding declaration after serialize/unserialize.
      *
-     * - ñ debe estar como byte ISO-8859-1 (0xF1), nunca como secuencia
-     *   UTF-8 (0xC3 0xB1).
-     * - á debe estar como byte ISO-8859-1 (0xE1), nunca como secuencia
-     *   UTF-8 (0xC3 0xA1).
+     * - ñ must be as ISO-8859-1 byte (0xF1), never as UTF-8
+     *   sequence (0xC3 0xB1).
+     * - á must be as ISO-8859-1 byte (0xE1), never as UTF-8
+     *   sequence (0xC3 0xA1).
      */
     public function testIso88591DocumentPreservesEncodingAfterSerializeUnserialize(): void
     {
@@ -127,29 +127,29 @@ class XmlSerializationTest extends TestCase
         /** @var XmlDocument $restored */
         $restored = unserialize(serialize($doc));
 
-        // La declaración de codificación se preserva.
+        // The encoding declaration is preserved.
         $this->assertSame('ISO-8859-1', $restored->getEncoding());
 
         $restoredXml = $restored->saveXml();
 
-        // El header declara ISO-8859-1.
+        // The header declares ISO-8859-1.
         $this->assertStringContainsString('encoding="ISO-8859-1"', $restoredXml);
 
-        // ñ como byte ISO-8859-1 (0xF1), nunca como secuencia UTF-8 (0xC3 0xB1).
+        // ñ as ISO-8859-1 byte (0xF1), never as UTF-8 sequence (0xC3 0xB1).
         $this->assertStringContainsString("\xF1", $restoredXml);
         $this->assertStringNotContainsString("\xC3\xB1", $restoredXml);
 
-        // á como byte ISO-8859-1 (0xE1), nunca como secuencia UTF-8 (0xC3 0xA1).
+        // á as ISO-8859-1 byte (0xE1), never as UTF-8 sequence (0xC3 0xA1).
         $this->assertStringContainsString("\xE1", $restoredXml);
         $this->assertStringNotContainsString("\xC3\xA1", $restoredXml);
     }
 
     /**
-     * Verifica que el contenido decodificado de un documento ISO-8859-1 es
-     * idéntico antes y después de serialize/unserialize.
+     * Verifies that decoded content from an ISO-8859-1 document is
+     * identical before and after serialize/unserialize.
      *
-     * DOMDocument almacena los valores internamente en UTF-8, por lo que los
-     * valores decodificados deben ser siempre strings UTF-8 válidos.
+     * DOMDocument stores values internally in UTF-8, so the
+     * decoded values must always be valid UTF-8 strings.
      */
     public function testIso88591DocumentPreservesDecodedContentAfterSerializeUnserialize(): void
     {
@@ -165,7 +165,7 @@ class XmlSerializationTest extends TestCase
             $this->assertSame(
                 $expected,
                 $decoded['documento'][$field],
-                "El campo '{$field}' tiene un valor inesperado tras serialize/unserialize."
+                "Field '{$field}' has an unexpected value after serialize/unserialize."
             );
         }
     }
@@ -175,13 +175,12 @@ class XmlSerializationTest extends TestCase
     // -------------------------------------------------------------------------
 
     /**
-     * Verifica que múltiples ciclos de serialize/unserialize no acumulan
-     * corrupción en un documento ISO-8859-1.
+     * Verifies that multiple serialize/unserialize cycles do not accumulate
+     * corruption in an ISO-8859-1 document.
      *
-     * Un único ciclo ya lo cubre testIso88591DocumentPreservesEncoding*.
-     * Este test corre tres ciclos adicionales para confirmar que no hay
-     * deriva en la declaración de codificación, los bytes o los valores
-     * decodificados.
+     * A single cycle is already covered by testIso88591DocumentPreservesEncoding*.
+     * This test runs three additional cycles to confirm there is no
+     * drift in the encoding declaration, bytes, or decoded values.
      */
     public function testMultipleCyclesDoNotCorruptIso88591Document(): void
     {
@@ -193,16 +192,16 @@ class XmlSerializationTest extends TestCase
             $doc = unserialize(serialize($doc));
         }
 
-        // La declaración de codificación sigue siendo ISO-8859-1 tras 3 ciclos.
+        // The encoding declaration is still ISO-8859-1 after 3 cycles.
         $this->assertSame('ISO-8859-1', $doc->getEncoding());
 
         $xml = $doc->saveXml();
 
-        // ñ sigue siendo el byte ISO-8859-1 0xF1, no la secuencia UTF-8 0xC3 0xB1.
+        // ñ is still the ISO-8859-1 byte 0xF1, not the UTF-8 sequence 0xC3 0xB1.
         $this->assertStringContainsString("\xF1", $xml);
         $this->assertStringNotContainsString("\xC3\xB1", $xml);
 
-        // Los valores decodificados coinciden con los originales.
+        // Decoded values match the originals.
         $decoded = (new XmlDecoder())->decode($doc);
         foreach ($this->expectedValues as $field => $expected) {
             $this->assertSame($expected, $decoded['documento'][$field]);
@@ -210,8 +209,8 @@ class XmlSerializationTest extends TestCase
     }
 
     /**
-     * Verifica que múltiples ciclos de serialize/unserialize en un documento
-     * UTF-8 producen siempre el mismo XML byte-a-byte.
+     * Verifies that multiple serialize/unserialize cycles in a
+     * UTF-8 document always produce the same XML byte-for-byte.
      */
     public function testMultipleCyclesProduceSameXmlForUtf8Document(): void
     {
@@ -235,8 +234,8 @@ class XmlSerializationTest extends TestCase
     // -------------------------------------------------------------------------
 
     /**
-     * Verifica que los métodos de XmlDocument funcionan correctamente tras
-     * la deserialización, incluidas las consultas XPath (xPathQuery lazy).
+     * Verifies that XmlDocument methods work correctly after
+     * deserialization, including XPath queries (xPathQuery lazy).
      */
     public function testAllMethodsWorkAfterUnserialize(): void
     {
@@ -257,7 +256,7 @@ class XmlSerializationTest extends TestCase
         $this->assertSame('http://example.com', $restored->getNamespace());
         $this->assertSame('schema.xsd', $restored->getSchema());
 
-        // XPath query (fuerza la inicialización lazy de xPathQuery).
+        // XPath query (forces lazy initialization of xPathQuery).
         $this->assertSame('Hola', $restored->query('//child'));
         $this->assertSame('42', $restored->query('//value'));
     }
@@ -267,8 +266,8 @@ class XmlSerializationTest extends TestCase
     // -------------------------------------------------------------------------
 
     /**
-     * Verifica que la forma serializada de PHP contiene la clave 'xml' definida
-     * en __serialize(), confirmando que el mecanismo correcto está en uso.
+     * Verifies that the PHP serialized form contains the 'xml' key defined
+     * in __serialize(), confirming the correct mechanism is in use.
      */
     public function testSerializedStringContainsXmlKey(): void
     {
@@ -277,8 +276,8 @@ class XmlSerializationTest extends TestCase
 
         $serialized = serialize($doc);
 
-        // La clave 'xml' del array devuelto por __serialize() debe aparecer
-        // en la representación serializada de PHP.
+        // The 'xml' key from the array returned by __serialize() must appear
+        // in the PHP serialized representation.
         $this->assertStringContainsString('s:3:"xml";', $serialized);
     }
 }

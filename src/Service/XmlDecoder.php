@@ -54,6 +54,7 @@ final class XmlDecoder implements XmlDecoderInterface
      * processing items inside a list of twin nodes).
      * @return void
      */
+    // @phpstan-ignore parameterByRef.unusedType (the null is needed: `$data[$key]` is passed by reference and may not exist yet)
     private function decodeNode(
         DOMElement $tagElement,
         array|null &$data,
@@ -123,6 +124,7 @@ final class XmlDecoder implements XmlDecoderInterface
                 );
                 if ($n_twinsNodes === 1) {
                     if ($twinsAsArray) {
+                        // @phpstan-ignore parameterByRef.type (the key may not exist yet: it is created as null)
                         $this->decodeNode($child, $data, false);
                     } else {
                         $this->decodeNode($child, $data[$key], false);

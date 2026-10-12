@@ -96,16 +96,14 @@ final class XPathQuery
      * The result will depend on what is found:
      *
      *   - `null`: if there was no match.
-     *   - string: if there was one match.
-     *   - string[]: if there was more than one match.
-     *
-     * If the node has children, it returns a recursive array representing
-     * the entire structure of the nodes.
+     *   - string: if there was one match and the matched node has no children.
+     *   - array: if there was more than one match, or the matched node has
+     *     children - in that case, recursively, down to each leaf node.
      *
      * @param string $query XPath query.
      * @param array $params Array of parameters.
      * @param DOMNode|null $contextNode From which node to evaluate the expression.
-     * @return string|string[]|null The processed value: string, array or null.
+     * @return string|array|null The processed value: string, array or null.
      */
     public function get(
         string $query,
@@ -285,29 +283,12 @@ final class XPathQuery
     /**
      * Escapes a value to use it in an XPath query.
      *
-     * If the version is PHP 8.4 or higher, DOMXPath::quote() is used.
-     * Otherwise, a manual implementation is used.
-     *
      * @param string $value Value to escape.
      * @return string Escaped value as an XPath literal.
      */
     private function quoteValue(string $value): string
     {
-        // Available only from PHP 8.4.
-        if (method_exists(DOMXPath::class, 'quote')) {
-            return DOMXPath::quote($value);
-        }
-
-        // Manual implementation for versions prior to PHP 8.4.
-        if (!str_contains($value, "'")) {
-            return "'" . $value . "'";
-        }
-        if (!str_contains($value, '"')) {
-            return '"' . $value . '"';
-        }
-
-        // If it contains single and double quotes, combine them with concat().
-        return "concat('" . str_replace("'", "',\"'\",'", $value) . "')";
+        return DOMXPath::quote($value);
     }
 
     /**
@@ -328,7 +309,7 @@ final class XPathQuery
             libxml_clear_errors();
             libxml_use_internal_errors($use_errors);
 
-            $message = $error ?: 'Ocurrió un error en XPathQuery.';
+            $message = $error ?: 'An error occurred in XPathQuery.';
             throw new XmlQueryException($message);
         }
 

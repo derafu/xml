@@ -34,21 +34,21 @@ use PHPUnit\Framework\TestCase;
 class XmlServiceTest extends TestCase
 {
     /**
-     * Servicio de documentos XML.
+     * XML document service.
      *
      * @var XmlServiceInterface
      */
     private XmlServiceInterface $xmlService;
 
     /**
-     * Atributo con los casos para cada test.
+     * Attribute with cases for each test.
      *
      * @var array<string, array>
      */
     private static array $testCases;
 
     /**
-     * Inicializa cada test.
+     * Initializes each test.
      */
     protected function setUp(): void
     {
@@ -60,10 +60,9 @@ class XmlServiceTest extends TestCase
     }
 
     /**
-     * Entrega los casos según el nombre del test.
+     * Provides cases based on the test name.
      *
-     * Este método lo utiliza cada proveedor de datos para obtener los datos de
-     * los tests.
+     * This method is used by each data provider to get test data.
      *
      * @return array<string, array>
      */
@@ -76,7 +75,7 @@ class XmlServiceTest extends TestCase
 
         if (!isset(self::$testCases[$testName])) {
             self::fail(sprintf(
-                'El test %s() no tiene casos asociados en el dataProvider().',
+                'Test %s() has no associated cases in dataProvider().',
                 $testName
             ));
         }
@@ -125,8 +124,8 @@ class XmlServiceTest extends TestCase
     }
 
     /**
-     * Convierte un arreglo a un Xml y luego de vuelta a un arreglo,
-     * asegurando que la estructura original se mantiene.
+     * Converts an array to XML and back to an array,
+     * ensuring the original structure is maintained.
      */
     #[DataProvider('arrayToXmlAndBackToArrayDataProvider')]
     public function testArrayToXmlAndBackToArray(
@@ -141,16 +140,16 @@ class XmlServiceTest extends TestCase
         $xml = $this->xmlService->encode($data);
         $arrayData = $this->xmlService->decode($xml);
 
-        // Validar estructura
+        // Validate structure
         $this->assertSame($expected, $arrayData);
 
-        // Validar codificación en cada valor del arreglo
+        // Validate encoding in each array value
         $this->assertArrayEncoding($arrayData, 'UTF-8');
     }
 
     /**
-     * Convierte un arreglo a un Xml y lo guarda como un string XML
-     * con saveXml(), asegurando que la codificación y contenido son correctos.
+     * Converts an array to XML and saves it as an XML string
+     * with saveXml(), ensuring encoding and content are correct.
      */
     #[DataProvider('arrayToXmlSaveXmlDataProvider')]
     public function testArrayToXmlSaveXml(
@@ -167,10 +166,10 @@ class XmlServiceTest extends TestCase
         $xml->setEncoding($encoding);
         $xmlString = $xml->saveXml();
 
-        // Validar contenido.
+        // Validate content.
         $this->assertSame($expected, $xmlString);
 
-        // Validar codificación.
+        // Validate encoding.
         $this->assertSame(
             'ISO-8859-1',
             mb_detect_encoding($xmlString, 'ISO-8859-1', true)
@@ -178,8 +177,8 @@ class XmlServiceTest extends TestCase
     }
 
     /**
-     * Convierte un arreglo a un Xml y lo guarda como un string XML
-     * con C14N(), asegurando que el contenido sea correcto.
+     * Converts an array to XML and saves it as an XML string
+     * with C14N(), ensuring the content is correct.
      */
     #[DataProvider('arrayToXmlC14NDataProvider')]
     public function testArrayToXmlC14N(
@@ -195,14 +194,14 @@ class XmlServiceTest extends TestCase
         $xmlString = $xml->C14N();
         $xmlString = XmlHelper::fixEntities($xmlString);
 
-        // Validar contenido.
+        // Validate content.
         $this->assertSame($expected, $xmlString);
     }
 
     /**
-     * Convierte un arreglo a un Xml y lo guarda como un string XML
-     * con testArrayToXmlC14NEncoded(), asegurando que la codificación
-     * y contenido son correctos.
+     * Converts an array to XML and saves it as an XML string
+     * with testArrayToXmlC14NEncoded(), ensuring encoding
+     * and content are correct.
      */
     #[DataProvider('arrayToXmlC14NEncodedDataProvider')]
     public function testArrayToXmlC14NEncoded(
@@ -219,10 +218,10 @@ class XmlServiceTest extends TestCase
         $xml->setEncoding($encoding);
         $xmlString = $xml->C14NEncoded();
 
-        // Validar contenido.
+        // Validate content.
         $this->assertSame($expected, $xmlString);
 
-        // Validar codificación.
+        // Validate encoding.
         $this->assertSame(
             'ISO-8859-1',
             mb_detect_encoding($xmlString, 'ISO-8859-1', true)
@@ -230,9 +229,9 @@ class XmlServiceTest extends TestCase
     }
 
     /**
-     * Convierte un string XML a un Xml y luego a un arreglo,
-     * asegurando que la estructura se mantiene y los datos están en la
-     * codificación correcta.
+     * Converts an XML string to XML and then to an array,
+     * ensuring the structure is maintained and data is in the
+     * correct encoding.
      */
     #[DataProvider('xmlToArrayDataProvider')]
     public function testXmlToArray(
@@ -248,16 +247,16 @@ class XmlServiceTest extends TestCase
         $doc->loadXml($xmlContent);
         $arrayData = $this->xmlService->decode($doc);
 
-        // Validar estructura.
+        // Validate structure.
         $this->assertSame($expected, $arrayData);
 
-        // Validar codificación en cada valor del arreglo.
+        // Validate encoding in each array value.
         $this->assertArrayEncoding($arrayData, 'UTF-8');
     }
 
     /**
-     * Convierte un string XML a un Xml y lo guarda como un string XML
-     * con saveXml(), asegurando que la codificación y contenido son correctos.
+     * Converts an XML string to XML and saves it as an XML string
+     * with saveXml(), ensuring encoding and content are correct.
      */
     #[DataProvider('xmlToSaveXmlDataProvider')]
     public function testXmlToSaveXml(
@@ -273,10 +272,10 @@ class XmlServiceTest extends TestCase
         $doc->loadXml($xmlContent);
         $xmlString = $doc->saveXml();
 
-        // Validar contenido.
+        // Validate content.
         $this->assertSame($expected, $xmlString);
 
-        // Validar codificación.
+        // Validate encoding.
         $this->assertSame(
             'ISO-8859-1',
             mb_detect_encoding($xmlString, 'ISO-8859-1', true)
@@ -284,8 +283,8 @@ class XmlServiceTest extends TestCase
     }
 
     /**
-     * Convierte un string XML a un Xml y lo guarda como un string XML
-     * con C14N(), asegurando que el contenido sea correcto.
+     * Converts an XML string to XML and saves it as an XML string
+     * with C14N(), ensuring the content is correct.
      */
     #[DataProvider('xmlToC14NDataProvider')]
     public function testXmlToC14N(
@@ -302,14 +301,14 @@ class XmlServiceTest extends TestCase
         $xmlString = $doc->C14N();
         $xmlString = XmlHelper::fixEntities($xmlString);
 
-        // Validar contenido.
+        // Validate content.
         $this->assertSame($expected, $xmlString);
     }
 
     /**
-     * Convierte un string XML a un Xml y lo guarda como un string XML
-     * con C14NEncoded(), asegurando que la codificación y contenido
-     * son correctos.
+     * Converts an XML string to XML and saves it as an XML string
+     * with C14NEncoded(), ensuring encoding and content
+     * are correct.
      */
     #[DataProvider('xmlToC14NEncodedDataProvider')]
     public function testXmlToC14NEncoded(
@@ -327,10 +326,10 @@ class XmlServiceTest extends TestCase
         $doc->setEncoding($encoding);
         $xmlString = $doc->C14NEncoded();
 
-        // Validar contenido.
+        // Validate content.
         $this->assertSame($expected, $xmlString);
 
-        // Validar codificación.
+        // Validate encoding.
         $this->assertSame(
             $encoding,
             mb_detect_encoding($xmlString, $encoding, true)
@@ -338,11 +337,10 @@ class XmlServiceTest extends TestCase
     }
 
     /**
-     * Función auxiliar para verificar la codificación de los valores en un
-     * arreglo.
+     * Helper function to verify the encoding of values in an array.
      *
-     * @param array $data Arreglo que contiene los valores a verificar.
-     * @param string $expectedEncoding Codificación esperada (ejemplo: UTF-8).
+     * @param array $data Array containing the values to verify.
+     * @param string $expectedEncoding Expected encoding (example: UTF-8).
      */
     private function assertArrayEncoding(
         array $data,
@@ -359,11 +357,11 @@ class XmlServiceTest extends TestCase
     }
 
     /**
-     * Verifica que la validación del XML contra el esquema pase correctamente.
+     * Verifies that XML validation against the schema passes correctly.
      */
     public function testValidateSchemaSuccess(): void
     {
-        // Crear el esquema XML (XSD).
+        // Create the XML schema (XSD).
         $xsdSchema = <<<XSD
         <?xml version="1.0" encoding="UTF-8"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -377,43 +375,43 @@ class XmlServiceTest extends TestCase
         </xs:schema>
         XSD;
 
-        // Guardar el esquema en un archivo temporal.
+        // Save the schema to a temporary file.
         $schemaPath = tempnam(sys_get_temp_dir(), 'schema') . '.xsd';
         file_put_contents($schemaPath, $xsdSchema);
 
-        // Crear un XML válido según el esquema.
+        // Create a valid XML according to the schema.
         $xmlContent = <<<XML
         <root>
             <element>Value</element>
         </root>
         XML;
 
-        // Cargar el XML en un Xml.
+        // Load the XML into an Xml.
         $xml = new XmlDocument();
         $xml->loadXml($xmlContent);
 
-        // Validar el XML contra el esquema.
+        // Validate the XML against the schema.
         try {
             $this->xmlService->validate($xml, $schemaPath);
-            $this->assertTrue(true); // Sin excepción la validación pasó.
+            $this->addToAssertionCount(1); // No exception means validation passed.
         } catch (XmlException $e) {
             $message = sprintf(
-                'La validación del XML no debería fallar, pero ocurrió un error: %s',
+                'XML validation should not fail, but an error occurred: %s',
                 $e->getMessage()
             );
             $this->fail($message);
         }
 
-        // Eliminar el archivo temporal del esquema.
+        // Delete the temporary schema file.
         unlink($schemaPath);
     }
 
     /**
-     * Verifica que la validación del XML contra el esquema falle correctamente.
+     * Verifies that XML validation against the schema fails correctly.
      */
     public function testValidateSchemaFailure(): void
     {
-        // Crear el esquema XML (XSD).
+        // Create the XML schema (XSD).
         $xsdSchema = <<<XSD
         <?xml version="1.0" encoding="UTF-8"?>
         <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
@@ -427,26 +425,26 @@ class XmlServiceTest extends TestCase
         </xs:schema>
         XSD;
 
-        // Guardar el esquema en un archivo temporal.
+        // Save the schema to a temporary file.
         $schemaPath = tempnam(sys_get_temp_dir(), 'schema') . '.xsd';
         file_put_contents($schemaPath, $xsdSchema);
 
-        // Crear un XML inválido según el esquema.
+        // Create an invalid XML according to the schema.
         $invalidXmlContent = <<<XML
         <root>
             <wrongElement>Value</wrongElement>
         </root>
         XML;
 
-        // Cargar el XML en un Xml.
+        // Load the XML into an Xml.
         $xml = new XmlDocument();
         $xml->loadXml($invalidXmlContent);
 
-        // Validar el XML contra el esquema y esperar que falle.
+        // Validate the XML against the schema and expect it to fail.
         $this->expectException(XmlException::class);
         $this->xmlService->validate($xml);
 
-        // Eliminar el archivo temporal del esquema.
+        // Delete the temporary schema file.
         unlink($schemaPath);
     }
 }

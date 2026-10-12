@@ -92,13 +92,13 @@ class XmlHelperTest extends TestCase
 
     public function testXmlFixEntitiesMalformedXml(): void
     {
-        // XML sin el cierre el tag `root`.
+        // XML without the closing `root` tag.
         $malformedXml = '<root>He said "Hello" & <child>Goodbye</child>';
 
         $result = XmlHelper::fixEntities($malformedXml);
 
-        // Se espera que el XML malformado se mantenga igual. Y que la
-        // corrección de entidades sea aplicada al resto del string del XML.
+        // The malformed XML is expected to remain the same. And the
+        // entity correction is applied to the rest of the XML string.
         //$expectedXml = '<root>He said &quot;Hello&quot; &amp; <child>Goodbye</child>';
         $expectedXml = '<root>He said &quot;Hello&quot; & <child>Goodbye</child>';
         $this->assertSame($expectedXml, $result);
@@ -110,7 +110,7 @@ class XmlHelperTest extends TestCase
 
         $result = XmlHelper::fixEntities($emptyXml);
 
-        // Un string XML vacio debe entregar un resultado vacio.
+        // An empty XML string should return an empty result.
         $this->assertSame('', $result);
     }
 
