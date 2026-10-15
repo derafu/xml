@@ -66,12 +66,25 @@ final class XmlDecoder implements XmlDecoderInterface
             $data = [$key => null];
         }
 
+        // The value of the element: the item of a list of twin nodes is its own
+        // array, in any other case it is the index of the element in `$data`.
+        // An element without content is left as null (it must exist, whatever
+        // its position among its siblings).
+        if ($twinsAsArray) {
+            $value = &$data;
+        } else {
+            if (!array_key_exists($key, $data)) {
+                $data[$key] = null;
+            }
+            $value = &$data[$key];
+        }
+
         // If the tagElement has attributes, add them to the array within the
         // special '@attributes' index.
         if ($tagElement->hasAttributes()) {
-            $data[$key]['@attributes'] = [];
+            $value['@attributes'] = [];
             foreach ($tagElement->attributes as $attribute) {
-                $data[$key]['@attributes'][$attribute->name] = $attribute->value;
+                $value['@attributes'][$attribute->name] = $attribute->value;
             }
         }
 
@@ -104,17 +117,25 @@ final class XmlDecoder implements XmlDecoderInterface
         bool $twinsAsArray,
     ): void {
         $key = $tagElement->tagName;
+
+        // The value of the element (see decodeNode()).
+        if ($twinsAsArray) {
+            $value = &$data;
+        } else {
+            $value = &$data[$key];
+        }
+
         // Loop through each of the child nodes.
         foreach ($childs as $child) {
             if ($child instanceof DOMText) {
                 $textContent = trim($child->textContent);
                 if ($textContent !== '') {
                     if ($tagElement->hasAttributes()) {
-                        $data[$key]['@value'] = $textContent;
-                    } elseif ($childs->length === 1 && empty($data[$key])) {
-                        $data[$key] = $textContent;
+                        $value['@value'] = $this->joinText($value, $textContent);
+                    } elseif ($childs->length === 1 && empty($value)) {
+                        $value = $textContent;
                     } else {
-                        $data[$key]['@value'] = $textContent;
+                        $value['@value'] = $this->joinText($value, $textContent);
                     }
                 }
             } elseif ($child instanceof DOMElement) {
@@ -123,39 +144,50 @@ final class XmlDecoder implements XmlDecoderInterface
                     $child->tagName
                 );
                 if ($n_twinsNodes === 1) {
-                    if ($twinsAsArray) {
-                        // @phpstan-ignore parameterByRef.type (the key may not exist yet: it is created as null)
-                        $this->decodeNode($child, $data, false);
-                    } else {
-                        $this->decodeNode($child, $data[$key], false);
-                    }
+                    $this->decodeNode($child, $value, false);
                 } else {
                     // Create a list for the child node, because it has several
                     // equal nodes in the XML.
-                    if (!isset($data[$key][$child->tagName])) {
-                        $data[$key][$child->tagName] = [];
+                    if (!isset($value[$child->tagName])) {
+                        $value[$child->tagName] = [];
                     }
 
-                    // Check if the child node is scalar. If it is, add it
-                    // directly to the list.
-                    if ($child->childElementCount === 0) {
+                    // Check if the child node is scalar (it has no elements nor
+                    // attributes). If it is, add it directly to the list.
+                    if ($child->childElementCount === 0 && !$child->hasAttributes()) {
                         $textContent = trim($child->textContent);
-                        $data[$key][$child->tagName][] = $textContent;
+                        $value[$child->tagName][] = $textContent;
                     }
                     // If the child node is not scalar, it is built as if it
                     // were a normal array with the recursive call to decodeNode().
                     else {
-                        $nextIndex = count($data[$key][$child->tagName]);
-                        $data[$key][$child->tagName][$nextIndex] = [];
+                        $nextIndex = count($value[$child->tagName]);
+                        $value[$child->tagName][$nextIndex] = [];
                         $this->decodeNode(
                             $child,
-                            $data[$key][$child->tagName][$nextIndex],
+                            $value[$child->tagName][$nextIndex],
                             true
                         );
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Joins the text of an element that has text in several parts (mixed
+     * content: text, elements and more text) with a space.
+     *
+     * @param mixed $value The value of the element.
+     * @param string $text The text to add.
+     * @return string
+     */
+    private function joinText(mixed $value, string $text): string
+    {
+        return is_array($value) && isset($value['@value'])
+            ? $value['@value'] . ' ' . $text
+            : $text
+        ;
     }
 
     /**
