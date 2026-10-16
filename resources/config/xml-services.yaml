@@ -1,6 +1,11 @@
+# Optional wiring for apps using symfony/dependency-injection.
+# Import it from your own services.yaml:
+#
+#   imports:
+#       - { resource: '../vendor/derafu/xml/resources/config/xml-services.yaml' }
+
 services:
 
-    # Default configuration for services.
     _defaults:
         autowire: true
         autoconfigure: true
