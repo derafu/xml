@@ -15,11 +15,23 @@ namespace Derafu\Xml\Service;
 use Derafu\Xml\Contract\XmlDecoderInterface;
 use Derafu\Xml\Contract\XmlDocumentInterface;
 use DOMElement;
-use DOMNodeList;
 use DOMText;
 
 /**
  * Class that creates a PHP array from an XML document.
+ *
+ * The value of an element is:
+ *
+ *   - A string, if it only has text: the text without the spaces around it.
+ *     An element without content is the empty string, as it is in the data
+ *     model of XML.
+ *   - An array, if it has attributes, child elements, or text mixed with
+ *     elements:
+ *       - `@attributes`: its attributes, by name.
+ *       - `@value`: its text, if it has any besides its other content. The
+ *         parts of text that are separated by elements are joined with a space.
+ *       - One key for each child element, by its name. The value is the one of
+ *         the element, or a list of values if the element is repeated.
  */
 final class XmlDecoder implements XmlDecoderInterface
 {
@@ -37,175 +49,78 @@ final class XmlDecoder implements XmlDecoderInterface
             return [];
         }
 
-        $data = [$tagElement->tagName => null];
-
-        $this->decodeNode($tagElement, $data, false);
-
-        return $data;
+        return [$tagElement->tagName => $this->decodeElement($tagElement)];
     }
 
     /**
-     * Recursively decodes a DOM element into a PHP array.
+     * Decodes a DOM element, and what it has inside, to its value.
      *
-     * @param DOMElement $tagElement The element to decode.
-     * @param array &$data The array being populated.
-     * @param bool $twinsAsArray Whether to insert children at the current level
-     * instead of nesting them under the element key (used internally when
-     * processing items inside a list of twin nodes).
-     * @return void
+     * @param DOMElement $element The element to decode.
+     * @return string|array<string, mixed> The value of the element.
      */
-    // @phpstan-ignore parameterByRef.unusedType (the null is needed: `$data[$key]` is passed by reference and may not exist yet)
-    private function decodeNode(
-        DOMElement $tagElement,
-        array|null &$data,
-        bool $twinsAsArray,
-    ): void {
-        $key = $tagElement->tagName;
+    private function decodeElement(DOMElement $element): string|array
+    {
+        $hasAttributes = $element->hasAttributes();
+        $result = [];
 
-        if ($data === null) {
-            $data = [$key => null];
-        }
-
-        // The value of the element: the item of a list of twin nodes is its own
-        // array, in any other case it is the index of the element in `$data`.
-        // An element without content is left as null (it must exist, whatever
-        // its position among its siblings).
-        if ($twinsAsArray) {
-            $value = &$data;
-        } else {
-            if (!array_key_exists($key, $data)) {
-                $data[$key] = null;
-            }
-            $value = &$data[$key];
-        }
-
-        // If the tagElement has attributes, add them to the array within the
-        // special '@attributes' index.
-        if ($tagElement->hasAttributes()) {
-            $value['@attributes'] = [];
-            foreach ($tagElement->attributes as $attribute) {
-                $value['@attributes'][$attribute->name] = $attribute->value;
+        // The attributes go first, in the special '@attributes' index.
+        if ($hasAttributes) {
+            $result['@attributes'] = [];
+            foreach ($element->attributes as $attribute) {
+                $result['@attributes'][$attribute->name] = $attribute->value;
             }
         }
 
-        // If the tagElement has child nodes, add them to the value of the tag.
-        if ($tagElement->hasChildNodes()) {
-            $this->arrayAddChilds(
-                $data,
-                $tagElement,
-                $tagElement->childNodes,
-                $twinsAsArray
-            );
-        }
-    }
-
-    /**
-     * Adds child nodes of an XML document to a PHP array.
-     *
-     * @param array &$data Array where the child nodes will be added.
-     * @param DOMElement $tagElement Parent node from which the child nodes will
-     * be extracted.
-     * @param DOMNodeList $childs List of child nodes of the parent node.
-     * @param bool $twinsAsArray Indicates if the twin nodes should be treated
-     * as an array.
-     * @return void
-     */
-    private function arrayAddChilds(
-        array &$data,
-        DOMElement $tagElement,
-        DOMNodeList $childs,
-        bool $twinsAsArray,
-    ): void {
-        $key = $tagElement->tagName;
-
-        // The value of the element (see decodeNode()).
-        if ($twinsAsArray) {
-            $value = &$data;
-        } else {
-            $value = &$data[$key];
+        // How many child elements there are with each name: the ones that are
+        // repeated are a list.
+        $counts = [];
+        foreach ($element->childNodes as $child) {
+            if ($child instanceof DOMElement) {
+                $counts[$child->tagName] = ($counts[$child->tagName] ?? 0) + 1;
+            }
         }
 
-        // Loop through each of the child nodes.
-        foreach ($childs as $child) {
+        $text = null;
+        $lists = [];
+        foreach ($element->childNodes as $child) {
             if ($child instanceof DOMText) {
-                $textContent = trim($child->textContent);
-                if ($textContent !== '') {
-                    if ($tagElement->hasAttributes()) {
-                        $value['@value'] = $this->joinText($value, $textContent);
-                    } elseif ($childs->length === 1 && empty($value)) {
-                        $value = $textContent;
-                    } else {
-                        $value['@value'] = $this->joinText($value, $textContent);
-                    }
+                $part = trim($child->textContent);
+                if ($part === '') {
+                    continue;
                 }
+
+                // An element that only has text is that text.
+                if (!$hasAttributes && $element->childNodes->length === 1) {
+                    return $part;
+                }
+
+                $text = $text === null ? $part : $text . ' ' . $part;
+                $result['@value'] = $text;
             } elseif ($child instanceof DOMElement) {
-                $n_twinsNodes = $this->nodeCountTwins(
-                    $tagElement,
-                    $child->tagName
-                );
-                if ($n_twinsNodes === 1) {
-                    $this->decodeNode($child, $value, false);
-                } else {
-                    // Create a list for the child node, because it has several
-                    // equal nodes in the XML.
-                    if (!isset($value[$child->tagName])) {
-                        $value[$child->tagName] = [];
-                    }
+                if ($counts[$child->tagName] === 1) {
+                    $result[$child->tagName] = $this->decodeElement($child);
 
-                    // Check if the child node is scalar (it has no elements nor
-                    // attributes). If it is, add it directly to the list.
-                    if ($child->childElementCount === 0 && !$child->hasAttributes()) {
-                        $textContent = trim($child->textContent);
-                        $value[$child->tagName][] = $textContent;
-                    }
-                    // If the child node is not scalar, it is built as if it
-                    // were a normal array with the recursive call to decodeNode().
-                    else {
-                        $nextIndex = count($value[$child->tagName]);
-                        $value[$child->tagName][$nextIndex] = [];
-                        $this->decodeNode(
-                            $child,
-                            $value[$child->tagName][$nextIndex],
-                            true
-                        );
-                    }
+                    continue;
                 }
-            }
-        }
-    }
 
-    /**
-     * Joins the text of an element that has text in several parts (mixed
-     * content: text, elements and more text) with a space.
-     *
-     * @param mixed $value The value of the element.
-     * @param string $text The text to add.
-     * @return string
-     */
-    private function joinText(mixed $value, string $text): string
-    {
-        return is_array($value) && isset($value['@value'])
-            ? $value['@value'] . ' ' . $text
-            : $text
-        ;
-    }
+                // The key is reserved here, in the order of the first one that
+                // is found, and it gets its list at the end.
+                $result[$child->tagName] = null;
 
-    /**
-     * Counts the nodes with the same name as the child nodes of a DOMElement.
-     *
-     * @param DOMElement $dom Element where the nodes will be searched.
-     * @param string $tagName Name of the tag to count.
-     * @return int Quantity of nodes with the same name.
-     */
-    private function nodeCountTwins(DOMElement $dom, string $tagName): int
-    {
-        $twins = 0;
-        foreach ($dom->childNodes as $child) {
-            if ($child instanceof DOMElement && $child->tagName === $tagName) {
-                $twins++;
+                // A repeated element that has no elements nor attributes is
+                // just its text.
+                $lists[$child->tagName][] = $child->childElementCount === 0 && !$child->hasAttributes()
+                    ? trim($child->textContent)
+                    : $this->decodeElement($child)
+                ;
             }
         }
 
-        return $twins;
+        foreach ($lists as $name => $list) {
+            $result[$name] = $list;
+        }
+
+        // An element without content is an empty text.
+        return $result === [] ? '' : $result;
     }
 }

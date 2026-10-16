@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Xml;
 
 use Derafu\Xml\Contract\XmlDocumentInterface;
+use Derafu\Xml\Exception\XmlException;
 use Derafu\Xml\Exception\XmlParseException;
 use Derafu\Xml\Exception\XmlQueryException;
 use DOMDocument;
@@ -115,11 +116,29 @@ final class XmlDocument implements XmlDocumentInterface
     }
 
     /**
+     * Gets the document element (the root) of the document, that must exist.
+     *
+     * It is the `getDocumentElement()` for what is asked to the document
+     * element: a document without it (it has no content yet) can not answer,
+     * so it is an error and not a `null` that would look like a value that is
+     * not there.
+     *
+     * @return DOMElement
+     * @throws XmlException If the document has no document element.
+     */
+    private function requireDocumentElement(): DOMElement
+    {
+        return $this->dom->documentElement
+            ?? throw new XmlException('The XML document has no document element.')
+        ;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function getName(): string
     {
-        return $this->dom->documentElement->tagName;
+        return $this->requireDocumentElement()->tagName;
     }
 
     /**
@@ -127,7 +146,7 @@ final class XmlDocument implements XmlDocumentInterface
      */
     public function getNamespace(): ?string
     {
-        $namespace = $this->dom->documentElement->getAttribute('xmlns');
+        $namespace = $this->requireDocumentElement()->getAttribute('xmlns');
 
         return $namespace !== '' ? $namespace : null;
     }
@@ -137,7 +156,7 @@ final class XmlDocument implements XmlDocumentInterface
      */
     public function getSchema(): ?string
     {
-        $schemaLocation = $this->dom->documentElement->getAttribute(
+        $schemaLocation = $this->requireDocumentElement()->getAttribute(
             'xsi:schemaLocation'
         );
 
@@ -173,7 +192,14 @@ final class XmlDocument implements XmlDocumentInterface
         libxml_use_internal_errors($useInternalErrors);
 
         if (!$status) {
-            throw new XmlParseException('Error al cargar el XML.', $errors);
+            $texts = XmlHelper::libxmlErrorsToText($errors);
+
+            throw new XmlParseException(
+                $texts === []
+                    ? 'Failed to load the XML.'
+                    : ['Failed to load the XML: {errors}', 'errors' => implode(' ', $texts)],
+                errors: $texts
+            );
         }
 
         // Return the status of the XML loading.
@@ -187,6 +213,9 @@ final class XmlDocument implements XmlDocumentInterface
     public function saveXml(?DOMNode $node = null, int $options = 0): string
     {
         $xml = $this->dom->saveXml($node, $options);
+        if ($xml === false) {
+            throw new XmlException('The XML could not be converted to text.');
+        }
 
         return XmlHelper::fixEntities($xml);
     }
@@ -202,6 +231,9 @@ final class XmlDocument implements XmlDocumentInterface
             '',
             $xml
         );
+        if ($xml === null) {
+            throw new XmlException('The XML declaration could not be removed.');
+        }
 
         return trim($xml);
     }
@@ -214,17 +246,21 @@ final class XmlDocument implements XmlDocumentInterface
         // If an XPath is provided, filter the nodes.
         if ($xpath) {
             $node = $this->getNodes($xpath)->item(0);
-            if (!$node) {
-                throw new XmlQueryException(sprintf(
-                    'No fue posible obtener el nodo con el XPath %s.',
-                    $xpath
-                ));
+            if (!$node instanceof DOMNode) {
+                throw new XmlQueryException([
+                    'The node with the XPath {xpath} could not be obtained.',
+                    'xpath' => $xpath,
+                ]);
             }
             $xml = $node->C14N();
         }
         // Use C14N() for the entire document if no XPath is specified.
         else {
             $xml = $this->dom->C14N();
+        }
+
+        if ($xml === false) {
+            throw new XmlException('The XML could not be canonicalized.');
         }
 
         // Fix XML entities.
@@ -251,6 +287,9 @@ final class XmlDocument implements XmlDocumentInterface
 
         // Remove the spaces between tags.
         $xml = preg_replace("/>\s+</", '><', $xml);
+        if ($xml === null) {
+            throw new XmlException('The spaces between the tags could not be removed.');
+        }
 
         // Return the canonicalized and flattened XML.
         return $xml;
@@ -261,11 +300,20 @@ final class XmlDocument implements XmlDocumentInterface
      */
     public function getSignatureNodeXml(): ?string
     {
-        $tag = $this->dom->documentElement->tagName;
+        $tag = $this->requireDocumentElement()->tagName;
         $xpath = '/' . $tag . '/Signature';
         $signatureElement = $this->getNodes($xpath)->item(0);
 
-        return $signatureElement?->C14N();
+        if (!$signatureElement instanceof DOMNode) {
+            return null;
+        }
+
+        $xml = $signatureElement->C14N();
+        if ($xml === false) {
+            throw new XmlException('The XML could not be canonicalized.');
+        }
+
+        return $xml;
     }
 
     /**
@@ -317,11 +365,17 @@ final class XmlDocument implements XmlDocumentInterface
      */
     public function toArray(): array
     {
-        return $this->query('/');
+        $array = $this->query('/');
+
+        // A document without content has nothing to give: an empty array, as
+        // the decoder does for a document without a document element.
+        return is_array($array) ? $array : [];
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return array<int|string, mixed>
      */
     public function jsonSerialize(): array
     {

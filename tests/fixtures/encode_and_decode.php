@@ -63,7 +63,7 @@ return [
         // Case with empty nodes.
         'empty_node' => [
             'data' => ['root' => ['element' => '']],
-            'expected' => ['root' => ['element' => null]],
+            'expected' => ['root' => ['element' => '']],
             'expectedException' => null,
         ],
         // Case with multiple repeated values.
@@ -308,7 +308,7 @@ return [
         // Case with empty nodes.
         'empty_node' => [
             'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><element></element></root>',
-            'expected' => ['root' => ['element' => null]],
+            'expected' => ['root' => ['element' => '']],
             'expectedException' => null,
         ],
         // Case with multiple repeated values.

@@ -16,6 +16,7 @@ use Derafu\Xml\Exception\XmlException;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
+use DOMElement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -76,18 +77,27 @@ final class XmlDecoderTest extends TestCase
                 '<r><i>1</i><i>2</i><i>3</i></r>',
                 ['r' => ['i' => ['1', '2', '3']]],
             ],
-            // An element without content is null, in any position.
+            // An element without content is an empty text (its value in the data
+            // model of XML is the empty string), in any position.
             'empty element as the first child' => [
                 '<root><element/></root>',
-                ['root' => ['element' => null]],
+                ['root' => ['element' => '']],
             ],
             'empty elements among others' => [
                 '<order><client>Ana</client><empty/><other>x</other><empty2></empty2></order>',
-                ['order' => ['client' => 'Ana', 'empty' => null, 'other' => 'x', 'empty2' => null]],
+                ['order' => ['client' => 'Ana', 'empty' => '', 'other' => 'x', 'empty2' => '']],
             ],
             'empty elements inside repeated elements' => [
                 '<r><i><v/><w>1</w></i><i><v/><w>2</w></i></r>',
-                ['r' => ['i' => [['v' => null, 'w' => '1'], ['v' => null, 'w' => '2']]]],
+                ['r' => ['i' => [['v' => '', 'w' => '1'], ['v' => '', 'w' => '2']]]],
+            ],
+            'an element with only spaces or a comment is empty' => [
+                '<r><a>   </a><b><!-- c --></b></r>',
+                ['r' => ['a' => '', 'b' => '']],
+            ],
+            'an empty root element' => [
+                '<r/>',
+                ['r' => ''],
             ],
             // The text in several parts of an element is joined.
             'text in several parts' => [
@@ -97,6 +107,65 @@ final class XmlDecoderTest extends TestCase
             'text in several parts with attributes' => [
                 '<note k="1">one <b>x</b> two</note>',
                 ['note' => ['@attributes' => ['k' => '1'], '@value' => 'one two', 'b' => 'x']],
+            ],
+            'text before and after repeated elements' => [
+                '<r><a>1</a>tail<a>2</a></r>',
+                ['r' => ['a' => ['1', '2'], '@value' => 'tail']],
+            ],
+            // The text of an element is trimmed, and the spaces between elements
+            // are not text.
+            'text is trimmed' => [
+                '<r>  hi  </r>',
+                ['r' => 'hi'],
+            ],
+            'spaces between elements are ignored' => [
+                "<r>\n    <a>1</a>\n    <b>2</b>\n</r>",
+                ['r' => ['a' => '1', 'b' => '2']],
+            ],
+            // What is not an element nor text is not in the array.
+            'comments are ignored' => [
+                '<r><!-- comment --><a>1</a></r>',
+                ['r' => ['a' => '1']],
+            ],
+            'CDATA is text' => [
+                '<r><![CDATA[ <x> ]]></r>',
+                ['r' => '<x>'],
+            ],
+            'CDATA among text is joined with it' => [
+                '<r>a<![CDATA[b]]>c</r>',
+                ['r' => ['@value' => 'a b c']],
+            ],
+            // Attributes.
+            'only attributes' => [
+                '<r id="1"/>',
+                ['r' => ['@attributes' => ['id' => '1']]],
+            ],
+            'attributes and text' => [
+                '<r id="1">hi</r>',
+                ['r' => ['@attributes' => ['id' => '1'], '@value' => 'hi']],
+            ],
+            'a child with only attributes' => [
+                '<r><a id="1"/></r>',
+                ['r' => ['a' => ['@attributes' => ['id' => '1']]]],
+            ],
+            // The names are the ones of the XML, with their prefix.
+            'names with a prefix' => [
+                '<x:r xmlns:x="urn:x"><x:a>1</x:a></x:r>',
+                ['x:r' => ['x:a' => '1']],
+            ],
+            'nested elements' => [
+                '<r><a><b><c>1</c></b></a></r>',
+                ['r' => ['a' => ['b' => ['c' => '1']]]],
+            ],
+            // Repeated elements are a list, and the ones without content are
+            // empty texts as an element that is not repeated.
+            'repeated elements without content' => [
+                '<r><a/><a/></r>',
+                ['r' => ['a' => ['', '']]],
+            ],
+            'repeated elements of different kinds' => [
+                '<r><a>1</a><a id="2"/></r>',
+                ['r' => ['a' => ['1', ['@attributes' => ['id' => '2']]]]],
             ],
         ];
     }
@@ -111,6 +180,19 @@ final class XmlDecoderTest extends TestCase
         $document->loadXml($xml);
 
         $this->assertSame($expected, (new XmlDecoder())->decode($document));
+    }
+
+    public function testAnElementOfTheDocumentIsDecodedAsTheDocumentIs(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r><a id="1"><b>x</b><b>y</b></a><c>z</c></r>');
+        $element = $document->getDomDocument()->getElementsByTagName('a')->item(0);
+        $this->assertInstanceOf(DOMElement::class, $element);
+
+        $this->assertSame(
+            ['a' => ['@attributes' => ['id' => '1'], 'b' => ['x', 'y']]],
+            (new XmlDecoder())->decode($element)
+        );
     }
 
     public function testADocumentWithoutRootElementIsAnEmptyArray(): void

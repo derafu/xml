@@ -25,7 +25,7 @@ interface XmlDecoderInterface
      * @param XmlDocumentInterface|DOMElement $documentElement XML document that
      * we want to convert to a PHP array or the element where we will make the
      * conversion if it is not the complete XML document.
-     * @return array The PHP array with the XML representation.
+     * @return array<int|string, mixed> The PHP array with the XML representation.
      */
     public function decode(
         XmlDocumentInterface|DOMElement $documentElement

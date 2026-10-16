@@ -43,7 +43,7 @@ class XmlSpecialCasesTest extends TestCase
     /**
      * Attribute with the cases for each test.
      *
-     * @var array<string, array>
+     * @var array<string, array<string, array<int|string, mixed>>>
      */
     private static array $testCases;
 
@@ -64,7 +64,7 @@ class XmlSpecialCasesTest extends TestCase
      *
      * This method is used by each data provider to obtain the test data.
      *
-     * @return array<string, array>
+     * @return array<string, array<int|string, mixed>>
      */
     private static function dataProvider(string $testName): array
     {
@@ -83,36 +83,57 @@ class XmlSpecialCasesTest extends TestCase
         return self::$testCases[$testName];
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function utf8CharactersNotSupportedInIso88591DataProvider(): array
     {
         return self::dataProvider('testUtf8CharactersNotSupportedInIso88591');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function controlCharactersInIso88591DataProvider(): array
     {
         return self::dataProvider('testControlCharactersInIso88591');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function specialCharactersInAttributesDataProvider(): array
     {
         return self::dataProvider('testSpecialCharactersInAttributes');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function c14NWithSpecialCharactersDataProvider(): array
     {
         return self::dataProvider('testC14NWithSpecialCharacters');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function specialWhitespaceCharactersDataProvider(): array
     {
         return self::dataProvider('testSpecialWhitespaceCharacters');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function c14NEncodingValidationDataProvider(): array
     {
         return self::dataProvider('testC14NEncodingValidation');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function exportedXmlCompatibilityWithIso88591EncodingDataProvider(): array
     {
         return self::dataProvider('testExportedXmlCompatibilityWithIso88591Encoding');
@@ -121,6 +142,10 @@ class XmlSpecialCasesTest extends TestCase
     /**
      * Verifies that UTF-8 characters not supported in ISO-8859-1 are handled
      * correctly during encoding.
+     *
+     * @param array<int|string, mixed> $data
+     * @param array<int|string, mixed> $expected
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('utf8CharactersNotSupportedInIso88591DataProvider')]
     public function testUtf8CharactersNotSupportedInIso88591(
@@ -149,6 +174,10 @@ class XmlSpecialCasesTest extends TestCase
 
     /**
      * Verifies that control characters are removed during encoding for XML-DSIG.
+     *
+     * @param array<int|string, mixed> $data
+     * @param array<int|string, mixed> $expected
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('controlCharactersInIso88591DataProvider')]
     public function testControlCharactersInIso88591(
@@ -182,6 +211,10 @@ class XmlSpecialCasesTest extends TestCase
     /**
      * Verifies that special characters in attributes are handled correctly for
      * XML-DSIG.
+     *
+     * @param array<int|string, mixed> $data
+     * @param array<int|string, mixed> $expected
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('specialCharactersInAttributesDataProvider')]
     public function testSpecialCharactersInAttributes(
@@ -203,21 +236,26 @@ class XmlSpecialCasesTest extends TestCase
         $xmlString = $xml->saveXml();
 
         // Check for special characters if they are present in the attribute value
-        if (str_contains($data['root']['element']['@attributes']['attr'], '&')) {
+        $this->assertIsArray($data['root']);
+        $this->assertIsArray($data['root']['element']);
+        $this->assertIsArray($data['root']['element']['@attributes']);
+        $attribute = $data['root']['element']['@attributes']['attr'];
+        $this->assertIsString($attribute);
+        if (str_contains($attribute, '&')) {
             $this->assertStringContainsString('&amp;', $xmlString);
         }
-        if (str_contains($data['root']['element']['@attributes']['attr'], '<')) {
+        if (str_contains($attribute, '<')) {
             $this->assertStringContainsString('&lt;', $xmlString);
         }
-        if (str_contains($data['root']['element']['@attributes']['attr'], '>')) {
+        if (str_contains($attribute, '>')) {
             $this->assertStringContainsString('&gt;', $xmlString);
         }
-        if (str_contains($data['root']['element']['@attributes']['attr'], '"')) {
+        if (str_contains($attribute, '"')) {
             $this->assertStringContainsString('&quot;', $xmlString);
         }
         // Note: Single quotes (') are not escaped in XML attributes when the attribute
         // is delimited by double quotes, which is the correct behavior.
-        // if (str_contains($data['root']['element']['@attributes']['attr'], "'")) {
+        // if (str_contains($attribute, "'")) {
         //     $this->assertStringContainsString('&apos;', $xmlString);
         // }
     }
@@ -225,6 +263,9 @@ class XmlSpecialCasesTest extends TestCase
     /**
      * Verifies that canonicalization with special characters works correctly
      * for XML-DSIG.
+     *
+     * @param array<int|string, mixed> $data
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('c14NWithSpecialCharactersDataProvider')]
     public function testC14NWithSpecialCharacters(
@@ -254,6 +295,10 @@ class XmlSpecialCasesTest extends TestCase
 
     /**
      * Verifies that special whitespace characters are handled correctly.
+     *
+     * @param array<int|string, mixed> $data
+     * @param array<int|string, mixed> $expected
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('specialWhitespaceCharactersDataProvider')]
     public function testSpecialWhitespaceCharacters(
@@ -281,6 +326,9 @@ class XmlSpecialCasesTest extends TestCase
 
     /**
      * Verifies that encoding validation in canonicalization works correctly.
+     *
+     * @param array<int|string, mixed> $data
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('c14NEncodingValidationDataProvider')]
     public function testC14NEncodingValidation(
@@ -329,6 +377,10 @@ class XmlSpecialCasesTest extends TestCase
 
     /**
      * Verifies specific compatibility with SII XML-DSIG.
+     *
+     * @param array<int|string, mixed> $data
+     * @param array<int|string, mixed> $expected
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('exportedXmlCompatibilityWithIso88591EncodingDataProvider')]
     public function testExportedXmlCompatibilityWithIso88591Encoding(

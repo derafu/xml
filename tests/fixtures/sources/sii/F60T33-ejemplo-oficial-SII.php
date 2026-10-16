@@ -63,18 +63,21 @@ return function (TestCase $test, array $xml): void {
     }
 
     // Specific assertions for each line.
+    $test->assertIsArray($detalle[0]);
     $test->assertSame('1', $detalle[0]['NroLinDet']);
     $test->assertSame('Parlantes Multimedia 180W.', $detalle[0]['NmbItem']);
     $test->assertSame('20', $detalle[0]['QtyItem']);
     $test->assertSame('4500', $detalle[0]['PrcItem']);
     $test->assertSame('90000', $detalle[0]['MontoItem']);
 
+    $test->assertIsArray($detalle[1]);
     $test->assertSame('2', $detalle[1]['NroLinDet']);
     $test->assertSame('Mouse Inalambrico PS/2', $detalle[1]['NmbItem']);
     $test->assertSame('1', $detalle[1]['QtyItem']);
     $test->assertSame('5000', $detalle[1]['PrcItem']);
     $test->assertSame('5000', $detalle[1]['MontoItem']);
 
+    $test->assertIsArray($detalle[2]);
     $test->assertSame('3', $detalle[2]['NroLinDet']);
     $test->assertSame('Caja de Diskettes 10 Unidades', $detalle[2]['NmbItem']);
     $test->assertSame('5', $detalle[2]['QtyItem']);

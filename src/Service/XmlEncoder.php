@@ -19,6 +19,7 @@ use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
 use DOMElement;
 use DOMNode;
+use Stringable;
 
 /**
  * Class that creates an XML document from a PHP array.
@@ -28,7 +29,7 @@ final class XmlEncoder implements XmlEncoderInterface
     /**
      * Rules for converting a PHP array to XML and vice versa.
      *
-     * @var array
+     * @var array{node_values: array{skip_generation: list<mixed>, generate_empty: list<mixed>}}
      */
     private array $rules = [
         // How to process the values of the nodes.
@@ -55,7 +56,7 @@ final class XmlEncoder implements XmlEncoderInterface
     /**
      * Recursively encodes an array into XML nodes and appends them to a parent.
      *
-     * @param array $data The array with the data to encode.
+     * @param array<int|string, mixed> $data The array with the data to encode.
      * @param XmlDocumentInterface $doc The root XML document.
      * @param DOMNode $parent The parent node to append nodes to.
      * @return void
@@ -88,7 +89,9 @@ final class XmlEncoder implements XmlEncoderInterface
             // value and attributes.
             elseif ($key === '@value') {
                 if (!$this->skipValue($value)) {
-                    $parent->nodeValue = XmlHelper::sanitize($value);
+                    $parent->nodeValue = XmlHelper::sanitize(
+                        $this->toText($value, $parent->nodeName)
+                    );
                 }
             }
 
@@ -99,7 +102,7 @@ final class XmlEncoder implements XmlEncoderInterface
                 // Only the node is created if it has child nodes. The node will
                 // not be created if an empty array (without children) is passed.
                 if (!empty($value)) {
-                    $this->nodeAddChilds($doc, $parent, $key, $value);
+                    $this->nodeAddChilds($doc, $parent, $this->name($key), $value);
                 }
             }
 
@@ -107,7 +110,8 @@ final class XmlEncoder implements XmlEncoderInterface
             // node is created and the value is assigned directly.
             else {
                 if (!$this->skipValue($value)) {
-                    $this->nodeAddValue($doc, $parent, $key, (string) $value);
+                    $name = $this->name($key);
+                    $this->nodeAddValue($doc, $parent, $name, $this->toText($value, $name));
                 }
             }
         }
@@ -117,27 +121,33 @@ final class XmlEncoder implements XmlEncoderInterface
      * Adds attributes to an XML node from an array.
      *
      * @param DOMElement $node Node to which the attributes will be added.
-     * @param array $attributes Array of attributes (key => value).
+     * @param array<int|string, mixed> $attributes Array of attributes (key => value).
      * @return void
-     * @throws XmlEncoderException If an attribute value is an array.
+     * @throws XmlEncoderException If the name of an attribute is not text, or
+     * if its value is an array or can not be written as text.
      */
     private function nodeAddAttributes(DOMElement $node, array $attributes): void
     {
-        foreach ($attributes as $attribute => $value) {
+        foreach ($attributes as $key => $value) {
+            $attribute = $this->name($key);
+
             // If the attribute value is an array, it cannot be assigned.
             if (is_array($value)) {
-                throw new XmlEncoderException(sprintf(
-                    'The type of data of the value entered for the attribute "%s" of the node "%s" is incorrect (cannot be an array). The value is: %s',
-                    $attribute,
-                    $node->tagName,
-                    json_encode($value)
-                ));
+                throw new XmlEncoderException([
+                    'The type of data of the value entered for the attribute "{attribute}" of the node "{node}" is incorrect (cannot be an array). The value is: {value}',
+                    'attribute' => $attribute,
+                    'node' => $node->tagName,
+                    'value' => json_encode($value),
+                ]);
             }
 
             // Assign the attribute value only if it is not skipped according to
             // the type of value to be assigned.
             if (!$this->skipValue($value)) {
-                $node->setAttribute($attribute, $value);
+                $node->setAttribute(
+                    $attribute,
+                    $this->toText($value, $node->tagName . '/@' . $attribute)
+                );
             }
         }
     }
@@ -148,7 +158,7 @@ final class XmlEncoder implements XmlEncoderInterface
      * @param XmlDocumentInterface $doc XML document in which the nodes will be added.
      * @param DOMNode $parent Node parent to which the child nodes will be added.
      * @param string $tagName Name of the child node tag.
-     * @param array $childs Array of data of the child nodes.
+     * @param array<int|string, mixed> $childs Array of data of the child nodes.
      * @return void
      * @throws XmlEncoderException If a child node is not an array.
      */
@@ -174,11 +184,11 @@ final class XmlEncoder implements XmlEncoderInterface
 
                 // If the array is not associative (with new nodes) error.
                 if (isset($child[0])) {
-                    throw new XmlEncoderException(sprintf(
-                        'The node "%s" allows including arrays, but they must be arrays with other nodes. The current value is incorrect: %s',
-                        $tagName,
-                        json_encode($child)
-                    ));
+                    throw new XmlEncoderException([
+                        'The node "{node}" allows including arrays, but they must be arrays with other nodes. The current value is incorrect: {value}',
+                        'node' => $tagName,
+                        'value' => json_encode($child),
+                    ]);
                 }
 
                 $Node = $doc->getDomDocument()->createElement($tagName);
@@ -188,9 +198,12 @@ final class XmlEncoder implements XmlEncoderInterface
             // If the child is not an array, it is simply a duplicate node that
             // must be added at the same level as the parent node.
             else {
-                $value = XmlHelper::sanitize((string) $child);
-                $Node = $doc->getDomDocument()->createElement($tagName, $value);
-                $parent->appendChild($Node);
+                $this->nodeAddValue(
+                    $doc,
+                    $parent,
+                    $tagName,
+                    $this->toText($child, $tagName)
+                );
             }
         }
     }
@@ -213,6 +226,56 @@ final class XmlEncoder implements XmlEncoderInterface
         $value = XmlHelper::sanitize($value);
         $Node = $doc->getDomDocument()->createElement($tagName, $value);
         $parent->appendChild($Node);
+    }
+
+    /**
+     * Gets a name of a node or of an attribute, that must be text: a number is
+     * the position of a value in a list, not a name.
+     *
+     * @param int|string $key Key of the array that is the name.
+     * @return string The name.
+     * @throws XmlEncoderException If the key is not text.
+     */
+    private function name(int|string $key): string
+    {
+        if (is_string($key)) {
+            return $key;
+        }
+
+        throw new XmlEncoderException([
+            'The name of a node or an attribute must be text, {name} given.',
+            'name' => $key,
+        ]);
+    }
+
+    /**
+     * Writes a value as the text of an XML node or attribute.
+     *
+     * Text, numbers, booleans and objects that can be a string are valid. What
+     * means nothing (see `skipValue()`) is never given to this method.
+     *
+     * @param mixed $value Value to write.
+     * @param string $name Name of the node or attribute, to say where it is.
+     * @return string The text.
+     * @throws XmlEncoderException If the value can not be written as text.
+     */
+    private function toText(mixed $value, string $name): string
+    {
+        if (
+            is_string($value)
+            || is_int($value)
+            || is_float($value)
+            || is_bool($value)
+            || $value instanceof Stringable
+        ) {
+            return (string) $value;
+        }
+
+        throw new XmlEncoderException([
+            'The value of "{name}" can not be written as text, {type} given.',
+            'name' => $name,
+            'type' => get_debug_type($value),
+        ]);
     }
 
     /**

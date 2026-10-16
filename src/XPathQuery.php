@@ -15,6 +15,7 @@ namespace Derafu\Xml;
 use Derafu\Xml\Contract\XmlDocumentInterface;
 use Derafu\Xml\Exception\XmlQueryException;
 use DOMDocument;
+use DOMNameSpaceNode;
 use DOMNode;
 use DOMNodeList;
 use DOMXPath;
@@ -49,7 +50,7 @@ final class XPathQuery
      * Constructor that receives the XML document and prepares XPath.
      *
      * @param string|XmlDocumentInterface|DOMDocument $xml XML document.
-     * @param array $namespaces Associative array with prefix and URI.
+     * @param array<string, string> $namespaces Associative array with prefix and URI.
      */
     public function __construct(
         string|XmlDocumentInterface|DOMDocument $xml,
@@ -101,9 +102,9 @@ final class XPathQuery
      *     children - in that case, recursively, down to each leaf node.
      *
      * @param string $query XPath query.
-     * @param array $params Array of parameters.
+     * @param array<string, string> $params Array of parameters.
      * @param DOMNode|null $contextNode From which node to evaluate the expression.
-     * @return string|array|null The processed value: string, array or null.
+     * @return string|array<int|string, mixed>|null The processed value: string, array or null.
      */
     public function get(
         string $query,
@@ -112,32 +113,29 @@ final class XPathQuery
     ): string|array|null {
         $nodes = $this->getNodes($query, $params, $contextNode);
 
-        // No matches.
-        if ($nodes->length === 0) {
-            return null;
-        }
-
-        // Single node.
-        if ($nodes->length === 1) {
-            return $this->processNode($nodes->item(0));
-        }
-
-        // Multiple nodes.
         $results = [];
         foreach ($nodes as $node) {
             $results[] = $this->processNode($node);
         }
 
-        return $results;
+        return match (count($results)) {
+            // No matches.
+            0 => null,
+            // Single node.
+            1 => $results[0],
+            // Multiple nodes.
+            default => $results,
+        };
     }
 
     /**
      * Executes an XPath query and returns an array of values.
      *
      * @param string $query XPath query.
-     * @param array $params Array of parameters.
+     * @param array<string, string> $params Array of parameters.
      * @param DOMNode|null $contextNode From which node to evaluate the expression.
-     * @return string[] Array of found values.
+     * @return list<string|null> Array of found values (`null` for a node without
+     * value).
      */
     public function getValues(
         string $query,
@@ -158,7 +156,7 @@ final class XPathQuery
      * Executes an XPath query and returns the first result as a string.
      *
      * @param string $query XPath query.
-     * @param array $params Array of parameters.
+     * @param array<string, string> $params Array of parameters.
      * @param DOMNode|null $contextNode From which node to evaluate the expression.
      * @return string|null The value of the node, or `null` if it does not exist.
      */
@@ -169,19 +167,16 @@ final class XPathQuery
     ): ?string {
         $nodes = $this->getNodes($query, $params, $contextNode);
 
-        return $nodes->length > 0
-            ? $nodes->item(0)->nodeValue
-            : null
-        ;
+        return $nodes->item(0)?->nodeValue;
     }
 
     /**
      * Executes an XPath query and returns the resulting nodes.
      *
      * @param string $query XPath query.
-     * @param array $params Array of parameters.
+     * @param array<string, string> $params Array of parameters.
      * @param DOMNode|null $contextNode From which node to evaluate the expression.
-     * @return DOMNodeList Resulting nodes from the XPath query.
+     * @return DOMNodeList<DOMNameSpaceNode|DOMNode> Resulting nodes from the XPath query.
      */
     public function getNodes(
         string $query,
@@ -196,11 +191,11 @@ final class XPathQuery
                 $this->registerNodeNS
             ));
         } catch (XmlQueryException $e) {
-            throw new XmlQueryException(sprintf(
-                'An error occurred while executing the XPath expression: %s. %s',
-                $query,
-                $e->getMessage()
-            ));
+            throw new XmlQueryException([
+                'An error occurred while executing the XPath expression: {query}. {error}',
+                'query' => $query,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return $nodes;
@@ -209,39 +204,38 @@ final class XPathQuery
     /**
      * Processes a DOM node and its children recursively.
      *
-     * @param DOMNode $node DOM node to process.
-     * @return string|array The value of the node or the structure of children as an array.
+     * @param DOMNode|DOMNameSpaceNode $node DOM node to process.
+     * @return string|array<int|string, mixed>|null The value of the node (`null`
+     * if it has none) or the structure of children as an array.
      */
-    private function processNode(DOMNode $node): string|array
+    private function processNode(DOMNode|DOMNameSpaceNode $node): string|array|null
     {
+        // A namespace node has no children: its value is its URI.
+        if ($node instanceof DOMNameSpaceNode) {
+            return $node->nodeValue;
+        }
+
         if ($node->hasChildNodes()) {
-            $children = [];
-            $nodeCounts = [];
+            // Values of the child elements, by name of the element.
+            $grouped = [];
 
             foreach ($node->childNodes as $child) {
                 if ($child->nodeType === XML_ELEMENT_NODE) {
-                    $nodeName = $child->nodeName;
-
-                    // Count occurrences of each node name.
-                    $nodeCounts[$nodeName] = ($nodeCounts[$nodeName] ?? 0) + 1;
-
-                    // If this is the first occurrence, store it directly.
-                    if ($nodeCounts[$nodeName] === 1) {
-                        $children[$nodeName] = $this->processNode($child);
-                    } else {
-                        // If this is a duplicate node name, convert to array.
-                        if ($nodeCounts[$nodeName] === 2) {
-                            // Convert the existing single value to an array.
-                            $children[$nodeName] = [$children[$nodeName]];
-                        }
-                        // Add the new value to the array.
-                        $children[$nodeName][] = $this->processNode($child);
-                    }
+                    $grouped[$child->nodeName][] = $this->processNode($child);
                 }
             }
 
-            // If it has processed children, return the structure.
-            return count($children) > 0 ? $children : $node->nodeValue;
+            // If it has processed children, return the structure: the value of
+            // an element that appears once, the list of values of one that is
+            // repeated.
+            if ($grouped !== []) {
+                return array_map(
+                    fn (array $values) => count($values) === 1 ? $values[0] : $values,
+                    $grouped
+                );
+            }
+
+            return $node->nodeValue;
         }
 
         // If it has no children, return the value.
@@ -255,7 +249,7 @@ final class XPathQuery
      * the escaped values in quotes.
      *
      * @param string $query XPath query with named markers (e.g.: ":param").
-     * @param array $params Array of parameters in the format ['param' => 'value'].
+     * @param array<string, string> $params Array of parameters in the format ['param' => 'value'].
      * @return string XPath query with the values replaced.
      */
     private function resolveQuery(string $query, array $params = []): string
@@ -267,6 +261,9 @@ final class XPathQuery
                 fn ($matches) => '*[local-name()="' . $matches[1] . '"]',
                 $query
             );
+            if ($query === null) {
+                throw new XmlQueryException('The XPath expression could not be prepared.');
+            }
         }
 
         // Replace parameters.
@@ -295,8 +292,11 @@ final class XPathQuery
      * Wrapper to execute capturing the errors of the methods associated with
      * the XPath instance.
      *
-     * @param callable $function
-     * @return mixed
+     * @template T
+     * @param callable(): (T|false) $function The code to execute, that gives
+     * `false` when it fails.
+     * @return T What the code gives, that is never `false`.
+     * @throws XmlQueryException If the code fails.
      */
     private function execute(callable $function): mixed
     {
@@ -309,8 +309,11 @@ final class XPathQuery
             libxml_clear_errors();
             libxml_use_internal_errors($use_errors);
 
-            $message = $error ?: 'An error occurred in XPathQuery.';
-            throw new XmlQueryException($message);
+            throw new XmlQueryException(
+                $error
+                    ? ['{error}', 'error' => $error]
+                    : 'An error occurred in XPathQuery.'
+            );
         }
 
         libxml_clear_errors();

@@ -16,6 +16,7 @@ use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
 use DOMDocument;
+use DOMNode;
 use DOMNodeList;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -25,6 +26,14 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlDocument::class)]
 class XmlHelperTest extends TestCase
 {
+    public function testXpathOverAnXmlThatIsAString(): void
+    {
+        $result = XmlHelper::xpath('<root><element>Value 1</element><element>Value 2</element></root>', '//element');
+
+        $this->assertInstanceOf(DOMNodeList::class, $result);
+        $this->assertSame(2, $result->length);
+    }
+
     public function testXmlXpath(): void
     {
         $xmlContent = <<<XML
@@ -41,7 +50,9 @@ class XmlHelperTest extends TestCase
 
         $this->assertInstanceOf(DOMNodeList::class, $result);
         $this->assertSame(1, $result->length);
-        $this->assertSame('Value 1', $result->item(0)->textContent);
+        $item = $result->item(0);
+        $this->assertInstanceOf(DOMNode::class, $item);
+        $this->assertSame('Value 1', $item->textContent);
     }
 
     public function testXmlXpathWithXmlDocument(): void
@@ -60,7 +71,9 @@ class XmlHelperTest extends TestCase
 
         $this->assertInstanceOf(DOMNodeList::class, $result);
         $this->assertSame(1, $result->length);
-        $this->assertSame('Value 1', $result->item(0)->textContent);
+        $item = $result->item(0);
+        $this->assertInstanceOf(DOMNode::class, $item);
+        $this->assertSame('Value 1', $item->textContent);
     }
 
     public function testXmlFixEntities(): void

@@ -14,6 +14,7 @@ namespace Derafu\Xml\Contract;
 
 use Derafu\Xml\Exception\XmlException;
 use DOMElement;
+use DOMNameSpaceNode;
 use DOMNode;
 use DOMNodeList;
 use JsonSerializable;
@@ -160,8 +161,8 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
      * use namespaces, use the XPathQuery class directly.
      *
      * @param string $query The XPath query with named markers (e.g.: ":param").
-     * @param array $params The array of parameters in the format ['param' => 'value'].
-     * @return string|array|null
+     * @param array<string, string> $params The array of parameters in the format ['param' => 'value'].
+     * @return string|array<int|string, mixed>|null
      */
     public function query(string $query, array $params = []): string|array|null;
 
@@ -172,8 +173,8 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
      * use namespaces, use the XPathQuery class directly.
      *
      * @param string $query The XPath query with named markers (e.g.: ":param").
-     * @param array $params The array of parameters in the format ['param' => 'value'].
-     * @return DOMNodeList
+     * @param array<string, string> $params The array of parameters in the format ['param' => 'value'].
+     * @return DOMNodeList<DOMNameSpaceNode|DOMNode>
      */
     public function getNodes(string $query, array $params = []): DOMNodeList;
 
@@ -189,7 +190,7 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
     /**
      * Returns the data of the XML in an array structure.
      *
-     * @return array
+     * @return array<int|string, mixed>
      */
     public function toArray(): array;
 }

@@ -13,10 +13,14 @@ declare(strict_types=1);
 namespace Derafu\Xml;
 
 use Derafu\Xml\Contract\XmlDocumentInterface;
+use Derafu\Xml\Exception\XmlException;
 use Derafu\Xml\Exception\XmlQueryException;
 use DOMDocument;
+use DOMNameSpaceNode;
+use DOMNode;
 use DOMNodeList;
 use DOMXPath;
+use LibXMLError;
 
 /**
  * Class with utilities to work with XML strings.
@@ -28,7 +32,7 @@ final class XmlHelper
      *
      * @param string|DOMDocument|XmlDocumentInterface $xml XML document to query.
      * @param string $expression XPath expression to execute on the XML.
-     * @return DOMNodeList Nodes resulting from the XPath query.
+     * @return DOMNodeList<DOMNameSpaceNode|DOMNode> Nodes resulting from the XPath query.
      */
     public static function xpath(
         string|DOMDocument|XmlDocumentInterface $xml,
@@ -47,13 +51,35 @@ final class XmlHelper
         $result = @$xpath->query($expression);
 
         if ($result === false) {
-            throw new XmlQueryException(sprintf(
-                'Invalid XPath expression: %s',
-                $expression
-            ));
+            throw new XmlQueryException([
+                'Invalid XPath expression: {expression}',
+                'expression' => $expression,
+            ]);
         }
 
         return $result;
+    }
+
+    /**
+     * Describes the errors of libxml as text, one text for each error.
+     *
+     * @param array<int, LibXMLError> $errors Errors of libxml.
+     * @return list<string> The errors, as text.
+     */
+    public static function libxmlErrorsToText(array $errors): array
+    {
+        return array_values(array_map(
+            fn (LibXMLError $error) => sprintf(
+                'Error %s: %s in line %d, column %d (Code: %d).',
+                $error->level === LIBXML_ERR_WARNING ? 'Warning' :
+                ($error->level === LIBXML_ERR_ERROR ? 'Error' : 'Fatal'),
+                trim($error->message),
+                $error->line,
+                $error->column,
+                $error->code
+            ),
+            $errors
+        ));
     }
 
     /**
@@ -74,6 +100,9 @@ final class XmlHelper
         // as-is. CR is normalized to LF per XML spec §2.11 (parsers would
         // convert it anyway, and leaving it would serialize as &#13;).
         $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $value);
+        if ($value === null) {
+            throw new XmlException('The text could not be sanitized.');
+        }
         $value = str_replace("\x0D", "\x0A", $value);
 
         // Convert "predefined entities" of XML.

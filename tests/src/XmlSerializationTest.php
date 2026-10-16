@@ -33,6 +33,8 @@ class XmlSerializationTest extends TestCase
     /**
      * Expected values after decoding the fixture. Always UTF-8 PHP strings,
      * regardless of the source encoding.
+     *
+     * @var array<string, string>
      */
     private array $expectedValues = [
         'vocales_min' => 'á é í ó ú à è ì ò ù',
@@ -161,6 +163,7 @@ class XmlSerializationTest extends TestCase
 
         $decoded = (new XmlDecoder())->decode($restored);
 
+        $this->assertIsArray($decoded['documento']);
         foreach ($this->expectedValues as $field => $expected) {
             $this->assertSame(
                 $expected,
@@ -203,6 +206,7 @@ class XmlSerializationTest extends TestCase
 
         // Decoded values match the originals.
         $decoded = (new XmlDecoder())->decode($doc);
+        $this->assertIsArray($decoded['documento']);
         foreach ($this->expectedValues as $field => $expected) {
             $this->assertSame($expected, $decoded['documento'][$field]);
         }

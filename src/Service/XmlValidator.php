@@ -15,6 +15,7 @@ namespace Derafu\Xml\Service;
 use Derafu\Xml\Contract\XmlDocumentInterface;
 use Derafu\Xml\Contract\XmlValidatorInterface;
 use Derafu\Xml\Exception\XmlException;
+use LibXMLError;
 
 /**
  * Class for the validation of XML and error handling.
@@ -28,7 +29,7 @@ final class XmlValidator implements XmlValidatorInterface
      * them simpler so that a non-technical human can understand them more
      * easily.
      *
-     * @var array
+     * @var array<string, string>
      */
     private array $defaultLibxmlTranslations = [
         '\': '
@@ -106,11 +107,18 @@ final class XmlValidator implements XmlValidatorInterface
                 : []
             ;
             throw new XmlException(
-                sprintf(
-                    'The XML validation failed using the schema %s.',
-                    basename($schemaPath)
-                ),
-                $errors
+                $errors === []
+                    ? [
+                        'The XML validation failed using the schema {schema}.',
+                        'schema' => basename($schemaPath),
+                    ]
+                    : [
+                        'The XML validation failed using the schema {schema}: {errors}',
+                        'schema' => basename($schemaPath),
+                        'errors' => implode(' ', $errors),
+                    ],
+                errors: $errors,
+                xmlDocument: $xml
             );
         }
     }
@@ -118,9 +126,9 @@ final class XmlValidator implements XmlValidatorInterface
     /**
      * Translates the errors of libxml to simpler messages for humans.
      *
-     * @param array $errors Array with the original errors of libxml.
-     * @param array $translations Additional translations to apply.
-     * @return array Array with the translated errors.
+     * @param array<int, LibXMLError> $errors Array with the original errors of libxml.
+     * @param array<string, string> $translations Additional translations to apply.
+     * @return list<string> Array with the translated errors.
      */
     private function translateLibxmlErrors(
         array $errors,

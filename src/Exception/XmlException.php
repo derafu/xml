@@ -12,46 +12,46 @@ declare(strict_types=1);
 
 namespace Derafu\Xml\Exception;
 
+use Derafu\Translation\Contract\TranslatableInterface;
 use Derafu\Translation\Exception\Core\TranslatableException as Exception;
 use Derafu\Xml\Contract\XmlDocumentInterface;
-use LibXMLError;
 use Throwable;
 
 /**
  * Custom exception for XML errors.
+ *
+ * It is a translatable exception like any other: what it says is its message.
+ * The errors that explain it (the ones of libxml, as text) and the XML document
+ * that caused it are data that it carries.
  */
 class XmlException extends Exception
 {
     /**
      * Constructor of the exception.
      *
-     * @param string $message The exception message.
-     * @param array $errors The array with the errors.
+     * @param string|array<int|string, mixed>|TranslatableInterface $message The
+     * exception message, as it is given to a translatable exception.
      * @param int $code The exception code (optional).
      * @param Throwable|null $previous The previous exception (optional).
+     * @param list<string> $errors The errors that explain the exception, as
+     * text (optional).
      * @param XmlDocumentInterface|null $xmlDocument The XML document that
      * caused the exception or `null` if it is not present in the exception.
      */
     public function __construct(
-        string $message,
-        private array $errors = [],
+        string|array|TranslatableInterface $message,
         int $code = 0,
         ?Throwable $previous = null,
+        private array $errors = [],
         private ?XmlDocumentInterface $xmlDocument = null
     ) {
-        $message = trim(sprintf(
-            '%s %s',
-            $message,
-            implode(' ', $this->libXmlErrorToString($this->errors))
-        ));
-
         parent::__construct($message, $code, $previous);
     }
 
     /**
-     * Gets the array with the errors.
+     * Gets the errors that explain the exception.
      *
-     * @return array The array with the errors.
+     * @return list<string> The errors, as text.
      */
     public function getErrors(): array
     {
@@ -67,31 +67,5 @@ class XmlException extends Exception
     public function getXmlDocument(): ?XmlDocumentInterface
     {
         return $this->xmlDocument;
-    }
-
-    /**
-     * Processes an array of errors, probably of LibXMLError, and returns it as
-     * an array of strings.
-     *
-     * @param array $errors
-     * @return array
-     */
-    private function libXmlErrorToString(array $errors): array
-    {
-        return array_map(function ($error) {
-            if ($error instanceof LibXMLError) {
-                return sprintf(
-                    'Error %s: %s in line %d, column %d (Code: %d).',
-                    $error->level === LIBXML_ERR_WARNING ? 'Warning' :
-                    ($error->level === LIBXML_ERR_ERROR ? 'Error' : 'Fatal'),
-                    trim($error->message),
-                    $error->line,
-                    $error->column,
-                    $error->code
-                );
-            }
-
-            return $error;
-        }, $errors);
     }
 }

@@ -43,7 +43,7 @@ class XmlServiceTest extends TestCase
     /**
      * Attribute with cases for each test.
      *
-     * @var array<string, array>
+     * @var array<string, array<string, array<int|string, mixed>>>
      */
     private static array $testCases;
 
@@ -64,7 +64,7 @@ class XmlServiceTest extends TestCase
      *
      * This method is used by each data provider to get test data.
      *
-     * @return array<string, array>
+     * @return array<string, array<int|string, mixed>>
      */
     private static function dataProvider(string $testName): array
     {
@@ -83,41 +83,65 @@ class XmlServiceTest extends TestCase
         return self::$testCases[$testName];
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function arrayToXmlAndBackToArrayDataProvider(): array
     {
         return self::dataProvider('testArrayToXmlAndBackToArray');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function arrayToXmlSaveXmlDataProvider(): array
     {
         return self::dataProvider('testArrayToXmlSaveXml');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function arrayToXmlC14NDataProvider(): array
     {
         return self::dataProvider('testArrayToXmlC14N');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function arrayToXmlC14NEncodedDataProvider(): array
     {
         return self::dataProvider('testArrayToXmlC14NEncoded');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function xmlToArrayDataProvider(): array
     {
         return self::dataProvider('testXmlToArray');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function xmlToSaveXmlDataProvider(): array
     {
         return self::dataProvider('testXmlToSaveXml');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function xmlToC14NDataProvider(): array
     {
         return self::dataProvider('testXmlToC14N');
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function xmlToC14NEncodedDataProvider(): array
     {
         return self::dataProvider('testXmlToC14NEncoded');
@@ -126,6 +150,10 @@ class XmlServiceTest extends TestCase
     /**
      * Converts an array to XML and back to an array,
      * ensuring the original structure is maintained.
+     *
+     * @param array<int|string, mixed> $data
+     * @param array<int|string, mixed> $expected
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('arrayToXmlAndBackToArrayDataProvider')]
     public function testArrayToXmlAndBackToArray(
@@ -150,6 +178,9 @@ class XmlServiceTest extends TestCase
     /**
      * Converts an array to XML and saves it as an XML string
      * with saveXml(), ensuring encoding and content are correct.
+     *
+     * @param array<int|string, mixed> $data
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('arrayToXmlSaveXmlDataProvider')]
     public function testArrayToXmlSaveXml(
@@ -179,6 +210,9 @@ class XmlServiceTest extends TestCase
     /**
      * Converts an array to XML and saves it as an XML string
      * with C14N(), ensuring the content is correct.
+     *
+     * @param array<int|string, mixed> $data
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('arrayToXmlC14NDataProvider')]
     public function testArrayToXmlC14N(
@@ -192,6 +226,7 @@ class XmlServiceTest extends TestCase
 
         $xml = $this->xmlService->encode($data);
         $xmlString = $xml->C14N();
+        $this->assertIsString($xmlString);
         $xmlString = XmlHelper::fixEntities($xmlString);
 
         // Validate content.
@@ -202,6 +237,9 @@ class XmlServiceTest extends TestCase
      * Converts an array to XML and saves it as an XML string
      * with testArrayToXmlC14NEncoded(), ensuring encoding
      * and content are correct.
+     *
+     * @param array<int|string, mixed> $data
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('arrayToXmlC14NEncodedDataProvider')]
     public function testArrayToXmlC14NEncoded(
@@ -232,6 +270,9 @@ class XmlServiceTest extends TestCase
      * Converts an XML string to XML and then to an array,
      * ensuring the structure is maintained and data is in the
      * correct encoding.
+     *
+     * @param array<int|string, mixed> $expected
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('xmlToArrayDataProvider')]
     public function testXmlToArray(
@@ -257,6 +298,8 @@ class XmlServiceTest extends TestCase
     /**
      * Converts an XML string to XML and saves it as an XML string
      * with saveXml(), ensuring encoding and content are correct.
+     *
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('xmlToSaveXmlDataProvider')]
     public function testXmlToSaveXml(
@@ -285,6 +328,8 @@ class XmlServiceTest extends TestCase
     /**
      * Converts an XML string to XML and saves it as an XML string
      * with C14N(), ensuring the content is correct.
+     *
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('xmlToC14NDataProvider')]
     public function testXmlToC14N(
@@ -299,6 +344,7 @@ class XmlServiceTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml($xmlContent);
         $xmlString = $doc->C14N();
+        $this->assertIsString($xmlString);
         $xmlString = XmlHelper::fixEntities($xmlString);
 
         // Validate content.
@@ -309,6 +355,8 @@ class XmlServiceTest extends TestCase
      * Converts an XML string to XML and saves it as an XML string
      * with C14NEncoded(), ensuring encoding and content
      * are correct.
+     *
+     * @param class-string<\Throwable>|null $expectedException
      */
     #[DataProvider('xmlToC14NEncodedDataProvider')]
     public function testXmlToC14NEncoded(
@@ -341,6 +389,7 @@ class XmlServiceTest extends TestCase
      *
      * @param array $data Array containing the values to verify.
      * @param string $expectedEncoding Expected encoding (example: UTF-8).
+     * @param array<int|string, mixed> $data
      */
     private function assertArrayEncoding(
         array $data,

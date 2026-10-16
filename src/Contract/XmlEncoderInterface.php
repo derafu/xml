@@ -21,7 +21,7 @@ interface XmlEncoderInterface
      * Converts a PHP array to an XML document, generating the nodes and
      * respecting a namespace if provided.
      *
-     * @param array $data The array with the data that will be used to generate
+     * @param array<int|string, mixed> $data The array with the data that will be used to generate
      * XML.
      * @return XmlDocumentInterface
      */

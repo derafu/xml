@@ -13,12 +13,15 @@ declare(strict_types=1);
 namespace Derafu\TestsXml;
 
 use Derafu\Xml\Exception\XmlException;
+use Derafu\Xml\Exception\XmlParseException;
 use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlDocument::class)]
@@ -27,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XPathQuery::class)]
 #[CoversClass(XmlQueryException::class)]
+#[CoversClass(XmlParseException::class)]
 class XmlTest extends TestCase
 {
     /**
@@ -44,7 +48,9 @@ class XmlTest extends TestCase
         $result = $doc->loadXml($xmlContent);
 
         $this->assertTrue($result);
-        $this->assertSame('root', $doc->getDomDocument()->documentElement->tagName);
+        $root = $doc->getDomDocument()->documentElement;
+        $this->assertNotNull($root);
+        $this->assertSame('root', $root->tagName);
     }
 
     /**
@@ -180,6 +186,7 @@ class XmlTest extends TestCase
 
         $canonicalXml = $doc->C14N();
 
+        $this->assertIsString($canonicalXml);
         $this->assertNotEmpty($canonicalXml);
         $expectedXml = "<root>\n    <element>Value</element>\n</root>";
         $this->assertStringContainsString($expectedXml, $canonicalXml);
@@ -241,16 +248,20 @@ class XmlTest extends TestCase
         $doc->loadXml('<root/>');
 
         $this->assertSame('root', $doc->getName());
-        $this->assertFalse($doc->getDomDocument()->documentElement->hasChildNodes());
-        $this->assertFalse($doc->getDomDocument()->documentElement->hasAttributes());
+        $root = $doc->getDomDocument()->documentElement;
+        $this->assertNotNull($root);
+        $this->assertFalse($root->hasChildNodes());
+        $this->assertFalse($root->hasAttributes());
     }
 
     /**
      * Verifica que un elemento raíz vacío con etiqueta de cierre explícita se
-     * carga y serializa correctamente, y que decode() retorna null para él.
+     * carga y serializa correctamente, y que decode() retorna un texto vacío
+     * para él.
      *
      * <root></root> y <root/> son semánticamente equivalentes en XML. Aquí se
-     * verifica además que el decoder los trata igual: retorna ['root' => null].
+     * verifica además que el decoder los trata igual: retorna ['root' => ''] (el
+     * valor de un elemento sin contenido es la cadena vacía).
      */
     public function testLoadEmptyRootWithExplicitClosingTag(): void
     {
@@ -258,10 +269,12 @@ class XmlTest extends TestCase
         $doc->loadXml('<root></root>');
 
         $this->assertSame('root', $doc->getName());
-        $this->assertFalse($doc->getDomDocument()->documentElement->hasAttributes());
+        $root = $doc->getDomDocument()->documentElement;
+        $this->assertNotNull($root);
+        $this->assertFalse($root->hasAttributes());
 
         $decoded = (new XmlDecoder())->decode($doc);
-        $this->assertSame(['root' => null], $decoded);
+        $this->assertSame(['root' => ''], $decoded);
     }
 
     /**
@@ -324,6 +337,152 @@ class XmlTest extends TestCase
         $doc->loadXml('<root><element>Value</element></root>');
 
         $this->assertNull($doc->getSignatureNodeXml());
+    }
+
+    /**
+     * Un documento sin contenido no tiene elemento raíz: lo que se pregunta a la
+     * raíz es un error de uso, no un valor que no existe, así que no se
+     * confunde con un `null`.
+     *
+     * @return array<string, array{string}>
+     */
+    public static function methodsThatNeedTheRootProvider(): array
+    {
+        return [
+            'getName' => ['getName'],
+            'getNamespace' => ['getNamespace'],
+            'getSchema' => ['getSchema'],
+            'getSignatureNodeXml' => ['getSignatureNodeXml'],
+        ];
+    }
+
+    #[DataProvider('methodsThatNeedTheRootProvider')]
+    public function testADocumentWithoutRootElementFailsWhenTheRootIsNeeded(string $method): void
+    {
+        $doc = new XmlDocument();
+
+        $this->expectException(XmlException::class);
+        $this->expectExceptionMessage('The XML document has no document element.');
+
+        $doc->$method();
+    }
+
+    /**
+     * Las expresiones regulares de PHP pueden fallar (por ejemplo, al agotar el
+     * límite de backtracking): el fallo es un error del paquete, no un `null`
+     * que siga su camino como si fuera el texto.
+     *
+     * Las expresiones que PHP ya compiló con JIT no respetan el límite, por eso
+     * los tests que lo usan van en un proceso aparte.
+     */
+    private function failRegularExpressions(callable $do): void
+    {
+        $jit = ini_set('pcre.jit', '0');
+        $limit = ini_set('pcre.backtrack_limit', '1');
+
+        try {
+            $do();
+        } finally {
+            ini_set('pcre.backtrack_limit', (string) $limit);
+            ini_set('pcre.jit', (string) $jit);
+        }
+    }
+
+    #[RunInSeparateProcess]
+    public function testGetXmlFailsWhenTheDeclarationCanNotBeRemoved(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root><element>Value</element></root>');
+
+        $this->expectException(XmlException::class);
+        $this->expectExceptionMessage('The XML declaration could not be removed.');
+
+        $this->failRegularExpressions(fn () => $doc->getXml());
+    }
+
+    #[RunInSeparateProcess]
+    public function testC14NEncodedFlattenedFailsWhenTheSpacesCanNotBeRemoved(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml("<root>\n    <element>Value</element>\n</root>");
+
+        $this->expectException(XmlException::class);
+        $this->expectExceptionMessage('The spaces between the tags could not be removed.');
+
+        $this->failRegularExpressions(fn () => $doc->C14NEncodedFlattened());
+    }
+
+    #[RunInSeparateProcess]
+    public function testSanitizeFailsWhenTheControlCharactersCanNotBeRemoved(): void
+    {
+        $this->expectException(XmlException::class);
+        $this->expectExceptionMessage('The text could not be sanitized.');
+
+        $this->failRegularExpressions(fn () => XmlHelper::sanitize("Value \x01 with control characters"));
+    }
+
+    #[RunInSeparateProcess]
+    public function testAnXPathQueryFailsWhenItCanNotBePrepared(): void
+    {
+        $query = new XPathQuery('<root><element>Value</element></root>');
+
+        $this->expectException(XmlQueryException::class);
+        $this->expectExceptionMessage('The XPath expression could not be prepared.');
+
+        $this->failRegularExpressions(fn () => $query->get('/root/element'));
+    }
+
+    /**
+     * Verifica que cargar un XML vacío es un error de parseo.
+     */
+    public function testLoadEmptyXmlFails(): void
+    {
+        $doc = new XmlDocument();
+
+        $this->expectException(XmlParseException::class);
+        $this->expectExceptionMessage('The XML content that you want to load is empty.');
+
+        $doc->loadXml('');
+    }
+
+    /**
+     * Verifica que getXml() entrega el XML sin la declaración, y saveXml() con
+     * ella.
+     */
+    public function testGetXmlIsTheXmlWithoutTheDeclaration(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<?xml version="1.0" encoding="UTF-8"?><root><element>Value</element></root>');
+
+        $this->assertSame("<root>\n  <element>Value</element>\n</root>", $doc->getXml());
+        $this->assertStringStartsWith('<?xml version="1.0" encoding="UTF-8"?>', $doc->saveXml());
+    }
+
+    /**
+     * Verifica que el documento se serializa a JSON como su arreglo.
+     */
+    public function testTheDocumentIsSerializedToJsonAsItsArray(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root><element>Value</element><list>1</list><list>2</list></root>');
+
+        $this->assertSame(
+            '{"root":{"element":"Value","list":["1","2"]}}',
+            json_encode($doc)
+        );
+    }
+
+    /**
+     * Verifica que un documento sin contenido es un arreglo vacío, y que
+     * preguntarle por un valor da el valor por defecto.
+     */
+    public function testADocumentWithoutContentIsAnEmptyArray(): void
+    {
+        $doc = new XmlDocument();
+
+        $this->assertSame([], $doc->toArray());
+        $this->assertSame([], $doc->jsonSerialize());
+        $this->assertSame('default', $doc->get('root.element', 'default'));
     }
 
     /**

@@ -18,6 +18,7 @@ use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
 use DOMDocument;
+use DOMNode;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -103,15 +104,57 @@ class XPathQueryTest extends TestCase
         $this->assertSame(['First', 'Second', 'Third'], $results);
     }
 
+    public function testItQueriesADomDocument(): void
+    {
+        $dom = new DOMDocument();
+        $dom->loadXML($this->validXml);
+
+        $query = new XPathQuery($dom);
+
+        $this->assertSame($dom, $query->getDomDocument());
+        $this->assertSame('First', $query->get('/root/item[@id=1]'));
+    }
+
+    public function testAnElementWithoutContentIsAnEmptyText(): void
+    {
+        $query = new XPathQuery('<r><a/><b id="5"/></r>');
+
+        $this->assertSame('', $query->get('/r/a'));
+        $this->assertSame('', $query->getValue('/r/a'));
+        $this->assertSame(['', ''], $query->getValues('/r/*'));
+        $this->assertSame('5', $query->get('/r/b/@id'));
+    }
+
+    /**
+     * A namespace node has no children: what it has as value is its URI, in
+     * `get()` as in `getValues()`.
+     */
+    public function testANamespaceNodeIsItsUri(): void
+    {
+        $query = new XPathQuery(
+            '<root xmlns:a="urn:a" xmlns:b="urn:b"><x>1</x></root>',
+            ['a' => 'urn:a']
+        );
+
+        $this->assertSame('urn:a', $query->get('/root/namespace::a'));
+        $this->assertSame(
+            $query->getValues('/root/namespace::*'),
+            $query->get('/root/namespace::*')
+        );
+        $this->assertContains('urn:b', $query->getValues('/root/namespace::*'));
+    }
+
     public function testGetNodes(): void
     {
         $query = new XPathQuery($this->validXml);
         $nodes = $query->getNodes('/root/item');
 
         $this->assertSame(3, $nodes->length);
-        $this->assertSame('First', $nodes->item(0)->nodeValue);
-        $this->assertSame('Second', $nodes->item(1)->nodeValue);
-        $this->assertSame('Third', $nodes->item(2)->nodeValue);
+        $values = [];
+        foreach ($nodes as $node) {
+            $values[] = $node->nodeValue;
+        }
+        $this->assertSame(['First', 'Second', 'Third'], $values);
     }
 
     public function testGetSingleResultWithGet(): void
@@ -158,6 +201,7 @@ class XPathQueryTest extends TestCase
         $dom = $query->getDomDocument();
 
         $this->assertInstanceOf(DOMDocument::class, $dom);
+        $this->assertNotNull($dom->documentElement);
         $this->assertSame('root', $dom->documentElement->nodeName);
     }
 
@@ -327,7 +371,9 @@ class XPathQueryTest extends TestCase
         $dom = $query->getDomDocument();
 
         $this->assertInstanceOf(DOMDocument::class, $dom);
-        $this->assertStringContainsString('DTE', $dom->saveXml());
+        $xml = $dom->saveXml();
+        $this->assertIsString($xml);
+        $this->assertStringContainsString('DTE', $xml);
     }
 
     // Case with single quotes in the value (value matches the XML node).
@@ -447,6 +493,7 @@ class XPathQueryTest extends TestCase
 
         // Obtain the 'Encabezado' node as context
         $contextNode = $query->getNodes('//ns:Encabezado')->item(0);
+        $this->assertInstanceOf(DOMNode::class, $contextNode);
 
         // Query from the 'Encabezado' node context
         $result = $query->get('ns:IdDoc/ns:TipoDTE', contextNode: $contextNode);
@@ -465,6 +512,7 @@ class XPathQueryTest extends TestCase
 
         // Obtain the 'Encabezado' node as context
         $contextNode = $query->getNodes('//ns:Encabezado')->item(0);
+        $this->assertInstanceOf(DOMNode::class, $contextNode);
 
         // Attempt to query a node that does not exist from the context
         $result = $query->get('ns:NonExistentNode', contextNode: $contextNode);
@@ -480,6 +528,7 @@ class XPathQueryTest extends TestCase
 
         // Obtain the 'Encabezado' node as context
         $contextNode = $query->getNodes('//ns:Encabezado')->item(0);
+        $this->assertInstanceOf(DOMNode::class, $contextNode);
 
         // Query multiple nodes from the context
         $result = $query->getValues('ns:IdDoc/ns:*', contextNode: $contextNode);
@@ -545,18 +594,21 @@ class XPathQueryTest extends TestCase
         $this->assertCount(3, $detalle);
 
         // Verify the content of each Detalle node.
+        $this->assertIsArray($detalle[0]);
         $this->assertSame('1', $detalle[0]['NroLinDet']);
         $this->assertSame('Producto A', $detalle[0]['NmbItem']);
         $this->assertSame('2', $detalle[0]['QtyItem']);
         $this->assertSame('1000', $detalle[0]['PrcItem']);
         $this->assertSame('2000', $detalle[0]['MontoItem']);
 
+        $this->assertIsArray($detalle[1]);
         $this->assertSame('2', $detalle[1]['NroLinDet']);
         $this->assertSame('Producto B', $detalle[1]['NmbItem']);
         $this->assertSame('1', $detalle[1]['QtyItem']);
         $this->assertSame('1500', $detalle[1]['PrcItem']);
         $this->assertSame('1500', $detalle[1]['MontoItem']);
 
+        $this->assertIsArray($detalle[2]);
         $this->assertSame('3', $detalle[2]['NroLinDet']);
         $this->assertSame('Producto C', $detalle[2]['NmbItem']);
         $this->assertSame('3', $detalle[2]['QtyItem']);

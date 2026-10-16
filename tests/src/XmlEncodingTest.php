@@ -38,6 +38,8 @@ class XmlEncodingTest extends TestCase
     /**
      * Expected values after decoding the fixture. Always UTF-8 PHP strings,
      * regardless of the source encoding.
+     *
+     * @var array<string, string>
      */
     private array $expectedValues = [
         'vocales_min' => 'á é í ó ú à è ì ò ù',
@@ -109,6 +111,7 @@ class XmlEncodingTest extends TestCase
 
         $decoded = $this->xmlService->decode($doc2);
 
+        $this->assertIsArray($decoded['documento']);
         foreach ($this->expectedValues as $field => $expected) {
             $this->assertSame($expected, $decoded['documento'][$field]);
         }
@@ -133,6 +136,7 @@ class XmlEncodingTest extends TestCase
 
         $decoded = $this->xmlService->decode($doc);
 
+        $this->assertIsArray($decoded['documento']);
         foreach ($this->expectedValues as $field => $expected) {
             $actual = $decoded['documento'][$field];
 
@@ -183,6 +187,7 @@ class XmlEncodingTest extends TestCase
 
         // Decoding yields the same UTF-8 values.
         $decoded = $this->xmlService->decode($encoded);
+        $this->assertIsArray($decoded['documento']);
         foreach ($this->expectedValues as $field => $expected) {
             $this->assertSame($expected, $decoded['documento'][$field]);
         }
@@ -221,6 +226,7 @@ class XmlEncodingTest extends TestCase
 
         // Decoding yields the same UTF-8 values as if the source were UTF-8.
         $decoded = $this->xmlService->decode($encoded);
+        $this->assertIsArray($decoded['documento']);
         foreach ($this->expectedValues as $field => $expected) {
             $this->assertSame($expected, $decoded['documento'][$field]);
         }
@@ -260,6 +266,7 @@ class XmlEncodingTest extends TestCase
 
         // Decoded values must match the original expected UTF-8 strings.
         $decoded = $this->xmlService->decode($doc);
+        $this->assertIsArray($decoded['documento']);
         foreach ($this->expectedValues as $field => $expected) {
             $this->assertSame($expected, $decoded['documento'][$field]);
         }
@@ -316,6 +323,7 @@ class XmlEncodingTest extends TestCase
         $doc2 = new XmlDocument();
         $doc2->loadXml($isoXml);
         $decoded = $this->xmlService->decode($doc2);
+        $this->assertIsArray($decoded['root']);
         $this->assertSame('Precio: 100€', $decoded['root']['euro']);
         $this->assertSame('Marca™', $decoded['root']['trade']);
     }

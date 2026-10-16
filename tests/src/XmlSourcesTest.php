@@ -38,12 +38,15 @@ class XmlSourcesTest extends TestCase
         );
     }
 
+    /**
+     * @return array<string, array<int|string, mixed>>
+     */
     public static function xmlSourcesDataProvider(): array
     {
         $testCases = [];
 
         $fixturesPath = __DIR__ . '/../fixtures/sources';
-        $files = glob($fixturesPath . '/*/*.xml');
+        $files = glob($fixturesPath . '/*/*.xml') ?: [];
 
         foreach ($files as $xmlPath) {
             $name = basename($xmlPath, '.xml');

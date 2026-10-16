@@ -47,8 +47,8 @@ interface DOMDocumentInterface
      *
      * @param bool $exclusive Indicates if exclusive canonicalization is used.
      * @param bool $withComments Includes comments in the output if `true`.
-     * @param array|null $xpath Optional list of nodes to include.
-     * @param array|null $nsPrefixes Namespace prefixes to consider.
+     * @param array<int|string, mixed>|null $xpath Optional list of nodes to include.
+     * @param array<int|string, string>|null $nsPrefixes Namespace prefixes to consider.
      * @return string|false Canonicalized XML or `false` on error.
      */
     public function C14N(
