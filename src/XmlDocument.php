@@ -227,7 +227,7 @@ final class XmlDocument implements XmlDocumentInterface
     {
         $xml = $this->saveXml();
         $xml = preg_replace(
-            '/<\?xml\s+version="1\.0"\s+encoding="[^"]+"\s*\?>/i',
+            '/^\s*<\?xml\s[^?]*\?>/i',
             '',
             $xml
         );
@@ -298,11 +298,13 @@ final class XmlDocument implements XmlDocumentInterface
     /**
      * {@inheritDoc}
      */
-    public function getSignatureNodeXml(): ?string
+    public function getTopLevelSignatureC14N(): ?string
     {
-        $tag = $this->requireDocumentElement()->tagName;
-        $xpath = '/' . $tag . '/Signature';
-        $signatureElement = $this->getNodes($xpath)->item(0);
+        // The document element must exist: it is where the signature is.
+        $this->requireDocumentElement();
+
+        // Any name that the document element has, with or without a prefix.
+        $signatureElement = $this->getNodes('/*/Signature')->item(0);
 
         if (!$signatureElement instanceof DOMNode) {
             return null;

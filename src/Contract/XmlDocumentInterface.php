@@ -148,11 +148,25 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
     public function C14NEncodedFlattened(?string $xpath = null): string;
 
     /**
-     * Gets the XML string of the electronic signature node.
+     * Gets the canonicalized XML (C14N) of the `Signature` element that is a
+     * child of the document element.
      *
-     * @return string|null The XML string of the signature if it exists.
+     * The element is found by its local name, in any namespace or prefix. If
+     * there are several, it is the first one. A `Signature` that is deeper in
+     * the document (inside an extension, for example) is not found: for that one
+     * use `C14NEncoded()` with its XPath.
+     *
+     * Unlike `C14NEncoded()`, the result is the one that C14N gives: in UTF-8,
+     * whatever the encoding of the document is. It is the inclusive C14N, so the
+     * `Signature` has the declarations of the namespaces that are in scope in it
+     * (the ones that its ancestors declare).
+     *
+     * @return string|null The canonicalized XML of the signature, or `null` if
+     * the document element has no `Signature` as a child.
+     * @throws XmlException If the document has no document element, or the
+     * signature can not be canonicalized.
      */
-    public function getSignatureNodeXml(): ?string;
+    public function getTopLevelSignatureC14N(): ?string;
 
     /**
      * Executes an XPath query on the XML document.
@@ -189,6 +203,13 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
 
     /**
      * Returns the data of the XML in an array structure.
+     *
+     * It is the simple version of `XmlDecoderInterface::decode()`: it is the
+     * result of `query('/')`, so it has the value of each element by its name
+     * (a text, an array of its elements or a list if it is repeated) and it does
+     * not have the attributes, the namespaces nor the comments. Whoever needs
+     * all of the XML, to encode it again for example, uses the decoder. A
+     * document without content is an empty array.
      *
      * @return array<int|string, mixed>
      */

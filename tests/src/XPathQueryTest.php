@@ -550,21 +550,21 @@ class XPathQueryTest extends TestCase
                 </Encabezado>
                 <Detalle>
                     <NroLinDet>1</NroLinDet>
-                    <NmbItem>Producto A</NmbItem>
+                    <NmbItem>Product A</NmbItem>
                     <QtyItem>2</QtyItem>
                     <PrcItem>1000</PrcItem>
                     <MontoItem>2000</MontoItem>
                 </Detalle>
                 <Detalle>
                     <NroLinDet>2</NroLinDet>
-                    <NmbItem>Producto B</NmbItem>
+                    <NmbItem>Product B</NmbItem>
                     <QtyItem>1</QtyItem>
                     <PrcItem>1500</PrcItem>
                     <MontoItem>1500</MontoItem>
                 </Detalle>
                 <Detalle>
                     <NroLinDet>3</NroLinDet>
-                    <NmbItem>Producto C</NmbItem>
+                    <NmbItem>Product C</NmbItem>
                     <QtyItem>3</QtyItem>
                     <PrcItem>500</PrcItem>
                     <MontoItem>1500</MontoItem>
@@ -596,21 +596,21 @@ class XPathQueryTest extends TestCase
         // Verify the content of each Detalle node.
         $this->assertIsArray($detalle[0]);
         $this->assertSame('1', $detalle[0]['NroLinDet']);
-        $this->assertSame('Producto A', $detalle[0]['NmbItem']);
+        $this->assertSame('Product A', $detalle[0]['NmbItem']);
         $this->assertSame('2', $detalle[0]['QtyItem']);
         $this->assertSame('1000', $detalle[0]['PrcItem']);
         $this->assertSame('2000', $detalle[0]['MontoItem']);
 
         $this->assertIsArray($detalle[1]);
         $this->assertSame('2', $detalle[1]['NroLinDet']);
-        $this->assertSame('Producto B', $detalle[1]['NmbItem']);
+        $this->assertSame('Product B', $detalle[1]['NmbItem']);
         $this->assertSame('1', $detalle[1]['QtyItem']);
         $this->assertSame('1500', $detalle[1]['PrcItem']);
         $this->assertSame('1500', $detalle[1]['MontoItem']);
 
         $this->assertIsArray($detalle[2]);
         $this->assertSame('3', $detalle[2]['NroLinDet']);
-        $this->assertSame('Producto C', $detalle[2]['NmbItem']);
+        $this->assertSame('Product C', $detalle[2]['NmbItem']);
         $this->assertSame('3', $detalle[2]['QtyItem']);
         $this->assertSame('500', $detalle[2]['PrcItem']);
         $this->assertSame('1500', $detalle[2]['MontoItem']);

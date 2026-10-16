@@ -34,7 +34,7 @@ use PHPUnit\Framework\TestCase;
 class XmlTest extends TestCase
 {
     /**
-     * Verifica que el documento XML se carga correctamente.
+     * Verifies that the XML document is loaded correctly.
      */
     public function testXmlLoadXml(): void
     {
@@ -54,8 +54,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que se obtenga correctamente el nombre del tag raíz del
-     * documento XML.
+     * Verifies that the name of the root tag of the XML document is obtained
+     * correctly.
      */
     public function testXmlGetName(): void
     {
@@ -72,8 +72,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica la obtención del espacio de nombres del documento XML cuando
-     * existe.
+     * Verifies that the namespace of the XML document is obtained when it
+     * exists.
      */
     public function testXmlGetNamespace(): void
     {
@@ -90,8 +90,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica la obtención del espacio de nombres del documento XML cuando
-     * no existe.
+     * Verifies that the namespace of the XML document is obtained when it
+     * does not exist.
      */
     public function testXmlGetNamespaceNull(): void
     {
@@ -108,8 +108,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica la obtención del schema asociado al documento XML cuando
-     * existe.
+     * Verifies that the schema associated with the XML document is obtained
+     * when it exists.
      */
     public function testXmlGetSchema(): void
     {
@@ -127,8 +127,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica la obtención del schema asociado al documento XML cuando no
-     * existe.
+     * Verifies that the schema associated with the XML document is obtained
+     * when it does not exist.
      */
     public function testXmlGetSchemaNull(): void
     {
@@ -145,7 +145,7 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que el método saveXml() genera correctamente el XML.
+     * Verifies that the saveXml() method generates the XML correctly.
      */
     public function testXmlSaveXml(): void
     {
@@ -170,8 +170,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que el método C14N() funcione correctamente, generando la
-     * versión canónica del XML.
+     * Verifies that the C14N() method works correctly, generating the
+     * canonical version of the XML.
      */
     public function testXmlC14N(): void
     {
@@ -193,8 +193,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que el método C14NEncoded() aplane correctamente el
-     * documento XML.
+     * Verifies that the C14NEncodedFlattened() method flattens the XML
+     * document correctly.
      */
     public function testXmlC14NEncoded(): void
     {
@@ -214,8 +214,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que C14NEncoded() funcione correctamente cuando se
-     * proporciona una expresión XPath.
+     * Verifies that C14NEncoded() works correctly when an XPath expression
+     * is given.
      */
     public function testXmlC14NEncodedWithXPath(): void
     {
@@ -236,11 +236,11 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que un elemento raíz vacío (self-closing) se carga correctamente.
+     * Verifies that an empty root element (self-closing) is loaded correctly.
      *
-     * Un documento como <root/> es XML válido. El elemento raíz existe pero no
-     * tiene hijos ni atributos. Esto prueba que el parser no lo rechaza y que
-     * getName() funciona sin contenido interior.
+     * A document like <root/> is valid XML. The root element exists but it has
+     * no children nor attributes. This tests that the parser does not reject it
+     * and that getName() works without inner content.
      */
     public function testLoadEmptySelfClosingRoot(): void
     {
@@ -255,13 +255,14 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que un elemento raíz vacío con etiqueta de cierre explícita se
-     * carga y serializa correctamente, y que decode() retorna un texto vacío
-     * para él.
+     * Verifies that an empty root element with an explicit closing tag is
+     * loaded and serialized correctly, and that decode() returns an empty text
+     * for it.
      *
-     * <root></root> y <root/> son semánticamente equivalentes en XML. Aquí se
-     * verifica además que el decoder los trata igual: retorna ['root' => ''] (el
-     * valor de un elemento sin contenido es la cadena vacía).
+     * <root></root> and <root/> are semantically equivalent in XML. It also
+     * verifies that the decoder treats them the same: it returns
+     * ['root' => ''] (the value of an element without content is the empty
+     * string).
      */
     public function testLoadEmptyRootWithExplicitClosingTag(): void
     {
@@ -278,7 +279,7 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que get() retorna el valor correcto con selector de puntos.
+     * Verifies that get() returns the correct value with a dot selector.
      */
     public function testGetWithDotNotation(): void
     {
@@ -289,7 +290,7 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que get() retorna null cuando el selector no existe.
+     * Verifies that get() returns null when the selector does not exist.
      */
     public function testGetReturnsNullForMissingKey(): void
     {
@@ -300,7 +301,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que get() retorna el default proporcionado cuando el selector no existe.
+     * Verifies that get() returns the given default when the selector does
+     * not exist.
      */
     public function testGetReturnsCustomDefaultForMissingKey(): void
     {
@@ -311,17 +313,17 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que getSignatureNodeXml() retorna el XML canonicalizado del nodo
-     * Signature cuando existe como hijo directo del root.
+     * Verifies that getTopLevelSignatureC14N() returns the canonicalized XML
+     * of the Signature node when it exists as a direct child of the root.
      */
-    public function testGetSignatureNodeXmlReturnsCanonicalXml(): void
+    public function testGetTopLevelSignatureC14NReturnsCanonicalXml(): void
     {
         $doc = new XmlDocument();
         $doc->loadXml(
             '<root><Signature><SignedInfo>data</SignedInfo></Signature></root>'
         );
 
-        $result = $doc->getSignatureNodeXml();
+        $result = $doc->getTopLevelSignatureC14N();
 
         $this->assertNotNull($result);
         $this->assertStringContainsString('<Signature>', $result);
@@ -329,20 +331,80 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que getSignatureNodeXml() retorna null cuando no hay nodo Signature.
+     * Verifies that the signature is looked up under the root element
+     * whatever the root is called: it is also found with a namespace prefix.
      */
-    public function testGetSignatureNodeXmlReturnsNullWhenAbsent(): void
+    public function testGetTopLevelSignatureC14NWithARootWithAPrefix(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<p:r xmlns:p="urn:p"><Signature><a>1</a></Signature></p:r>');
+
+        // The C14N declares the namespaces that are in scope: the one of the root.
+        $this->assertSame('<Signature xmlns:p="urn:p"><a>1</a></Signature>', $doc->getTopLevelSignatureC14N());
+    }
+
+    /**
+     * Verifies that the signature is found by its local name, in any
+     * namespace or prefix, and that the result is the canonicalized XML.
+     */
+    public function testGetTopLevelSignatureC14NFindsTheSignatureInAnyNamespace(): void
+    {
+        $dsig = 'http://www.w3.org/2000/09/xmldsig#';
+
+        $withDefault = new XmlDocument();
+        $withDefault->loadXml('<r xmlns="urn:r"><Signature xmlns="' . $dsig . '"><a/></Signature></r>');
+        $withPrefix = new XmlDocument();
+        $withPrefix->loadXml('<r xmlns:ds="' . $dsig . '"><ds:Signature><ds:a/></ds:Signature></r>');
+
+        $this->assertSame('<Signature xmlns="' . $dsig . '"><a></a></Signature>', $withDefault->getTopLevelSignatureC14N());
+        $this->assertSame('<ds:Signature xmlns:ds="' . $dsig . '"><ds:a></ds:a></ds:Signature>', $withPrefix->getTopLevelSignatureC14N());
+    }
+
+    /**
+     * Verifies that it is canonical XML and not a serialization: without the
+     * XML declaration, with the attributes sorted and without abbreviated
+     * empty elements.
+     */
+    public function testGetTopLevelSignatureC14NIsCanonicalXml(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<?xml version="1.0" encoding="UTF-8"?><r><Signature z="1" a="2"><e/></Signature></r>');
+
+        $this->assertSame('<Signature a="2" z="1"><e></e></Signature>', $doc->getTopLevelSignatureC14N());
+    }
+
+    /**
+     * Verifies that only the direct children of the root element are
+     * searched: a signature deeper in the document is not found. With several,
+     * the first one is given.
+     */
+    public function testGetTopLevelSignatureC14NOnlyLooksAmongTheChildrenOfTheRoot(): void
+    {
+        $deeper = new XmlDocument();
+        $deeper->loadXml('<r><ext><Signature>x</Signature></ext></r>');
+        $several = new XmlDocument();
+        $several->loadXml('<r><Signature>first</Signature><Signature>second</Signature></r>');
+
+        $this->assertNull($deeper->getTopLevelSignatureC14N());
+        $this->assertSame('<Signature>first</Signature>', $several->getTopLevelSignatureC14N());
+    }
+
+    /**
+     * Verifies that getTopLevelSignatureC14N() returns null when there is no
+     * Signature node.
+     */
+    public function testGetTopLevelSignatureC14NReturnsNullWhenAbsent(): void
     {
         $doc = new XmlDocument();
         $doc->loadXml('<root><element>Value</element></root>');
 
-        $this->assertNull($doc->getSignatureNodeXml());
+        $this->assertNull($doc->getTopLevelSignatureC14N());
     }
 
     /**
-     * Un documento sin contenido no tiene elemento raíz: lo que se pregunta a la
-     * raíz es un error de uso, no un valor que no existe, así que no se
-     * confunde con un `null`.
+     * A document without content has no root element: what is asked to the
+     * root is a usage error, not a value that does not exist, so it is not
+     * confused with a `null`.
      *
      * @return array<string, array{string}>
      */
@@ -352,7 +414,7 @@ class XmlTest extends TestCase
             'getName' => ['getName'],
             'getNamespace' => ['getNamespace'],
             'getSchema' => ['getSchema'],
-            'getSignatureNodeXml' => ['getSignatureNodeXml'],
+            'getTopLevelSignatureC14N' => ['getTopLevelSignatureC14N'],
         ];
     }
 
@@ -368,12 +430,12 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Las expresiones regulares de PHP pueden fallar (por ejemplo, al agotar el
-     * límite de backtracking): el fallo es un error del paquete, no un `null`
-     * que siga su camino como si fuera el texto.
+     * The regular expressions of PHP can fail (for example, when the
+     * backtracking limit is exhausted): the failure is an error of the package,
+     * not a `null` that goes on as if it were the text.
      *
-     * Las expresiones que PHP ya compiló con JIT no respetan el límite, por eso
-     * los tests que lo usan van en un proceso aparte.
+     * The expressions that PHP already compiled with JIT do not respect the
+     * limit, so the tests that use it run in a separate process.
      */
     private function failRegularExpressions(callable $do): void
     {
@@ -433,7 +495,7 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que cargar un XML vacío es un error de parseo.
+     * Verifies that loading an empty XML is a parse error.
      */
     public function testLoadEmptyXmlFails(): void
     {
@@ -446,8 +508,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que getXml() entrega el XML sin la declaración, y saveXml() con
-     * ella.
+     * Verifies that getXml() gives the XML without the declaration, and
+     * saveXml() with it.
      */
     public function testGetXmlIsTheXmlWithoutTheDeclaration(): void
     {
@@ -459,7 +521,33 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que el documento se serializa a JSON como su arreglo.
+     * Verifies that getXml() gives the XML without the declaration, whatever
+     * the declaration of the XML is: without encoding, with it or with
+     * standalone.
+     *
+     * @return array<string, array{string}>
+     */
+    public static function declarationsProvider(): array
+    {
+        return [
+            'without declaration' => ['<root><a>1</a></root>'],
+            'without encoding' => ['<?xml version="1.0"?><root><a>1</a></root>'],
+            'with encoding' => ['<?xml version="1.0" encoding="UTF-8"?><root><a>1</a></root>'],
+            'with standalone' => ['<?xml version="1.0" encoding="UTF-8" standalone="yes"?><root><a>1</a></root>'],
+        ];
+    }
+
+    #[DataProvider('declarationsProvider')]
+    public function testGetXmlHasNoDeclarationWhateverItIs(string $xml): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml($xml);
+
+        $this->assertSame("<root>\n  <a>1</a>\n</root>", $doc->getXml());
+    }
+
+    /**
+     * Verifies that the document is serialized to JSON as its array.
      */
     public function testTheDocumentIsSerializedToJsonAsItsArray(): void
     {
@@ -473,8 +561,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que un documento sin contenido es un arreglo vacío, y que
-     * preguntarle por un valor da el valor por defecto.
+     * Verifies that a document without content is an empty array, and that
+     * asking it for a value gives the default value.
      */
     public function testADocumentWithoutContentIsAnEmptyArray(): void
     {
@@ -486,7 +574,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que setFormatOutput() es fluent y propaga el valor al DOMDocument interno.
+     * Verifies that setFormatOutput() is fluent and propagates the value to
+     * the inner DOMDocument.
      */
     public function testSetFormatOutput(): void
     {
@@ -500,7 +589,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que setPreserveWhiteSpace() es fluent y propaga el valor al DOMDocument interno.
+     * Verifies that setPreserveWhiteSpace() is fluent and propagates the
+     * value to the inner DOMDocument.
      */
     public function testSetPreserveWhiteSpace(): void
     {
@@ -514,8 +604,8 @@ class XmlTest extends TestCase
     }
 
     /**
-     * Verifica que C14NEncoded() retorne false cuando la expresión
-     * XPath no coincide con ningún nodo.
+     * Verifies that C14NEncoded() throws an exception when the XPath
+     * expression matches no node.
      */
     public function testXmlC14NEncodedXPathNotFound(): void
     {

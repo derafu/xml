@@ -91,9 +91,9 @@ final class XmlDecoderTest extends TestCase
                 '<r><i><v/><w>1</w></i><i><v/><w>2</w></i></r>',
                 ['r' => ['i' => [['v' => '', 'w' => '1'], ['v' => '', 'w' => '2']]]],
             ],
-            'an element with only spaces or a comment is empty' => [
+            'an element with only spaces and an element with only a comment' => [
                 '<r><a>   </a><b><!-- c --></b></r>',
-                ['r' => ['a' => '', 'b' => '']],
+                ['r' => ['a' => '   ', 'b' => ['@comment' => ' c ']]],
             ],
             'an empty root element' => [
                 '<r/>',
@@ -112,28 +112,28 @@ final class XmlDecoderTest extends TestCase
                 '<r><a>1</a>tail<a>2</a></r>',
                 ['r' => ['a' => ['1', '2'], '@value' => 'tail']],
             ],
-            // The text of an element is trimmed, and the spaces between elements
-            // are not text.
-            'text is trimmed' => [
+            // The text of an element is exactly the one of the XML, and the spaces
+            // between elements are not text.
+            'text is exact' => [
                 '<r>  hi  </r>',
-                ['r' => 'hi'],
+                ['r' => '  hi  '],
             ],
             'spaces between elements are ignored' => [
                 "<r>\n    <a>1</a>\n    <b>2</b>\n</r>",
                 ['r' => ['a' => '1', 'b' => '2']],
             ],
-            // What is not an element nor text is not in the array.
-            'comments are ignored' => [
+            // The comments are in `@comment`, and a CDATA section is text.
+            'comments are in @comment' => [
                 '<r><!-- comment --><a>1</a></r>',
-                ['r' => ['a' => '1']],
+                ['r' => ['@comment' => ' comment ', 'a' => '1']],
             ],
             'CDATA is text' => [
                 '<r><![CDATA[ <x> ]]></r>',
-                ['r' => '<x>'],
+                ['r' => ' <x> '],
             ],
-            'CDATA among text is joined with it' => [
+            'CDATA among text is part of it' => [
                 '<r>a<![CDATA[b]]>c</r>',
-                ['r' => ['@value' => 'a b c']],
+                ['r' => 'abc'],
             ],
             // Attributes.
             'only attributes' => [
@@ -151,7 +151,7 @@ final class XmlDecoderTest extends TestCase
             // The names are the ones of the XML, with their prefix.
             'names with a prefix' => [
                 '<x:r xmlns:x="urn:x"><x:a>1</x:a></x:r>',
-                ['x:r' => ['x:a' => '1']],
+                ['x:r' => ['@attributes' => ['xmlns:x' => 'urn:x'], 'x:a' => '1']],
             ],
             'nested elements' => [
                 '<r><a><b><c>1</c></b></a></r>',

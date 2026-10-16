@@ -427,7 +427,7 @@ class XmlSpecialCasesTest extends TestCase
         ];
 
         foreach ($unsupportedChars as $char) {
-            $data = ['root' => ['element' => "Texto con $char"]];
+            $data = ['root' => ['element' => "Text with $char"]];
 
             try {
                 $xml = $this->xmlService->encode($data);
@@ -455,7 +455,7 @@ class XmlSpecialCasesTest extends TestCase
         ];
 
         foreach ($controlChars as $char) {
-            $data = ['root' => ['element' => "Texto$char control"]];
+            $data = ['root' => ['element' => "Text$char control"]];
 
             try {
                 $xml = $this->xmlService->encode($data);
@@ -482,9 +482,9 @@ class XmlSpecialCasesTest extends TestCase
                 '@attributes' => [
                     'id' => 'F33T1',
                     'version' => '1.0',
-                    'fecha' => '2025-01-03',
+                    'date' => '2025-01-03',
                 ],
-                '@value' => 'Contenido con áéíóú ñ & < > " \'',
+                '@value' => 'Content with áéíóú ñ & < > " \'',
             ],
         ]];
 
@@ -495,7 +495,7 @@ class XmlSpecialCasesTest extends TestCase
         // Verify that it is compatible with XML-DSIG.
         $this->assertStringContainsString('id="F33T1"', $c14n);
         $this->assertStringContainsString('version="1.0"', $c14n);
-        $this->assertStringContainsString('fecha="2025-01-03"', $c14n);
+        $this->assertStringContainsString('date="2025-01-03"', $c14n);
         // Note: Accented characters are converted to substitution characters in ISO-8859-1.
         $this->assertStringContainsString('&amp;', $c14n);
         $this->assertStringContainsString('&lt;', $c14n);
@@ -527,7 +527,7 @@ class XmlSpecialCasesTest extends TestCase
                     ],
                     'Emisor' => [
                         'RUTEmisor' => '76192083-9',
-                        'RznSoc' => 'Empresa con áéíóú ñ',
+                        'RznSoc' => 'Company with áéíóú ñ',
                     ],
                 ],
             ],

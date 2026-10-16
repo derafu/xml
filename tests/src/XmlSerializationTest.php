@@ -37,13 +37,13 @@ class XmlSerializationTest extends TestCase
      * @var array<string, string>
      */
     private array $expectedValues = [
-        'vocales_min' => 'á é í ó ú à è ì ò ù',
-        'vocales_may' => 'Á É Í Ó Ú À È Ì Ò Ù',
-        'enie'        => 'ñ Ñ',
-        'dieresis'    => 'ü Ü ö Ö',
-        'puntuacion'  => '¿Hola? ¡Mundo!',
-        'simbolos'    => '© ® ° ½ ¼ ¾',
-        'frase'       => 'Fabricación de Ñoños en Güemes',
+        'lowercase_vowels' => 'á é í ó ú à è ì ò ù',
+        'uppercase_vowels' => 'Á É Í Ó Ú À È Ì Ò Ù',
+        'tilde_n'        => 'ñ Ñ',
+        'diaeresis'    => 'ü Ü ö Ö',
+        'punctuation'  => '¿Hello? ¡World!',
+        'symbols'    => '© ® ° ½ ¼ ¾',
+        'sentence'       => 'Fabricación de Ñoños en Güemes',
     ];
 
     protected function setUp(): void
@@ -63,7 +63,7 @@ class XmlSerializationTest extends TestCase
     {
         $doc = new XmlDocument();
         $doc->loadXml(
-            '<?xml version="1.0" encoding="UTF-8"?><root><element>Valor</element></root>'
+            '<?xml version="1.0" encoding="UTF-8"?><root><element>Value</element></root>'
         );
 
         /** @var XmlDocument $restored */
@@ -72,7 +72,7 @@ class XmlSerializationTest extends TestCase
         $this->assertInstanceOf(XmlDocument::class, $restored);
         $this->assertSame('UTF-8', $restored->getEncoding());
         $this->assertSame('root', $restored->getName());
-        $this->assertSame('Valor', $restored->query('//element'));
+        $this->assertSame('Value', $restored->query('//element'));
     }
 
     /**
@@ -88,7 +88,7 @@ class XmlSerializationTest extends TestCase
     {
         $doc = new XmlDocument();
         $doc->loadXml(
-            '<?xml version="1.0" encoding="UTF-8"?><root><nombre>áéíóú ñÑ Güemes</nombre></root>'
+            '<?xml version="1.0" encoding="UTF-8"?><root><name>áéíóú ñÑ Güemes</name></root>'
         );
 
         $xmlBefore = $doc->saveXml();
@@ -163,11 +163,11 @@ class XmlSerializationTest extends TestCase
 
         $decoded = (new XmlDecoder())->decode($restored);
 
-        $this->assertIsArray($decoded['documento']);
+        $this->assertIsArray($decoded['document']);
         foreach ($this->expectedValues as $field => $expected) {
             $this->assertSame(
                 $expected,
-                $decoded['documento'][$field],
+                $decoded['document'][$field],
                 "Field '{$field}' has an unexpected value after serialize/unserialize."
             );
         }
@@ -206,9 +206,9 @@ class XmlSerializationTest extends TestCase
 
         // Decoded values match the originals.
         $decoded = (new XmlDecoder())->decode($doc);
-        $this->assertIsArray($decoded['documento']);
+        $this->assertIsArray($decoded['document']);
         foreach ($this->expectedValues as $field => $expected) {
-            $this->assertSame($expected, $decoded['documento'][$field]);
+            $this->assertSame($expected, $decoded['document'][$field]);
         }
     }
 
@@ -220,7 +220,7 @@ class XmlSerializationTest extends TestCase
     {
         $doc = new XmlDocument();
         $doc->loadXml(
-            '<?xml version="1.0" encoding="UTF-8"?><root><frase>Fabricación de Ñoños</frase></root>'
+            '<?xml version="1.0" encoding="UTF-8"?><root><sentence>Fabricación de Ñoños</sentence></root>'
         );
 
         $xmlOriginal = $doc->saveXml();

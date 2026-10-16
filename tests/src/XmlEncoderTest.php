@@ -218,6 +218,107 @@ final class XmlEncoderTest extends TestCase
         );
     }
 
+    /**
+     * The text of an element is written before its child elements and its
+     * comments, wherever `@value` is: no position loses it.
+     *
+     * @return array<string, array{array<string, mixed>}>
+     */
+    public static function valueInAnyPlaceProvider(): array
+    {
+        return [
+            'first' => [['@value' => 'text', '@attributes' => ['id' => '1'], 'a' => '1', 'b' => '2']],
+            'among the others' => [['@attributes' => ['id' => '1'], 'a' => '1', '@value' => 'text', 'b' => '2']],
+            'last' => [['@attributes' => ['id' => '1'], 'a' => '1', 'b' => '2', '@value' => 'text']],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $element
+     */
+    #[DataProvider('valueInAnyPlaceProvider')]
+    public function testTheValueOfAnElementIsWrittenWhereverItIs(array $element): void
+    {
+        $this->assertSame(
+            "<r id=\"1\">text<a>1</a><b>2</b></r>",
+            (new XmlEncoder())->encode(['r' => $element])->getXml()
+        );
+    }
+
+    public function testTheValueOfAnElementIsWrittenBeforeItsComments(): void
+    {
+        $this->assertSame(
+            '<r>text<!--c--><a>1</a></r>',
+            (new XmlEncoder())->encode(['r' => ['@comment' => 'c', 'a' => '1', '@value' => 'text']])->getXml()
+        );
+    }
+
+    public function testTheValueOfAnElementWithElementsIsInTheDecodedArray(): void
+    {
+        $document = (new XmlEncoder())->encode(['r' => ['a' => '1', '@value' => 'text']]);
+
+        $this->assertSame(
+            ['r' => ['@value' => 'text', 'a' => '1']],
+            (new XmlDecoder())->decode($document)
+        );
+    }
+
+    public function testTheValueThatMeansNothingIsNotWritten(): void
+    {
+        $this->assertSame(
+            "<r>\n  <a>1</a>\n</r>",
+            (new XmlEncoder())->encode(['r' => ['a' => '1', '@value' => null]])->getXml()
+        );
+    }
+
+    /**
+     * An empty value is an empty text of the node: the node has a closing tag,
+     * as it is written for any element that has a text.
+     */
+    public function testAnEmptyValueIsAnEmptyText(): void
+    {
+        $this->assertSame(
+            '<r id="1"></r>',
+            (new XmlEncoder())->encode(['r' => ['@attributes' => ['id' => '1'], '@value' => '']])->getXml()
+        );
+    }
+
+    public function testTheValueOfNoElementIsNotValid(): void
+    {
+        $this->expectException(XmlEncoderException::class);
+        $this->expectExceptionMessage('A text can not be written outside of an element.');
+
+        (new XmlEncoder())->encode(['@value' => 'text', 'r' => '1']);
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>, string}>
+     */
+    public static function severalRootsProvider(): array
+    {
+        return [
+            'two nodes' => [['a' => '1', 'b' => '2'], 'There are 2: a, b.'],
+            'a list' => [['r' => ['x', 'y', 'z']], 'There are 3: r, r, r.'],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    #[DataProvider('severalRootsProvider')]
+    public function testAnXmlWithSeveralRootsIsNotValid(array $data, string $message): void
+    {
+        $this->expectException(XmlEncoderException::class);
+        $this->expectExceptionMessage('An XML document can only have one root element. ' . $message);
+
+        (new XmlEncoder())->encode($data);
+    }
+
+    public function testNothingToWriteIsADocumentWithoutRoot(): void
+    {
+        $this->assertNull((new XmlEncoder())->encode([])->getDocumentElement());
+    }
+
     public function testAnAttributeThatIsAnArrayIsNotValid(): void
     {
         $this->expectException(XmlEncoderException::class);

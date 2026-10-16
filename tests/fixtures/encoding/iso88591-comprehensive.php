@@ -30,15 +30,15 @@ declare(strict_types=1);
  */
 
 $xml = '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n"
-    . '<documento>' . "\n"
-    . '  <vocales_min>á é í ó ú à è ì ò ù</vocales_min>' . "\n"
-    . '  <vocales_may>Á É Í Ó Ú À È Ì Ò Ù</vocales_may>' . "\n"
-    . '  <enie>ñ Ñ</enie>' . "\n"
-    . '  <dieresis>ü Ü ö Ö</dieresis>' . "\n"
-    . '  <puntuacion>¿Hola? ¡Mundo!</puntuacion>' . "\n"
-    . '  <simbolos>© ® ° ½ ¼ ¾</simbolos>' . "\n"
-    . '  <frase>Fabricación de Ñoños en Güemes</frase>' . "\n"
-    . '</documento>' . "\n"
+    . '<document>' . "\n"
+    . '  <lowercase_vowels>á é í ó ú à è ì ò ù</lowercase_vowels>' . "\n"
+    . '  <uppercase_vowels>Á É Í Ó Ú À È Ì Ò Ù</uppercase_vowels>' . "\n"
+    . '  <tilde_n>ñ Ñ</tilde_n>' . "\n"
+    . '  <diaeresis>ü Ü ö Ö</diaeresis>' . "\n"
+    . '  <punctuation>¿Hello? ¡World!</punctuation>' . "\n"
+    . '  <symbols>© ® ° ½ ¼ ¾</symbols>' . "\n"
+    . '  <sentence>Fabricación de Ñoños en Güemes</sentence>' . "\n"
+    . '</document>' . "\n"
 ;
 
 return mb_convert_encoding($xml, 'ISO-8859-1', 'UTF-8');

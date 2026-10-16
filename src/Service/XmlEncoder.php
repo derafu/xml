@@ -27,6 +27,16 @@ use Stringable;
 final class XmlEncoder implements XmlEncoderInterface
 {
     /**
+     * Namespace of the declarations of namespaces (`xmlns` and `xmlns:prefix`).
+     */
+    private const XMLNS_NAMESPACE = 'http://www.w3.org/2000/xmlns/';
+
+    /**
+     * Namespace of the attributes with the prefix `xml` (`xml:lang`...).
+     */
+    private const XML_NAMESPACE = 'http://www.w3.org/XML/1998/namespace';
+
+    /**
      * Rules for converting a PHP array to XML and vice versa.
      *
      * @var array{node_values: array{skip_generation: list<mixed>, generate_empty: list<mixed>}}
@@ -48,7 +58,23 @@ final class XmlEncoder implements XmlEncoderInterface
     {
         $doc = new XmlDocument();
 
-        $this->encodeNode($data, $doc, $doc->getDomDocument());
+        $this->encodeNode($data, $doc, $doc->getDomDocument(), []);
+
+        // An XML has only one root element: the array has one node (and not a
+        // list of them) at its first level.
+        $roots = [];
+        foreach ($doc->getDomDocument()->childNodes as $node) {
+            if ($node instanceof DOMElement) {
+                $roots[] = $node->nodeName;
+            }
+        }
+        if (count($roots) > 1) {
+            throw new XmlEncoderException([
+                'An XML document can only have one root element. There are {count}: {names}.',
+                'count' => count($roots),
+                'names' => implode(', ', $roots),
+            ]);
+        }
 
         return $doc;
     }
@@ -59,14 +85,40 @@ final class XmlEncoder implements XmlEncoderInterface
      * @param array<int|string, mixed> $data The array with the data to encode.
      * @param XmlDocumentInterface $doc The root XML document.
      * @param DOMNode $parent The parent node to append nodes to.
+     * @param array<string, string> $namespaces The namespaces that are in scope
+     * in the parent node, by prefix (the default one is the empty prefix).
      * @return void
      */
     private function encodeNode(
         array $data,
         XmlDocumentInterface $doc,
         DOMNode $parent,
+        array $namespaces,
     ): void {
+        // The value of the node (its text) is written first, wherever `@value`
+        // is: the text goes before the child nodes, and that is the same in
+        // every place of the array.
+        if (array_key_exists('@value', $data) && !$this->skipValue($data['@value'])) {
+            if (!$parent instanceof DOMElement) {
+                throw new XmlEncoderException('A text can not be written outside of an element.');
+            }
+            // The text is made as the one of any other node is (`nodeAddValue()`),
+            // in a node that gives its content, so it is escaped only once.
+            $text = XmlHelper::sanitize($this->toText($data['@value'], $parent->nodeName));
+            $holder = $doc->getDomDocument()->createElement('value', $text);
+            if ($holder->firstChild === null) {
+                // An empty value is an empty text, as it always was written.
+                $parent->appendChild($doc->getDomDocument()->createTextNode(''));
+            }
+            while ($holder->firstChild !== null) {
+                $parent->appendChild($holder->firstChild);
+            }
+        }
+
         foreach ($data as $key => $value) {
+            if ($key === '@value') {
+                continue;
+            }
 
             // If the index is '@attributes' then the value of this index is an
             // array where the key is the name of the attribute of the tag of
@@ -78,21 +130,15 @@ final class XmlEncoder implements XmlEncoderInterface
                     // that $parent is a DOMElement. And only in that case
                     // continue.
                     if ($parent instanceof DOMElement) {
-                        $this->nodeAddAttributes($parent, $value);
+                        $this->nodeAddAttributes($parent, $value, $namespaces);
                     }
                 }
             }
 
-            // If the index is '@value' then the value must be assigned directly
-            // to the node, since it is a scalar (not an array with child nodes).
-            // This case is usually used when creating a node that must have a
-            // value and attributes.
-            elseif ($key === '@value') {
-                if (!$this->skipValue($value)) {
-                    $parent->nodeValue = XmlHelper::sanitize(
-                        $this->toText($value, $parent->nodeName)
-                    );
-                }
+            // If the index is '@comment' then the value is a comment, or a list of
+            // them, that are added to the parent in the place of the index.
+            elseif ($key === '@comment') {
+                $this->nodeAddComments($doc, $parent, $value);
             }
 
             // Here the index is the name of a node. In this case, the node is
@@ -102,7 +148,7 @@ final class XmlEncoder implements XmlEncoderInterface
                 // Only the node is created if it has child nodes. The node will
                 // not be created if an empty array (without children) is passed.
                 if (!empty($value)) {
-                    $this->nodeAddChilds($doc, $parent, $this->name($key), $value);
+                    $this->nodeAddChilds($doc, $parent, $this->name($key), $value, $namespaces);
                 }
             }
 
@@ -111,7 +157,7 @@ final class XmlEncoder implements XmlEncoderInterface
             else {
                 if (!$this->skipValue($value)) {
                     $name = $this->name($key);
-                    $this->nodeAddValue($doc, $parent, $name, $this->toText($value, $name));
+                    $this->nodeAddValue($doc, $parent, $name, $this->toText($value, $name), $namespaces);
                 }
             }
         }
@@ -122,12 +168,18 @@ final class XmlEncoder implements XmlEncoderInterface
      *
      * @param DOMElement $node Node to which the attributes will be added.
      * @param array<int|string, mixed> $attributes Array of attributes (key => value).
+     * @param array<string, string> $namespaces The namespaces that are in scope
+     * in the node, with the ones that it declares.
      * @return void
      * @throws XmlEncoderException If the name of an attribute is not text, or
      * if its value is an array or can not be written as text.
      */
-    private function nodeAddAttributes(DOMElement $node, array $attributes): void
+    private function nodeAddAttributes(DOMElement $node, array $attributes, array $namespaces): void
     {
+        // The declarations of namespaces go first, so the attributes that have
+        // a prefix find their namespace declared wherever they are in the array.
+        uksort($attributes, fn (int|string $a, int|string $b) => $this->isDeclaration($b) <=> $this->isDeclaration($a));
+
         foreach ($attributes as $key => $value) {
             $attribute = $this->name($key);
 
@@ -144,10 +196,18 @@ final class XmlEncoder implements XmlEncoderInterface
             // Assign the attribute value only if it is not skipped according to
             // the type of value to be assigned.
             if (!$this->skipValue($value)) {
-                $node->setAttribute(
-                    $attribute,
-                    $this->toText($value, $node->tagName . '/@' . $attribute)
-                );
+                $text = $this->toText($value, $node->tagName . '/@' . $attribute);
+                $prefix = str_contains($attribute, ':') ? strstr($attribute, ':', true) : '';
+
+                if ($this->isDeclaration($attribute)) {
+                    $node->setAttributeNS(self::XMLNS_NAMESPACE, $attribute, $text);
+                } elseif ($prefix === 'xml') {
+                    $node->setAttributeNS(self::XML_NAMESPACE, $attribute, $text);
+                } elseif ($prefix !== '' && isset($namespaces[$prefix])) {
+                    $node->setAttributeNS($namespaces[$prefix], $attribute, $text);
+                } else {
+                    $node->setAttribute($attribute, $text);
+                }
             }
         }
     }
@@ -159,6 +219,8 @@ final class XmlEncoder implements XmlEncoderInterface
      * @param DOMNode $parent Node parent to which the child nodes will be added.
      * @param string $tagName Name of the child node tag.
      * @param array<int|string, mixed> $childs Array of data of the child nodes.
+     * @param array<string, string> $namespaces The namespaces that are in scope
+     * in the parent node.
      * @return void
      * @throws XmlEncoderException If a child node is not an array.
      */
@@ -167,6 +229,7 @@ final class XmlEncoder implements XmlEncoderInterface
         DOMNode $parent,
         string $tagName,
         array $childs,
+        array $namespaces,
     ): void {
         $keys = array_keys($childs);
         if (!is_int($keys[0])) {
@@ -191,9 +254,12 @@ final class XmlEncoder implements XmlEncoderInterface
                     ]);
                 }
 
-                $Node = $doc->getDomDocument()->createElement($tagName);
+                // The namespaces that the node declares are the ones of the node
+                // and of what is inside of it.
+                $nodeNamespaces = $this->declareNamespaces($child, $namespaces);
+                $Node = $this->createElement($doc, $tagName, $nodeNamespaces);
                 $parent->appendChild($Node);
-                $this->encodeNode($child, $doc, $Node);
+                $this->encodeNode($child, $doc, $Node, $nodeNamespaces);
             }
             // If the child is not an array, it is simply a duplicate node that
             // must be added at the same level as the parent node.
@@ -202,7 +268,8 @@ final class XmlEncoder implements XmlEncoderInterface
                     $doc,
                     $parent,
                     $tagName,
-                    $this->toText($child, $tagName)
+                    $this->toText($child, $tagName),
+                    $namespaces
                 );
             }
         }
@@ -215,6 +282,8 @@ final class XmlEncoder implements XmlEncoderInterface
      * @param DOMNode $parent Node parent to which the node will be added.
      * @param string $tagName Name of the child node tag.
      * @param string $value Value of the child node.
+     * @param array<string, string> $namespaces The namespaces that are in scope
+     * in the parent node.
      * @return void
      */
     private function nodeAddValue(
@@ -222,10 +291,91 @@ final class XmlEncoder implements XmlEncoderInterface
         DOMNode $parent,
         string $tagName,
         string $value,
+        array $namespaces,
     ): void {
         $value = XmlHelper::sanitize($value);
-        $Node = $doc->getDomDocument()->createElement($tagName, $value);
+        $Node = $this->createElement($doc, $tagName, $namespaces, $value);
         $parent->appendChild($Node);
+    }
+
+    /**
+     * Adds comments to a node.
+     *
+     * @param XmlDocumentInterface $doc XML document in which the comments will be added.
+     * @param DOMNode $parent Node to which the comments will be added.
+     * @param mixed $comments A comment, or a list of them.
+     * @return void
+     * @throws XmlEncoderException If a comment can not be written as text, or
+     * it has two hyphens in a row or ends with a hyphen (not valid in XML).
+     */
+    private function nodeAddComments(XmlDocumentInterface $doc, DOMNode $parent, mixed $comments): void
+    {
+        foreach (is_array($comments) ? $comments : [$comments] as $comment) {
+            if ($this->skipValue($comment)) {
+                continue;
+            }
+
+            $text = $this->toText($comment, '@comment');
+            if (str_contains($text, '--') || str_ends_with($text, '-')) {
+                throw new XmlEncoderException([
+                    'A comment can not have two hyphens in a row nor end with a hyphen: {comment}',
+                    'comment' => $text,
+                ]);
+            }
+
+            $parent->appendChild($doc->getDomDocument()->createComment($text));
+        }
+    }
+
+    /**
+     * Tells if the name of an attribute is the declaration of a namespace.
+     */
+    private function isDeclaration(int|string $name): bool
+    {
+        return $name === 'xmlns' || (is_string($name) && str_starts_with($name, 'xmlns:'));
+    }
+
+    /**
+     * Gets the namespaces that are in scope in a node: the ones of its parent
+     * and the ones that it declares in its `@attributes`.
+     *
+     * @param array<int|string, mixed> $node The data of the node.
+     * @param array<string, string> $inherited The namespaces of the parent.
+     * @return array<string, string> The URI of each namespace, by prefix (the
+     * default one is the empty prefix).
+     */
+    private function declareNamespaces(array $node, array $inherited): array
+    {
+        $attributes = $node['@attributes'] ?? null;
+        if (!is_array($attributes)) {
+            return $inherited;
+        }
+
+        foreach ($attributes as $name => $uri) {
+            if ($this->isDeclaration($name) && is_string($uri)) {
+                $inherited[substr((string) $name, 6)] = $uri;
+            }
+        }
+
+        return $inherited;
+    }
+
+    /**
+     * Creates an element in the namespace that its prefix has in scope. A name
+     * without prefix is in the default namespace, if there is one. A prefix that
+     * is not declared is a name without namespace.
+     *
+     * @param array<string, string> $namespaces The namespaces that are in scope.
+     */
+    private function createElement(XmlDocumentInterface $doc, string $name, array $namespaces, string $value = ''): DOMElement
+    {
+        $prefix = str_contains($name, ':') ? (string) strstr($name, ':', true) : '';
+        $uri = $namespaces[$prefix] ?? '';
+
+        return $uri === ''
+            ? $doc->getDomDocument()->createElement($name, $value)
+            : $doc->getDomDocument()->createElementNS($uri, $name, $value)
+        ;
     }
 
     /**

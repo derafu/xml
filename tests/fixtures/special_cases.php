@@ -53,13 +53,13 @@ return [
             'expectedException' => null,
         ],
         'micro_symbol' => [
-            'data' => ['root' => ['element' => 'Concentración: 5µg']],
-            'expected' => ['root' => ['element' => 'Concentración: 5µg']],
+            'data' => ['root' => ['element' => 'Concentration: 5µg']],
+            'expected' => ['root' => ['element' => 'Concentration: 5µg']],
             'expectedException' => null,
         ],
         'multiple_unsupported' => [
-            'data' => ['root' => ['element' => 'Texto con €™©®°±²³µ']],
-            'expected' => ['root' => ['element' => 'Texto con €™©®°±²³µ']],
+            'data' => ['root' => ['element' => 'Text with €™©®°±²³µ']],
+            'expected' => ['root' => ['element' => 'Text with €™©®°±²³µ']],
             'expectedException' => null,
         ],
     ],
@@ -68,53 +68,53 @@ return [
     'testControlCharactersInIso88591' => [
         // Control characters that may cause problems in XML-DSIG.
         'null_character' => [
-            'data' => ['root' => ['element' => "Texto\x00 con null"]],
-            'expected' => ['root' => ['element' => "Texto con null"]],
+            'data' => ['root' => ['element' => "Text\x00 with null"]],
+            'expected' => ['root' => ['element' => "Text with null"]],
             'expectedException' => null,
         ],
         'start_of_heading' => [
-            'data' => ['root' => ['element' => "Texto\x01 control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x01 control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
         'start_of_text' => [
-            'data' => ['root' => ['element' => "Texto\x02 control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x02 control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
         'end_of_text' => [
-            'data' => ['root' => ['element' => "Texto\x03 control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x03 control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
         'end_of_transmission' => [
-            'data' => ['root' => ['element' => "Texto\x04 control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x04 control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
         'enquiry' => [
-            'data' => ['root' => ['element' => "Texto\x05 control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x05 control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
         'acknowledge' => [
-            'data' => ['root' => ['element' => "Texto\x06 control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x06 control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
         'bell' => [
-            'data' => ['root' => ['element' => "Texto\x07 control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x07 control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
         'delete_character' => [
-            'data' => ['root' => ['element' => "Texto\x7F control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x7F control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
         'multiple_control_chars' => [
-            'data' => ['root' => ['element' => "Texto\x00\x01\x02\x03 control"]],
-            'expected' => ['root' => ['element' => "Texto control"]],
+            'data' => ['root' => ['element' => "Text\x00\x01\x02\x03 control"]],
+            'expected' => ['root' => ['element' => "Text control"]],
             'expectedException' => null,
         ],
     ],
@@ -125,14 +125,14 @@ return [
         'ampersand_in_attribute' => [
             'data' => ['root' => [
                 'element' => [
-                    '@attributes' => ['attr' => 'valor & especial'],
-                    '@value' => 'contenido',
+                    '@attributes' => ['attr' => 'value & special'],
+                    '@value' => 'content',
                 ],
             ]],
             'expected' => ['root' => [
                 'element' => [
-                    '@attributes' => ['attr' => 'valor & especial'],
-                    '@value' => 'contenido',
+                    '@attributes' => ['attr' => 'value & special'],
+                    '@value' => 'content',
                 ],
             ]],
             'expectedException' => null,
@@ -140,14 +140,14 @@ return [
         'quotes_in_attribute' => [
             'data' => ['root' => [
                 'element' => [
-                    '@attributes' => ['attr' => 'valor con "comillas" y \'apóstrofes\''],
-                    '@value' => 'contenido',
+                    '@attributes' => ['attr' => 'value with "quotes" and \'apostrophes\''],
+                    '@value' => 'content',
                 ],
             ]],
             'expected' => ['root' => [
                 'element' => [
-                    '@attributes' => ['attr' => 'valor con "comillas" y \'apóstrofes\''],
-                    '@value' => 'contenido',
+                    '@attributes' => ['attr' => 'value with "quotes" and \'apostrophes\''],
+                    '@value' => 'content',
                 ],
             ]],
             'expectedException' => null,
@@ -155,14 +155,14 @@ return [
         'less_greater_in_attribute' => [
             'data' => ['root' => [
                 'element' => [
-                    '@attributes' => ['attr' => 'valor < 10 > 5'],
-                    '@value' => 'contenido',
+                    '@attributes' => ['attr' => 'value < 10 > 5'],
+                    '@value' => 'content',
                 ],
             ]],
             'expected' => ['root' => [
                 'element' => [
-                    '@attributes' => ['attr' => 'valor < 10 > 5'],
-                    '@value' => 'contenido',
+                    '@attributes' => ['attr' => 'value < 10 > 5'],
+                    '@value' => 'content',
                 ],
             ]],
             'expectedException' => null,
@@ -171,13 +171,13 @@ return [
             'data' => ['root' => [
                 'element' => [
                     '@attributes' => ['attr' => 'áéíóú ñ'],
-                    '@value' => 'contenido',
+                    '@value' => 'content',
                 ],
             ]],
             'expected' => ['root' => [
                 'element' => [
                     '@attributes' => ['attr' => 'áéíóú ñ'],
-                    '@value' => 'contenido',
+                    '@value' => 'content',
                 ],
             ]],
             'expectedException' => null,
@@ -186,13 +186,13 @@ return [
             'data' => ['root' => [
                 'element' => [
                     '@attributes' => ['attr' => 'áéíóú & < > " \' ñ'],
-                    '@value' => 'contenido',
+                    '@value' => 'content',
                 ],
             ]],
             'expected' => ['root' => [
                 'element' => [
                     '@attributes' => ['attr' => 'áéíóú & < > " \' ñ'],
-                    '@value' => 'contenido',
+                    '@value' => 'content',
                 ],
             ]],
             'expectedException' => null,
@@ -208,31 +208,31 @@ return [
             'data' => ['root' => [
                 'element' => [
                     '@attributes' => ['id' => 'F33T1', 'version' => '1.0'],
-                    '@value' => 'Contenido con áéíóú ñ',
+                    '@value' => 'Content with áéíóú ñ',
                 ],
             ]],
             'encoding' => 'ISO-8859-1',
-            'expected' => '<root><element id="F33T1" version="1.0">Contenido con ' . mb_convert_encoding('áéíóú ñ', 'ISO-8859-1', 'UTF-8') . '</element></root>',
+            'expected' => '<root><element id="F33T1" version="1.0">Content with ' . mb_convert_encoding('áéíóú ñ', 'ISO-8859-1', 'UTF-8') . '</element></root>',
             'expectedException' => null,
         ],
         'special_chars_in_c14n' => [
             'data' => ['root' => [
                 'element' => [
-                    '@attributes' => ['attr' => 'valor & < > " \''],
-                    '@value' => 'contenido con & < > " \'',
+                    '@attributes' => ['attr' => 'value & < > " \''],
+                    '@value' => 'content with & < > " \'',
                 ],
             ]],
-            'expected' => '<root><element attr="valor &amp; &lt; > &quot; \'">contenido con &amp; &lt; &gt; &quot; &apos;</element></root>',
+            'expected' => '<root><element attr="value &amp; &lt; > &quot; \'">content with &amp; &lt; &gt; &quot; &apos;</element></root>',
             'expectedException' => null,
         ],
         'mixed_content_in_c14n' => [
             'data' => ['root' => [
                 'element' => [
-                    '@attributes' => ['id' => 'F33T1', 'fecha' => '2025-01-03'],
-                    '@value' => 'Árbol con ñ y áéíóú & < > " \'',
+                    '@attributes' => ['id' => 'F33T1', 'date' => '2025-01-03'],
+                    '@value' => 'Árbol with ñ and áéíóú & < > " \'',
                 ],
             ]],
-            'expected' => '<root><element fecha="2025-01-03" id="F33T1">' . 'Árbol con ñ y áéíóú' . ' &amp; &lt; &gt; &quot; &apos;</element></root>',
+            'expected' => '<root><element date="2025-01-03" id="F33T1">' . 'Árbol with ñ and áéíóú' . ' &amp; &lt; &gt; &quot; &apos;</element></root>',
             'expectedException' => null,
         ],
     ],
@@ -245,28 +245,28 @@ return [
         // to LF (XML spec §2.11) only applies when parsing XML strings; since
         // the encode→decode round-trip does not re-parse, CR is preserved as-is.
         'tab_character' => [
-            'data' => ['root' => ['element' => "Texto\x09 con tab"]],
-            'expected' => ['root' => ['element' => "Texto\x09 con tab"]],
+            'data' => ['root' => ['element' => "Text\x09 with tab"]],
+            'expected' => ['root' => ['element' => "Text\x09 with tab"]],
             'expectedException' => null,
         ],
         'line_feed' => [
-            'data' => ['root' => ['element' => "Texto\x0A con LF"]],
-            'expected' => ['root' => ['element' => "Texto\x0A con LF"]],
+            'data' => ['root' => ['element' => "Text\x0A with LF"]],
+            'expected' => ['root' => ['element' => "Text\x0A with LF"]],
             'expectedException' => null,
         ],
         'carriage_return' => [
-            'data' => ['root' => ['element' => "Texto\x0D con CR"]],
-            'expected' => ['root' => ['element' => "Texto\x0A con CR"]],
+            'data' => ['root' => ['element' => "Text\x0D with CR"]],
+            'expected' => ['root' => ['element' => "Text\x0A with CR"]],
             'expectedException' => null,
         ],
         'space_character' => [
-            'data' => ['root' => ['element' => "Texto\x20 con espacio"]],
-            'expected' => ['root' => ['element' => "Texto\x20 con espacio"]],
+            'data' => ['root' => ['element' => "Text\x20 with space"]],
+            'expected' => ['root' => ['element' => "Text\x20 with space"]],
             'expectedException' => null,
         ],
         'mixed_whitespace' => [
-            'data' => ['root' => ['element' => "Texto\x09\x0A\x0D\x20 con espacios especiales"]],
-            'expected' => ['root' => ['element' => "Texto\x09\x0A\x0A\x20 con espacios especiales"]],
+            'data' => ['root' => ['element' => "Text\x09\x0A\x0D\x20 with spaces special"]],
+            'expected' => ['root' => ['element' => "Text\x09\x0A\x0A\x20 with spaces special"]],
             'expectedException' => null,
         ],
     ],
@@ -277,19 +277,19 @@ return [
         // NOTE: C14NEncoded() converts to ISO-8859-1 if the encoding is ISO-8859-1,
         // so accented characters become substitution characters.
         'accented_chars_encoding' => [
-            'data' => ['root' => ['element' => 'Árbol con ñ y áéíóú']],
-            'expected' => '<root><element>' . 'Árbol con ñ y áéíóú' . '</element></root>',
+            'data' => ['root' => ['element' => 'Árbol with ñ and áéíóú']],
+            'expected' => '<root><element>' . 'Árbol with ñ and áéíóú' . '</element></root>',
             'expectedException' => null,
         ],
         'special_chars_encoding' => [
-            'data' => ['root' => ['element' => 'Texto con & < > " \'']],
-            'expected' => '<root><element>Texto con &amp; &lt; &gt; &quot; &apos;</element></root>',
+            'data' => ['root' => ['element' => 'Text with & < > " \'']],
+            'expected' => '<root><element>Text with &amp; &lt; &gt; &quot; &apos;</element></root>',
             'expectedException' => null,
         ],
         'mixed_chars_encoding' => [
-            'data' => ['root' => ['element' => 'Árbol con ñ y & < > " \'']],
+            'data' => ['root' => ['element' => 'Árbol with ñ and & < > " \'']],
             'encoding' => 'ISO-8859-1',
-            'expected' => '<root><element>' . mb_convert_encoding('Árbol con ñ y', 'ISO-8859-1', 'UTF-8') . ' &amp; &lt; &gt; &quot; &apos;</element></root>',
+            'expected' => '<root><element>' . mb_convert_encoding('Árbol with ñ and', 'ISO-8859-1', 'UTF-8') . ' &amp; &lt; &gt; &quot; &apos;</element></root>',
             'expectedException' => null,
         ],
     ],
@@ -310,7 +310,7 @@ return [
                         ],
                         'Emisor' => [
                             'RUTEmisor' => '76192083-9',
-                            'RznSoc' => 'Empresa con áéíóú ñ',
+                            'RznSoc' => 'Company with áéíóú ñ',
                         ],
                     ],
                 ],
@@ -327,7 +327,7 @@ return [
                         ],
                         'Emisor' => [
                             'RUTEmisor' => '76192083-9',
-                            'RznSoc' => 'Empresa con áéíóú ñ',
+                            'RznSoc' => 'Company with áéíóú ñ',
                         ],
                     ],
                 ],
@@ -340,8 +340,8 @@ return [
                 'Documento' => [
                     '@attributes' => ['ID' => 'F33T1'],
                     'Detalle' => [
-                        'NmbItem' => 'Producto con áéíóú ñ & < > " \'',
-                        'DscItem' => 'Descripción con caracteres especiales',
+                        'NmbItem' => 'Product with áéíóú ñ & < > " \'',
+                        'DscItem' => 'Description with characters special',
                     ],
                 ],
             ]],
@@ -350,8 +350,8 @@ return [
                 'Documento' => [
                     '@attributes' => ['ID' => 'F33T1'],
                     'Detalle' => [
-                        'NmbItem' => 'Producto con áéíóú ñ & < > " \'',
-                        'DscItem' => 'Descripción con caracteres especiales',
+                        'NmbItem' => 'Product with áéíóú ñ & < > " \'',
+                        'DscItem' => 'Description with characters special',
                     ],
                 ],
             ]],

@@ -20,6 +20,8 @@ return [
         'Error al cargar el XML.',
     'Failed to load the XML: {errors}' =>
         'Error al cargar el XML: {errors}',
+    'The element does not belong to an XML document.' =>
+        'El elemento no pertenece a un documento XML.',
     'The XML could not be converted to text.' =>
         'No fue posible convertir el XML a texto.',
     'The XML declaration could not be removed.' =>
@@ -60,6 +62,12 @@ return [
     // XmlEncoder.
     'The type of data of the value entered for the attribute "{attribute}" of the node "{node}" is incorrect (cannot be an array). The value is: {value}' =>
         'El tipo de dato del valor ingresado para el atributo "{attribute}" del nodo "{node}" es incorrecto (no puede ser un arreglo). El valor es: {value}',
+    'An XML document can only have one root element. There are {count}: {names}.' =>
+        'Un documento XML solo puede tener un elemento raíz. Hay {count}: {names}.',
+    'A text can not be written outside of an element.' =>
+        'Un texto no se puede escribir fuera de un elemento.',
+    'A comment can not have two hyphens in a row nor end with a hyphen: {comment}' =>
+        'Un comentario no puede tener dos guiones seguidos ni terminar con un guion: {comment}',
     'The name of a node or an attribute must be text, {name} given.' =>
         'El nombre de un nodo o de un atributo debe ser texto, se entregó {name}.',
     'The value of "{name}" can not be written as text, {type} given.' =>
