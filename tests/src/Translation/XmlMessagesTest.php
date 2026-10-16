@@ -10,7 +10,7 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
-namespace Derafu\TestsXml;
+namespace Derafu\TestsXml\Translation;
 
 use Derafu\Translation\Lint\TranslationAudit;
 use Derafu\Xml\Translation\XmlTranslationResourceProvider;
@@ -32,7 +32,7 @@ final class XmlMessagesTest extends TestCase
     public function testThePackageIsTranslated(): void
     {
         $report = (new TranslationAudit())->audit(
-            dirname(__DIR__, 2) . '/src',
+            dirname(__DIR__, 3) . '/src',
             new XmlTranslationResourceProvider()
         );
 
