@@ -182,18 +182,18 @@ final class XmlDocument implements XmlDocumentInterface
         $status = $this->dom->loadXml($source, $options);
 
         // Get errors, clear them and restore the libxml error state.
-        $errors = libxml_get_errors();
+        $errors = XmlError::fromLibxmlErrors(libxml_get_errors());
         libxml_clear_errors();
         libxml_use_internal_errors($useInternalErrors);
 
         if (!$status) {
-            $texts = XmlHelper::libxmlErrorsToText($errors);
+            $main = XmlError::main($errors);
 
             throw new XmlParseException(
-                $texts === []
+                $main === null
                     ? 'Failed to load the XML.'
-                    : ['Failed to load the XML: {errors}', 'errors' => implode(' ', $texts)],
-                errors: $texts
+                    : ['Failed to load the XML: {error}', 'error' => $main],
+                errors: $errors
             );
         }
 

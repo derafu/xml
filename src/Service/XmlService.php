@@ -53,9 +53,8 @@ final class XmlService implements XmlServiceInterface
      */
     public function validate(
         XmlDocumentInterface $xml,
-        ?string $schemaPath = null,
-        array $translations = []
+        ?string $schemaPath = null
     ): void {
-        $this->validator->validate($xml, $schemaPath, $translations);
+        $this->validator->validate($xml, $schemaPath);
     }
 }

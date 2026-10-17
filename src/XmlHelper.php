@@ -20,7 +20,6 @@ use DOMNameSpaceNode;
 use DOMNode;
 use DOMNodeList;
 use DOMXPath;
-use LibXMLError;
 
 /**
  * Class with utilities to work with XML strings.
@@ -90,40 +89,22 @@ final class XmlHelper
 
         $xml = $node->C14N($exclusive, $withComments, $xpath, $nsPrefixes);
 
-        $errors = libxml_get_errors();
+        $errors = XmlError::fromLibxmlErrors(libxml_get_errors());
         libxml_clear_errors();
         libxml_use_internal_errors($useInternalErrors);
 
         if ($xml === false) {
+            $main = XmlError::main($errors);
+
             throw new XmlException(
-                'The XML could not be canonicalized.',
-                errors: self::libxmlErrorsToText($errors)
+                $main === null
+                    ? 'The XML could not be canonicalized.'
+                    : ['The XML could not be canonicalized: {error}', 'error' => $main],
+                errors: $errors
             );
         }
 
         return $xml;
-    }
-
-    /**
-     * Describes the errors of libxml as text, one text for each error.
-     *
-     * @param array<int, LibXMLError> $errors Errors of libxml.
-     * @return list<string> The errors, as text.
-     */
-    public static function libxmlErrorsToText(array $errors): array
-    {
-        return array_values(array_map(
-            fn (LibXMLError $error) => sprintf(
-                'Error %s: %s in line %d, column %d (Code: %d).',
-                $error->level === LIBXML_ERR_WARNING ? 'Warning' :
-                ($error->level === LIBXML_ERR_ERROR ? 'Error' : 'Fatal'),
-                trim($error->message),
-                $error->line,
-                $error->column,
-                $error->code
-            ),
-            $errors
-        ));
     }
 
     /**

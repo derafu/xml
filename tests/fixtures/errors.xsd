@@ -1,0 +1,40 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+ <xs:simpleType name="Pat"><xs:restriction base="xs:string"><xs:pattern value="[A-Z]{3}"/></xs:restriction></xs:simpleType>
+ <xs:simpleType name="Enu"><xs:restriction base="xs:string"><xs:enumeration value="a"/><xs:enumeration value="b"/></xs:restriction></xs:simpleType>
+ <xs:simpleType name="Len"><xs:restriction base="xs:string"><xs:length value="3"/></xs:restriction></xs:simpleType>
+ <xs:simpleType name="Min"><xs:restriction base="xs:string"><xs:minLength value="2"/></xs:restriction></xs:simpleType>
+ <xs:simpleType name="Max"><xs:restriction base="xs:string"><xs:maxLength value="4"/></xs:restriction></xs:simpleType>
+ <xs:simpleType name="Rng"><xs:restriction base="xs:integer"><xs:minInclusive value="1"/><xs:maxInclusive value="10"/></xs:restriction></xs:simpleType>
+ <xs:simpleType name="Exc"><xs:restriction base="xs:integer"><xs:minExclusive value="1"/><xs:maxExclusive value="10"/></xs:restriction></xs:simpleType>
+ <xs:simpleType name="Dig"><xs:restriction base="xs:decimal"><xs:totalDigits value="3"/><xs:fractionDigits value="1"/></xs:restriction></xs:simpleType>
+ <xs:simpleType name="Lst"><xs:list itemType="xs:integer"/></xs:simpleType>
+ <xs:simpleType name="Uni"><xs:union memberTypes="xs:integer xs:boolean"/></xs:simpleType>
+ <xs:element name="root"><xs:complexType>
+  <xs:sequence>
+   <xs:element name="pat" type="Pat" minOccurs="0"/>
+   <xs:element name="enu" type="Enu" minOccurs="0"/>
+   <xs:element name="len" type="Len" minOccurs="0"/>
+   <xs:element name="min" type="Min" minOccurs="0"/>
+   <xs:element name="max" type="Max" minOccurs="0"/>
+   <xs:element name="rng" type="Rng" minOccurs="0"/>
+   <xs:element name="exc" type="Exc" minOccurs="0"/>
+   <xs:element name="dig" type="Dig" minOccurs="0"/>
+   <xs:element name="lst" type="Lst" minOccurs="0"/>
+   <xs:element name="uni" type="Uni" minOccurs="0"/>
+   <xs:element name="int" type="xs:integer" minOccurs="0"/>
+   <xs:element name="dec" type="xs:decimal" minOccurs="0"/>
+   <xs:element name="date" type="xs:date" minOccurs="0"/>
+   <xs:element name="time" type="xs:dateTime" minOccurs="0"/>
+   <xs:element name="bool" type="xs:boolean" minOccurs="0"/>
+   <xs:element name="fix" type="xs:string" fixed="x" minOccurs="0"/>
+   <xs:element name="emp"><xs:complexType/></xs:element>
+   <xs:element name="elo"><xs:complexType><xs:sequence><xs:element name="c" type="xs:string"/></xs:sequence></xs:complexType></xs:element>
+   <xs:element name="txt" type="xs:string" minOccurs="0" maxOccurs="2"/>
+   <xs:element name="chs" minOccurs="0"><xs:complexType><xs:choice><xs:element name="x"/><xs:element name="y"/></xs:choice></xs:complexType></xs:element>
+   <xs:element name="att" minOccurs="0"><xs:complexType><xs:attribute name="req" type="xs:string" use="required"/><xs:attribute name="fx" type="xs:string" fixed="v"/><xs:attribute name="n" type="xs:integer"/><xs:attribute name="pro" use="prohibited"/></xs:complexType></xs:element>
+   <xs:element name="nil" type="xs:string" nillable="true" minOccurs="0"/>
+  </xs:sequence>
+ </xs:complexType>
+ <xs:unique name="u"><xs:selector xpath="txt"/><xs:field xpath="."/></xs:unique>
+ </xs:element>
+</xs:schema>

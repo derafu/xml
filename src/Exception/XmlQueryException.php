@@ -14,6 +14,7 @@ namespace Derafu\Xml\Exception;
 
 use Derafu\Translation\Contract\TranslatableInterface;
 use Derafu\Xml\Contract\XmlDocumentInterface;
+use Derafu\Xml\XmlError;
 use Throwable;
 
 /**
@@ -33,8 +34,8 @@ class XmlQueryException extends XmlException
      * exception message.
      * @param int $code The exception code (optional).
      * @param Throwable|null $previous The previous exception (optional).
-     * @param list<string> $errors The errors that explain the exception, as
-     * text (optional).
+     * @param list<XmlError> $errors The errors of libxml that explain the
+     * exception (optional).
      * @param XmlDocumentInterface|null $xmlDocument The XML document that
      * caused the exception or `null` if it is not present.
      * @param string|null $xpathExpression The XPath expression that caused the

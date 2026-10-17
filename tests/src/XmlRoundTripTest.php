@@ -17,11 +17,13 @@ use Derafu\Xml\Contract\XmlDocumentInterface;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\Service\XmlEncoder;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
 use Derafu\Xml\XmlHelper;
 use DOMDocument;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -49,6 +51,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlEncoder::class)]
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlHelper::class)]
+#[UsesClass(XmlError::class)]
 final class XmlRoundTripTest extends TestCase
 {
     /**

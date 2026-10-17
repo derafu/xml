@@ -15,7 +15,10 @@ namespace Derafu\TestsXml;
 use Derafu\Xml\Exception\XmlException;
 use Derafu\Xml\Service\XmlValidator;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
+use Derafu\Xml\XmlErrorExplainer;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -25,6 +28,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlValidator::class)]
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlException::class)]
+#[UsesClass(XmlError::class)]
+#[UsesClass(XmlErrorExplainer::class)]
 final class XmlValidatorTest extends TestCase
 {
     private string $schemaPath;
@@ -106,21 +111,9 @@ final class XmlValidatorTest extends TestCase
             $this->fail('An XML that is not valid was accepted.');
         } catch (XmlException $e) {
             $this->assertCount(1, $e->getErrors());
-            $this->assertStringContainsString("Field 'wrong' (line 1): was not expected", $e->getErrors()[0]);
-            $this->assertStringNotContainsString('{urn:x}', $e->getErrors()[0]);
+            $this->assertStringContainsString("Line 1, column 0: Element 'wrong': This element is not expected.", (string) $e->getErrors()[0]);
+            $this->assertStringNotContainsString('{urn:x}', (string) $e->getErrors()[0]);
             $this->assertSame($document, $e->getXmlDocument());
-        }
-    }
-
-    public function testTheTranslationsThatAreGivenAreApplied(): void
-    {
-        $document = $this->document('<wrong>Value</wrong>');
-
-        try {
-            (new XmlValidator())->validate($document, $this->schemaPath, ['was not expected' => 'WAS NOT EXPECTED']);
-            $this->fail('An XML that is not valid was accepted.');
-        } catch (XmlException $e) {
-            $this->assertStringContainsString('WAS NOT EXPECTED', $e->getErrors()[0]);
         }
     }
 }

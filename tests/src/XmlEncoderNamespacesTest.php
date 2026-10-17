@@ -15,6 +15,7 @@ namespace Derafu\TestsXml;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\Service\XmlEncoder;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
 use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
 use DOMAttr;
@@ -22,6 +23,7 @@ use DOMDocument;
 use DOMXPath;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProviderExternal;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -35,6 +37,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XPathQuery::class)]
+#[UsesClass(XmlError::class)]
 final class XmlEncoderNamespacesTest extends TestCase
 {
     private const XSI = 'http://www.w3.org/2001/XMLSchema-instance';

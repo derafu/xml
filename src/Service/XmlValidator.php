@@ -12,10 +12,11 @@ declare(strict_types=1);
 
 namespace Derafu\Xml\Service;
 
+use Derafu\Translation\TranslatableList;
 use Derafu\Xml\Contract\XmlDocumentInterface;
 use Derafu\Xml\Contract\XmlValidatorInterface;
 use Derafu\Xml\Exception\XmlException;
-use LibXMLError;
+use Derafu\Xml\XmlError;
 
 /**
  * Class for the validation of XML and error handling.
@@ -23,62 +24,11 @@ use LibXMLError;
 final class XmlValidator implements XmlValidatorInterface
 {
     /**
-     * Default translations, and transformations, of the errors of libxml.
-     *
-     * The objective is to simplify the "technical" messages of libxml and leave
-     * them simpler so that a non-technical human can understand them more
-     * easily.
-     *
-     * @var array<string, string>
-     */
-    private array $defaultLibxmlTranslations = [
-        '\': '
-            => '\' (line %(line)s): ',
-        ': [facet \'pattern\'] The value'
-            => ': has the value',
-        ': This element is not expected. Expected is one of'
-            => ': was not expected, the expected was one of the following',
-        ': This element is not expected. Expected is'
-            => ': was not expected, the expected was',
-        'is not accepted by the pattern'
-            => 'is not valid according to the regular expression (pattern)',
-        'is not a valid value of the local atomic type'
-            => 'is not a valid value for the field type',
-        'is not a valid value of the atomic type'
-            => 'is not a valid value for the field type',
-        ': [facet \'maxLength\'] The value has a length of '
-            => ': the value of the field has a length of ',
-        '; this exceeds the allowed maximum length of '
-            => ' characters exceeding the maximum allowed length of ',
-        ': [facet \'enumeration\'] The value '
-            => ': the value ',
-        'is not an element of the set'
-            => 'is not valid, it must be one of the following values',
-        '[facet \'minLength\'] The value has a length of'
-            => 'the value of the field has a length of ',
-        '; this underruns the allowed minimum length of'
-            => ' and the minimum required length is',
-        'Missing child element(s). Expected is'
-            => 'must have inside, lower level, the field',
-        'Character content other than whitespace is not allowed because the content type is \'element-only\''
-            => 'the value of the field is invalid',
-        'Element'
-            => 'Field',
-        ' ( '
-            => ' \'',
-        ' ).'
-            => '\'.',
-        'No matching global declaration available for the validation root'
-            => 'The root node of the XML does not match what is expected in the schema definition',
-    ];
-
-    /**
      * {@inheritDoc}
      */
     public function validate(
         XmlDocumentInterface $xml,
-        ?string $schemaPath = null,
-        array $translations = []
+        ?string $schemaPath = null
     ): void {
         // Determine $schemaPath if it was not passed.
         if ($schemaPath === null) {
@@ -94,18 +44,12 @@ final class XmlValidator implements XmlValidatorInterface
         $isValid = $xml->getDomDocument()->schemaValidate($schemaPath);
 
         // Get errors, clear them and restore the state of errors of libxml.
-        $errors = libxml_get_errors();
+        $errors = XmlError::fromLibxmlErrors(libxml_get_errors());
         libxml_clear_errors();
         libxml_use_internal_errors($useInternalErrors);
 
-        // If the XML is not valid, throw an exception with the translated errors.
+        // If the XML is not valid, throw an exception with the errors.
         if (!$isValid) {
-            $errors = !empty($errors)
-                ? $this->translateLibxmlErrors($errors, array_merge($translations, [
-                    '{' . $xml->getNamespace() . '}' => '',
-                ]))
-                : []
-            ;
             throw new XmlException(
                 $errors === []
                     ? [
@@ -115,44 +59,12 @@ final class XmlValidator implements XmlValidatorInterface
                     : [
                         'The XML validation failed using the schema {schema}: {errors}',
                         'schema' => basename($schemaPath),
-                        'errors' => implode(' ', $errors),
+                        'errors' => TranslatableList::separated($errors),
                     ],
                 errors: $errors,
                 xmlDocument: $xml
             );
         }
-    }
-
-    /**
-     * Translates the errors of libxml to simpler messages for humans.
-     *
-     * @param array<int, LibXMLError> $errors Array with the original errors of libxml.
-     * @param array<string, string> $translations Additional translations to apply.
-     * @return list<string> Array with the translated errors.
-     */
-    private function translateLibxmlErrors(
-        array $errors,
-        array $translations = []
-    ): array {
-        // Define the translation rules.
-        $replace = array_merge($this->defaultLibxmlTranslations, $translations);
-
-        // Translate the errors.
-        $translatedErrors = [];
-        foreach ($errors as $error) {
-            $translatedErrors[] = str_replace(
-                ['%(line)s'],
-                [(string) $error->line],
-                str_replace(
-                    array_keys($replace),
-                    array_values($replace),
-                    trim($error->message)
-                )
-            );
-        }
-
-        // Return the translated errors.
-        return $translatedErrors;
     }
 
     /**

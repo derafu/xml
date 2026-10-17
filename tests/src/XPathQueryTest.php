@@ -15,11 +15,14 @@ namespace Derafu\TestsXml;
 use Derafu\Xml\Exception\XmlParseException;
 use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
+use Derafu\Xml\XmlErrorExplainer;
 use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
 use DOMDocument;
 use DOMNode;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XPathQuery::class)]
@@ -27,6 +30,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlQueryException::class)]
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlHelper::class)]
+#[UsesClass(XmlError::class)]
+#[UsesClass(XmlErrorExplainer::class)]
 class XPathQueryTest extends TestCase
 {
     private string $validXml;

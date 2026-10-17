@@ -17,9 +17,11 @@ use Derafu\Xml\Exception\XmlEncoderException;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\Service\XmlEncoder;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
 use Derafu\Xml\XmlHelper;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Stringable;
@@ -33,6 +35,7 @@ use Stringable;
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlEncoderException::class)]
 #[CoversClass(XmlHelper::class)]
+#[UsesClass(XmlError::class)]
 final class XmlEncoderTest extends TestCase
 {
     /**

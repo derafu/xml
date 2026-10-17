@@ -15,8 +15,10 @@ namespace Derafu\TestsXml;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\Service\XmlEncoder;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
 use Derafu\Xml\XmlHelper;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
@@ -35,6 +37,7 @@ use Random\Randomizer;
 #[CoversClass(XmlDecoder::class)]
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlHelper::class)]
+#[UsesClass(XmlError::class)]
 final class XmlEncoderFuzzTest extends TestCase
 {
     private const ITERATIONS = 300;

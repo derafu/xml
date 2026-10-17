@@ -15,10 +15,12 @@ namespace Derafu\TestsXml;
 use Derafu\Xml\Exception\XmlException;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
 use Derafu\Xml\XmlHelper;
 use DOMElement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -29,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlException::class)]
 #[CoversClass(XmlHelper::class)]
+#[UsesClass(XmlError::class)]
 final class XmlDecoderTest extends TestCase
 {
     /**

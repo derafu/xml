@@ -15,17 +15,22 @@ namespace Derafu\TestsXml;
 use Derafu\Xml\Exception\XmlException;
 use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
+use Derafu\Xml\XmlErrorExplainer;
 use Derafu\Xml\XmlHelper;
 use DOMDocument;
 use DOMNode;
 use DOMNodeList;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XmlQueryException::class)]
 #[CoversClass(XmlException::class)]
 #[CoversClass(XmlDocument::class)]
+#[UsesClass(XmlError::class)]
+#[UsesClass(XmlErrorExplainer::class)]
 class XmlHelperTest extends TestCase
 {
     public function testXpathOverAnXmlThatIsAString(): void
@@ -252,7 +257,7 @@ class XmlHelperTest extends TestCase
             XmlHelper::canonicalize($document);
             $this->fail('It should have failed.');
         } catch (XmlException $e) {
-            $this->assertSame('The XML could not be canonicalized.', $e->getMessage());
+            $this->assertStringStartsWith('The XML could not be canonicalized: ', $e->getMessage());
             $this->assertStringContainsString('Relative namespace', implode(' ', $e->getErrors()));
         }
     }

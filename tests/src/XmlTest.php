@@ -17,11 +17,14 @@ use Derafu\Xml\Exception\XmlParseException;
 use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
+use Derafu\Xml\XmlErrorExplainer;
 use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlDocument::class)]
@@ -31,6 +34,8 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XPathQuery::class)]
 #[CoversClass(XmlQueryException::class)]
 #[CoversClass(XmlParseException::class)]
+#[UsesClass(XmlError::class)]
+#[UsesClass(XmlErrorExplainer::class)]
 class XmlTest extends TestCase
 {
     /**
@@ -668,7 +673,7 @@ class XmlTest extends TestCase
             $canonicalize($doc);
             $this->fail('It should have failed.');
         } catch (XmlException $e) {
-            $this->assertSame('The XML could not be canonicalized.', $e->getMessage());
+            $this->assertSame('The XML could not be canonicalized: Relative namespace URI is invalid here', $e->getMessage());
             // What libxml said is in the errors, it is not emitted as a warning.
             $this->assertStringContainsString('Relative namespace', implode(' ', $e->getErrors()));
         }

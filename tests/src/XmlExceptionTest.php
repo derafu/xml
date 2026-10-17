@@ -19,8 +19,12 @@ use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\Service\XmlValidator;
 use Derafu\Xml\Translation\XmlTranslationResourceProvider;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
+use Derafu\Xml\XmlErrorExplainer;
+use Derafu\Xml\XmlErrorLevel;
 use Derafu\Xml\XmlHelper;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Component\Translation\Translator;
@@ -38,6 +42,8 @@ use Symfony\Component\Translation\Translator;
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XmlTranslationResourceProvider::class)]
+#[UsesClass(XmlError::class)]
+#[UsesClass(XmlErrorExplainer::class)]
 final class XmlExceptionTest extends TestCase
 {
     private function translator(): Translator
@@ -68,9 +74,13 @@ final class XmlExceptionTest extends TestCase
 
     public function testTheErrorsAreDataAndNotPartOfTheMessage(): void
     {
-        $exception = new XmlException('Failed to load the XML.', errors: ['Error 1', 'Error 2']);
+        $errors = [
+            new XmlError(XmlErrorLevel::Fatal, 76, 1, 2, 'Error 1'),
+            new XmlError(XmlErrorLevel::Error, 201, 3, 4, 'Error 2'),
+        ];
+        $exception = new XmlException('Failed to load the XML.', errors: $errors);
 
-        $this->assertSame(['Error 1', 'Error 2'], $exception->getErrors());
+        $this->assertSame($errors, $exception->getErrors());
         $this->assertSame('Failed to load the XML.', $exception->getMessage());
         $this->assertSame('Error al cargar el XML.', $exception->trans($this->translator()));
     }
@@ -102,9 +112,14 @@ final class XmlExceptionTest extends TestCase
         } catch (XmlParseException $e) {
             $this->assertNotSame([], $e->getErrors());
             $this->assertStringStartsWith('Failed to load the XML: ', $e->getMessage());
-            $this->assertStringContainsString($e->getErrors()[0], $e->getMessage());
-            $this->assertStringStartsWith('Error al cargar el XML: ', $e->trans($this->translator()));
-            $this->assertStringContainsString($e->getErrors()[0], $e->trans($this->translator()));
+            $this->assertSame(
+                'Failed to load the XML: Line 1, column 24: Opening and ending tag mismatch: unclosed (line 1) and root',
+                $e->getMessage()
+            );
+            $this->assertSame(
+                'Error al cargar el XML: Línea 1, columna 24: La etiqueta de apertura unclosed (línea 1) no coincide con la de cierre root',
+                $e->trans($this->translator())
+            );
         }
     }
 
@@ -133,7 +148,7 @@ final class XmlExceptionTest extends TestCase
             $schema = basename($schemaPath);
             $this->assertNotSame([], $e->getErrors());
             $this->assertStringStartsWith('The XML validation failed using the schema ' . $schema . ': ', $e->getMessage());
-            $this->assertStringContainsString($e->getErrors()[0], $e->getMessage());
+            $this->assertStringContainsString((string) $e->getErrors()[0], $e->getMessage());
             $this->assertStringStartsWith('La validación del XML falló usando el esquema ' . $schema . ': ', $e->trans($this->translator()));
         } finally {
             unlink($schemaPath);

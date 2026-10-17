@@ -26,12 +26,10 @@ interface XmlValidatorInterface
      * @param string|null $schemaPath The path to the XSD file of the schema
      * against which to validate. If not specified, it is obtained from the
      * XML document if it is defined in "xsi:schemaLocation".
-     * @param array<string, string> $translations Additional translations to apply.
      * @throws XmlException If the XML is not valid according to its schema.
      */
     public function validate(
         XmlDocumentInterface $xml,
-        ?string $schemaPath = null,
-        array $translations = []
+        ?string $schemaPath = null
     ): void;
 }

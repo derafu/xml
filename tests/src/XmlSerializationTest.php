@@ -14,15 +14,18 @@ namespace Derafu\TestsXml;
 
 use Derafu\Xml\Service\XmlDecoder;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
 use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlDocument::class)]
 #[CoversClass(XmlDecoder::class)]
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XPathQuery::class)]
+#[UsesClass(XmlError::class)]
 class XmlSerializationTest extends TestCase
 {
     /**

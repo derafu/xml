@@ -17,8 +17,10 @@ use Derafu\Xml\Service\XmlEncoder;
 use Derafu\Xml\Service\XmlService;
 use Derafu\Xml\Service\XmlValidator;
 use Derafu\Xml\XmlDocument;
+use Derafu\Xml\XmlError;
 use Derafu\Xml\XmlHelper;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlDocument::class)]
@@ -26,6 +28,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlDecoder::class)]
 #[CoversClass(XmlEncoder::class)]
 #[CoversClass(XmlHelper::class)]
+#[UsesClass(XmlError::class)]
 class XmlEncodingTest extends TestCase
 {
     private XmlService $xmlService;
