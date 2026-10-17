@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Xml\Contract;
 
+use Derafu\Xml\Exception\XmlException;
 use DOMDocument;
 use DOMElement;
 
@@ -49,12 +50,13 @@ interface DOMDocumentInterface
      * @param bool $withComments Includes comments in the output if `true`.
      * @param array<int|string, mixed>|null $xpath Optional list of nodes to include.
      * @param array<int|string, string>|null $nsPrefixes Namespace prefixes to consider.
-     * @return string|false Canonicalized XML or `false` on error.
+     * @return string Canonicalized XML.
+     * @throws XmlException If it can not be canonicalized.
      */
     public function C14N(
         bool $exclusive = false,
         bool $withComments = false,
         ?array $xpath = null,
         ?array $nsPrefixes = null
-    ): string|false;
+    ): string;
 }

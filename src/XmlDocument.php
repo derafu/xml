@@ -247,15 +247,11 @@ final class XmlDocument implements XmlDocumentInterface
                     'xpath' => $xpath,
                 ]);
             }
-            $xml = $node->C14N();
+            $xml = XmlHelper::canonicalize($node);
         }
         // Use C14N() for the entire document if no XPath is specified.
         else {
-            $xml = $this->dom->C14N();
-        }
-
-        if ($xml === false) {
-            throw new XmlException('The XML could not be canonicalized.');
+            $xml = $this->C14N();
         }
 
         // Fix XML entities.
@@ -305,12 +301,7 @@ final class XmlDocument implements XmlDocumentInterface
             return null;
         }
 
-        $xml = $signatureElement->C14N();
-        if ($xml === false) {
-            throw new XmlException('The XML could not be canonicalized.');
-        }
-
-        return $xml;
+        return XmlHelper::canonicalize($signatureElement);
     }
 
     /**
@@ -387,8 +378,8 @@ final class XmlDocument implements XmlDocumentInterface
         bool $withComments = false,
         ?array $xpath = null,
         ?array $nsPrefixes = null
-    ): string|false {
-        return $this->dom->C14N($exclusive, $withComments, $xpath, $nsPrefixes);
+    ): string {
+        return XmlHelper::canonicalize($this->dom, $exclusive, $withComments, $xpath, $nsPrefixes);
     }
 
     /**

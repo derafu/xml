@@ -61,6 +61,50 @@ final class XmlHelper
     }
 
     /**
+     * Canonicalizes (C14N) a document or a node.
+     *
+     * `DOMNode::C14N()` gives `false` when libxml can not canonicalize, for
+     * example when a namespace is a relative URI (the Canonical XML
+     * recommendation requires it to fail). That is an error, and here it is an
+     * exception that has what libxml said, instead of a `false` that whoever
+     * calls it has to remember to check. libxml does not emit warnings of PHP
+     * for it, and its state of errors is the one that it was.
+     *
+     * @param DOMNode $node The document, or the node, to canonicalize.
+     * @param bool $exclusive Indicates if exclusive canonicalization is used.
+     * @param bool $withComments Includes comments in the output if `true`.
+     * @param array<int|string, mixed>|null $xpath Optional list of nodes to include.
+     * @param array<int|string, string>|null $nsPrefixes Namespace prefixes to consider.
+     * @return string The canonicalized XML, in UTF-8.
+     * @throws XmlException If it can not be canonicalized.
+     */
+    public static function canonicalize(
+        DOMNode $node,
+        bool $exclusive = false,
+        bool $withComments = false,
+        ?array $xpath = null,
+        ?array $nsPrefixes = null
+    ): string {
+        $useInternalErrors = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        $xml = $node->C14N($exclusive, $withComments, $xpath, $nsPrefixes);
+
+        $errors = libxml_get_errors();
+        libxml_clear_errors();
+        libxml_use_internal_errors($useInternalErrors);
+
+        if ($xml === false) {
+            throw new XmlException(
+                'The XML could not be canonicalized.',
+                errors: self::libxmlErrorsToText($errors)
+            );
+        }
+
+        return $xml;
+    }
+
+    /**
      * Describes the errors of libxml as text, one text for each error.
      *
      * @param array<int, LibXMLError> $errors Errors of libxml.

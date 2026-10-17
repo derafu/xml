@@ -226,7 +226,6 @@ class XmlServiceTest extends TestCase
 
         $xml = $this->xmlService->encode($data);
         $xmlString = $xml->C14N();
-        $this->assertIsString($xmlString);
         $xmlString = XmlHelper::fixEntities($xmlString);
 
         // Validate content.
@@ -344,7 +343,6 @@ class XmlServiceTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml($xmlContent);
         $xmlString = $doc->C14N();
-        $this->assertIsString($xmlString);
         $xmlString = XmlHelper::fixEntities($xmlString);
 
         // Validate content.

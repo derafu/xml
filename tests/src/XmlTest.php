@@ -186,7 +186,6 @@ class XmlTest extends TestCase
 
         $canonicalXml = $doc->C14N();
 
-        $this->assertIsString($canonicalXml);
         $this->assertNotEmpty($canonicalXml);
         $expectedXml = "<root>\n    <element>Value</element>\n</root>";
         $this->assertStringContainsString($expectedXml, $canonicalXml);
@@ -649,6 +648,7 @@ class XmlTest extends TestCase
     public static function canonicalizationsThatFailProvider(): array
     {
         return [
+            'C14N' => [fn (XmlDocument $doc) => $doc->C14N()],
             'the document' => [fn (XmlDocument $doc) => $doc->C14NEncoded()],
             'a node, by its XPath' => [fn (XmlDocument $doc) => $doc->C14NEncoded('/*')],
             'the top level signature' => [fn (XmlDocument $doc) => $doc->getTopLevelSignatureC14N()],
@@ -664,21 +664,13 @@ class XmlTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml('<r xmlns="relative"><Signature xmlns="relative"><x/></Signature></r>');
 
-        // libxml also warns of the namespace that is a relative URI.
-        $warnings = [];
-        set_error_handler(function (int $number, string $message) use (&$warnings): bool {
-            $warnings[] = $message;
-
-            return true;
-        });
-
         try {
-            $this->expectException(XmlException::class);
-            $this->expectExceptionMessage('The XML could not be canonicalized.');
             $canonicalize($doc);
-        } finally {
-            restore_error_handler();
-            $this->assertStringContainsString('Relative namespace', implode(' ', $warnings));
+            $this->fail('It should have failed.');
+        } catch (XmlException $e) {
+            $this->assertSame('The XML could not be canonicalized.', $e->getMessage());
+            // What libxml said is in the errors, it is not emitted as a warning.
+            $this->assertStringContainsString('Relative namespace', implode(' ', $e->getErrors()));
         }
     }
 }

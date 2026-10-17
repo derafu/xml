@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\TestsXml;
 
+use Derafu\Xml\Exception\XmlException;
 use Derafu\Xml\Exception\XmlQueryException;
 use Derafu\Xml\XmlDocument;
 use Derafu\Xml\XmlHelper;
@@ -23,6 +24,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(XmlHelper::class)]
 #[CoversClass(XmlQueryException::class)]
+#[CoversClass(XmlException::class)]
 #[CoversClass(XmlDocument::class)]
 class XmlHelperTest extends TestCase
 {
@@ -198,5 +200,99 @@ class XmlHelperTest extends TestCase
         $result = XmlHelper::sanitize($input);
 
         $this->assertSame($expected, $result);
+    }
+
+    private const XML_THAT_CAN_NOT_BE_CANONICALIZED = '<r xmlns="relative"><b ID="B1"/></r>';
+
+    /**
+     * libxml loads it, with a notice that the namespace is a relative URI.
+     */
+    private function documentThatCanNotBeCanonicalized(): DOMDocument
+    {
+        $useInternalErrors = libxml_use_internal_errors(true);
+        $document = new DOMDocument();
+        $document->loadXML(self::XML_THAT_CAN_NOT_BE_CANONICALIZED);
+        libxml_clear_errors();
+        libxml_use_internal_errors($useInternalErrors);
+
+        return $document;
+    }
+
+    public function testCanonicalizeADocumentAndANode(): void
+    {
+        $document = new DOMDocument();
+        $document->loadXML('<r b="2" a="1"><!-- c --><x>1</x></r>');
+
+        $this->assertSame('<r a="1" b="2"><x>1</x></r>', XmlHelper::canonicalize($document));
+        $this->assertSame('<x>1</x>', XmlHelper::canonicalize($document->getElementsByTagName('x')->item(0) ?? $document));
+    }
+
+    public function testCanonicalizeWithTheOptionsOfC14n(): void
+    {
+        $document = new DOMDocument();
+        $document->loadXML('<r xmlns:p="urn:p"><!-- c --><x>1</x></r>');
+
+        $this->assertStringContainsString('<!-- c -->', XmlHelper::canonicalize($document, withComments: true));
+        $this->assertStringNotContainsString('<!-- c -->', XmlHelper::canonicalize($document));
+        // The exclusive one does not have the namespace that is not used.
+        $this->assertSame('<r><x>1</x></r>', XmlHelper::canonicalize($document, exclusive: true));
+        $this->assertSame('<r xmlns:p="urn:p"><x>1</x></r>', XmlHelper::canonicalize($document));
+    }
+
+    /**
+     * An XML whose namespace is a relative URI is loaded by libxml, but it can
+     * not be canonicalized: it is an error of the package, with what libxml
+     * said, and not a `false` that goes on as if it were the text.
+     */
+    public function testWhatCanNotBeCanonicalizedIsAnExceptionWithTheErrorsOfLibxml(): void
+    {
+        $document = $this->documentThatCanNotBeCanonicalized();
+
+        try {
+            XmlHelper::canonicalize($document);
+            $this->fail('It should have failed.');
+        } catch (XmlException $e) {
+            $this->assertSame('The XML could not be canonicalized.', $e->getMessage());
+            $this->assertStringContainsString('Relative namespace', implode(' ', $e->getErrors()));
+        }
+    }
+
+    public function testTheErrorsOfLibxmlAreNotEmittedAsWarningsAndTheStateOfLibxmlIsTheOneThatWas(): void
+    {
+        $document = $this->documentThatCanNotBeCanonicalized();
+        $warnings = [];
+        set_error_handler(function (int $number, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
+        });
+        $before = libxml_use_internal_errors(false);
+
+        try {
+            XmlHelper::canonicalize($document);
+        } catch (XmlException) {
+            // The error is tested above.
+        } finally {
+            $after = libxml_use_internal_errors($before);
+            restore_error_handler();
+        }
+
+        $this->assertSame([], $warnings);
+        $this->assertFalse($after);
+        $this->assertSame([], libxml_get_errors());
+    }
+
+    public function testTheStateOfLibxmlIsRestoredWhenItWasUsingInternalErrors(): void
+    {
+        $document = new DOMDocument();
+        $document->loadXML('<r/>');
+        $before = libxml_use_internal_errors(true);
+
+        try {
+            XmlHelper::canonicalize($document);
+            $this->assertTrue(libxml_use_internal_errors($before));
+        } finally {
+            libxml_use_internal_errors($before);
+        }
     }
 }
