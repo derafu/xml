@@ -116,17 +116,12 @@ final class XmlDocument implements XmlDocumentInterface
     }
 
     /**
-     * Gets the document element (the root) of the document, that must exist.
+     * {@inheritDoc}
      *
-     * It is the `getDocumentElement()` for what is asked to the document
-     * element: a document without it (it has no content yet) can not answer,
-     * so it is an error and not a `null` that would look like a value that is
-     * not there.
-     *
-     * @return DOMElement
-     * @throws XmlException If the document has no document element.
+     * It is also what the methods that ask something to the document element
+     * use (`getName()`, `getNamespace()`, `getSchema()`...).
      */
-    private function requireDocumentElement(): DOMElement
+    public function requireDocumentElement(): DOMElement
     {
         return $this->dom->documentElement
             ?? throw new XmlException('The XML document has no document element.')

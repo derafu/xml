@@ -415,7 +415,22 @@ class XmlTest extends TestCase
             'getNamespace' => ['getNamespace'],
             'getSchema' => ['getSchema'],
             'getTopLevelSignatureC14N' => ['getTopLevelSignatureC14N'],
+            'requireDocumentElement' => ['requireDocumentElement'],
         ];
+    }
+
+    /**
+     * What `getDocumentElement()` gives (a `DOMElement` or `null`) is the same
+     * element, but a document without it is an error and not a `null`: whoever
+     * asks for the element needs it, and has no `null` to check.
+     */
+    public function testTheDocumentElementThatIsRequiredIsTheRootElement(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root><child/></root>');
+
+        $this->assertSame($doc->getDocumentElement(), $doc->requireDocumentElement());
+        $this->assertSame('root', $doc->requireDocumentElement()->tagName);
     }
 
     #[DataProvider('methodsThatNeedTheRootProvider')]
@@ -621,5 +636,49 @@ class XmlTest extends TestCase
         $doc->loadXml($xmlContent);
 
         $xml = $doc->C14NEncoded('//nonexistent');
+    }
+
+    /**
+     * An XML whose namespace is a relative URI is loaded by libxml, but it can
+     * not be canonicalized (C14N): the document that can not be canonicalized
+     * is an error of the package, not a `false` that goes on as if it were the
+     * text.
+     *
+     * @return array<string, array{callable(XmlDocument): mixed}>
+     */
+    public static function canonicalizationsThatFailProvider(): array
+    {
+        return [
+            'the document' => [fn (XmlDocument $doc) => $doc->C14NEncoded()],
+            'a node, by its XPath' => [fn (XmlDocument $doc) => $doc->C14NEncoded('/*')],
+            'the top level signature' => [fn (XmlDocument $doc) => $doc->getTopLevelSignatureC14N()],
+        ];
+    }
+
+    /**
+     * @param callable(XmlDocument): mixed $canonicalize
+     */
+    #[DataProvider('canonicalizationsThatFailProvider')]
+    public function testWhatCanNotBeCanonicalizedIsAnException(callable $canonicalize): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<r xmlns="relative"><Signature xmlns="relative"><x/></Signature></r>');
+
+        // libxml also warns of the namespace that is a relative URI.
+        $warnings = [];
+        set_error_handler(function (int $number, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
+        });
+
+        try {
+            $this->expectException(XmlException::class);
+            $this->expectExceptionMessage('The XML could not be canonicalized.');
+            $canonicalize($doc);
+        } finally {
+            restore_error_handler();
+            $this->assertStringContainsString('Relative namespace', implode(' ', $warnings));
+        }
     }
 }

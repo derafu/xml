@@ -64,6 +64,19 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
     public function getDocumentElement(): ?DOMElement;
 
     /**
+     * Returns the root element instance of the document, that must exist.
+     *
+     * It is `getDocumentElement()` for who needs the element: a document
+     * without it (it has no content yet) MUST be reported with an
+     * `XmlException`, and MUST NOT be given as a `null` that would look like a
+     * value that is not there.
+     *
+     * @return DOMElement The root element instance of the document.
+     * @throws XmlException If the document has no document element.
+     */
+    public function requireDocumentElement(): DOMElement;
+
+    /**
      * Returns the name of the root tag of the XML.
      *
      * @return string The name of the root tag.
