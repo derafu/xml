@@ -33,7 +33,9 @@
         "friendsofphp/php-cs-fixer": "^3.95",
         "nikic/php-parser": "^5.9",
         "phpstan/phpstan": "^2.3",
-        "phpunit/phpunit": "^13.4"
+        "phpunit/phpunit": "^13.4",
+        "symfony/dependency-injection": "^8.1",
+        "symfony/config": "^8.1"
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",
