@@ -280,7 +280,11 @@ final readonly class XPathReader
 
         return $items === null
             ? null
-            : $this->parse($items, ValueType::listOf($item), $this->path($xpath));
+            : $this->parse(
+                $this->emptyAsStructure($items, $item),
+                ValueType::listOf($item),
+                $this->path($xpath)
+            );
     }
 
     /**
@@ -294,7 +298,7 @@ final readonly class XPathReader
      */
     public function getMapOf(string $xpath, ValueType $item): ?array
     {
-        return $this->getStructure($xpath, ValueType::mapOf($item));
+        return $this->getStructure($xpath, ValueType::mapOf($item), $item);
     }
 
     /**
@@ -308,7 +312,7 @@ final readonly class XPathReader
      */
     public function getArrayOf(string $xpath, ValueType $item): ?array
     {
-        return $this->getStructure($xpath, ValueType::arrayOf($item));
+        return $this->getStructure($xpath, ValueType::arrayOf($item), $item);
     }
 
     /**
@@ -414,7 +418,11 @@ final readonly class XPathReader
             throw $this->missing($this->path($xpath));
         }
 
-        return $this->parse($items, ValueType::listOf($item), $this->path($xpath));
+        return $this->parse(
+            $this->emptyAsStructure($items, $item),
+            ValueType::listOf($item),
+            $this->path($xpath)
+        );
     }
 
     /**
@@ -427,7 +435,7 @@ final readonly class XPathReader
      */
     public function requireMapOf(string $xpath, ValueType $item): array
     {
-        return $this->requireStructure($xpath, ValueType::mapOf($item));
+        return $this->requireStructure($xpath, ValueType::mapOf($item), $item);
     }
 
     /**
@@ -440,7 +448,7 @@ final readonly class XPathReader
      */
     public function requireArrayOf(string $xpath, ValueType $item): array
     {
-        return $this->requireStructure($xpath, ValueType::arrayOf($item));
+        return $this->requireStructure($xpath, ValueType::arrayOf($item), $item);
     }
 
     /**
@@ -763,17 +771,22 @@ final readonly class XPathReader
      *
      * @template T
      * @param ValueType<T> $type
+     * @param ValueType<mixed>|null $item The type of the values, if it is a structure of values.
      * @return T|null
      * @throws XmlQueryException If the value is not of the type.
      */
-    private function getStructure(string $xpath, ValueType $type): mixed
+    private function getStructure(string $xpath, ValueType $type, ?ValueType $item = null): mixed
     {
         $value = $this->find($xpath);
         if ($value === null) {
             return null;
         }
 
-        return $this->parse($value === '' ? [] : $value, $type, $this->path($xpath));
+        return $this->parse(
+            $this->structureOf($value, $item),
+            $type,
+            $this->path($xpath)
+        );
     }
 
     /**
@@ -782,17 +795,63 @@ final readonly class XPathReader
      *
      * @template T
      * @param ValueType<T> $type
+     * @param ValueType<mixed>|null $item The type of the values, if it is a structure of values.
      * @return T
      * @throws XmlQueryException If no node matches, or the value is not of the type.
      */
-    private function requireStructure(string $xpath, ValueType $type): mixed
+    private function requireStructure(string $xpath, ValueType $type, ?ValueType $item = null): mixed
     {
         $value = $this->find($xpath);
         if ($value === null) {
             throw $this->missing($this->path($xpath));
         }
 
-        return $this->parse($value === '' ? [] : $value, $type, $this->path($xpath));
+        return $this->parse(
+            $this->structureOf($value, $item),
+            $type,
+            $this->path($xpath)
+        );
+    }
+
+    /**
+     * Gives what a node found as the structure that is read: an empty element
+     * is `[]`, and in a structure whose values are of a structure type, so are
+     * its empty elements.
+     *
+     * @param string|array<array-key, mixed> $value
+     * @param ValueType<mixed>|null $item
+     * @return array<array-key, mixed>|string
+     */
+    private function structureOf(string|array $value, ?ValueType $item): array|string
+    {
+        if ($value === '') {
+            return [];
+        }
+
+        return is_array($value) && $item !== null
+            ? $this->emptyAsStructure($value, $item)
+            : $value;
+    }
+
+    /**
+     * Gives the items with their empty elements as `[]` when the items are of
+     * a structure type (`map`, `array` or `list`, with or without a type for
+     * their items), and as they are when they are of any other type.
+     *
+     * @param array<array-key, mixed> $items
+     * @param ValueType<mixed> $item
+     * @return array<array-key, mixed>
+     */
+    private function emptyAsStructure(array $items, ValueType $item): array
+    {
+        if (preg_match('/^(map|array|list)(<.*>)?$/', $item->name) !== 1) {
+            return $items;
+        }
+
+        return array_map(
+            static fn (mixed $value): mixed => $value === '' ? [] : $value,
+            $items
+        );
     }
 
     /**

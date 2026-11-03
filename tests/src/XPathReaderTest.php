@@ -564,6 +564,40 @@ class XPathReaderTest extends TestCase
         $this->assertSame([], $reader->requireArrayOf('//customs', ValueType::string()));
     }
 
+    public function testAnEmptyElementIsAnEmptyStructureInTheItemsOfAList(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r><item/><item><a>1</a></item><one/></r>');
+        $reader = $document->getReader();
+
+        $this->assertSame([[], ['a' => '1']], $reader->getListOf('//item', ValueType::map()));
+        $this->assertSame([[], ['a' => '1']], $reader->requireListOf('//item', ValueType::array()));
+        $this->assertSame([[]], $reader->getListOf('//one', ValueType::map()));
+        $this->assertSame([[]], $reader->requireListOf('//one', ValueType::array()));
+    }
+
+    public function testAnEmptyElementIsAnEmptyStructureInTheValuesOfAStructure(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r><x><e/><f><a>1</a></f></x></r>');
+        $reader = $document->getReader();
+
+        $this->assertSame(['e' => [], 'f' => ['a' => '1']], $reader->getMapOf('//x', ValueType::map()));
+        $this->assertSame(['e' => [], 'f' => ['a' => '1']], $reader->requireMapOf('//x', ValueType::map()));
+        $this->assertSame(['e' => [], 'f' => ['a' => '1']], $reader->getArrayOf('//x', ValueType::array()));
+        $this->assertSame(['e' => [], 'f' => ['a' => '1']], $reader->requireArrayOf('//x', ValueType::array()));
+    }
+
+    public function testAnEmptyElementIsAnEmptyStringInTheItemsThatAreNotStructures(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r><s/><s>x</s></r>');
+        $reader = $document->getReader();
+
+        $this->assertSame(['', 'x'], $reader->getListOf('//s', ValueType::string()));
+        $this->assertSame(['', 'x'], $reader->getStringList('//s'));
+    }
+
     public function testAnEmptyElementIsAnEmptyStringForTheGenericRead(): void
     {
         $reader = $this->reader();
