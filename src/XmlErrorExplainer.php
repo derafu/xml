@@ -50,7 +50,7 @@ final class XmlErrorExplainer
         return match (true) {
             $is(1, '[Ii]nternal error ?: (?<detail>.+)')
                 => new TranslatableMessage('Internal error: {detail}', ['detail' => $g['detail']], domain: 'errors'),
-            $is(1, 'Excessive depth in document: (?<depth>\d+) use XML_PARSE_HUGE option')
+            $is([1, 114], 'Excessive depth in document: (?<depth>\d+),? use XML_PARSE_HUGE option')
                 => new TranslatableMessage('Excessive depth in document: {depth}, use the XML_PARSE_HUGE option', ['depth' => $g['depth']], domain: 'errors'),
             $is(1955, 'Relative namespace UR is invalid here : (?<detail>.*)')
                 => new TranslatableMessage('Relative namespace URI is invalid here', domain: 'errors'),
@@ -76,7 +76,7 @@ final class XmlErrorExplainer
                 => new TranslatableMessage('EntityRef: expecting \';\'', domain: 'errors'),
             $is([26, 27], 'Entity \'(?<name>[^\']*)\' not defined')
                 => new TranslatableMessage('Entity \'\'{name}\'\' not defined', ['name' => $g['name']], domain: 'errors'),
-            $is(32, 'Unsupported encoding (?<encoding>.+)')
+            $is(32, 'Unsupported encoding:? (?<encoding>.+)')
                 => new TranslatableMessage('Unsupported encoding {encoding}', ['encoding' => $g['encoding']], domain: 'errors'),
             $is(34, 'String not closed expecting \" or \'')
                 => new TranslatableMessage('String not closed expecting " or \'', domain: 'errors'),
@@ -138,6 +138,8 @@ final class XmlErrorExplainer
                 => new TranslatableMessage('Double hyphen within comment: {text}', ['text' => $g['text']], domain: 'errors'),
             $is(81, 'Document labelled (?<declared>\S+) but has (?<actual>\S+) content')
                 => new TranslatableMessage('Document labelled {declared} but has {actual} content', ['declared' => $g['declared'], 'actual' => $g['actual']], domain: 'errors'),
+            $is(81, 'Invalid bytes in character encoding')
+                => new TranslatableMessage('Invalid bytes in character encoding', domain: 'errors'),
             $is(89, 'Detected an entity reference loop')
                 => new TranslatableMessage('Detected an entity reference loop', domain: 'errors'),
             $is(96, 'Malformed declaration expecting version')
@@ -150,6 +152,12 @@ final class XmlErrorExplainer
                 => new TranslatableMessage('Unsupported version \'\'{version}\'\'', ['version' => $g['version']], domain: 'errors'),
             $is(110, 'Name too long: (?<type>.+)')
                 => new TranslatableMessage('Name too long: {type}', ['type' => $strip($g['type'])], domain: 'errors'),
+            $is(113, 'Encoding \'(?<declared>[^\']*)\' doesn\'t match auto-detected \'(?<actual>[^\']*)\'')
+                => new TranslatableMessage('Encoding \'\'{declared}\'\' doesn\'\'t match auto-detected \'\'{actual}\'\'', ['declared' => $g['declared'], 'actual' => $g['actual']], domain: 'errors'),
+            $is(114, 'Resource limit exceeded: Buffer size limit exceeded, try XML_PARSE_HUGE')
+                => new TranslatableMessage('Buffer size limit exceeded, use the XML_PARSE_HUGE option', domain: 'errors'),
+            $is(118, 'Content error in the internal subset')
+                => new TranslatableMessage('Content error in the internal subset', domain: 'errors'),
             $is(200, '(?<declaration>xmlns:\S+): Empty XML namespace is not allowed')
                 => new TranslatableMessage('{declaration}: Empty XML namespace is not allowed', ['declaration' => $g['declaration']], domain: 'errors'),
             $is(200, 'redefinition of the xmlns prefix is forbidden')
@@ -166,6 +174,8 @@ final class XmlErrorExplainer
                 => new TranslatableMessage('Failed to parse QName \'\'{qname}\'\'', ['qname' => $g['qname']], domain: 'errors'),
             $is(203, 'Namespaced Attribute (?<attribute>.+) in \'(?<namespace>[^\']*)\' redefined')
                 => new TranslatableMessage('Namespaced attribute {attribute} in \'\'{namespace}\'\' redefined', ['attribute' => $strip($g['attribute']), 'namespace' => $g['namespace']], domain: 'errors'),
+            $is(1524, 'failed to load \"(?<path>[^\"]*)\": (?<reason>.*)')
+                => new TranslatableMessage('Failed to load "{path}": {reason}', ['path' => $g['path'], 'reason' => $g['reason']], domain: 'errors'),
             $is(1549, 'failed to load external entity \"(?<path>.*)\"')
                 => new TranslatableMessage('Failed to load external entity "{path}"', ['path' => $g['path']], domain: 'errors'),
             $is(1757, 'Failed to locate the main schema resource at \'(?<path>.*)\'\.')

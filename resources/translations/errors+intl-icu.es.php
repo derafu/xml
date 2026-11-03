@@ -194,6 +194,8 @@ return [
         'Doble guion dentro de un comentario: {text}',
     'Document labelled {declared} but has {actual} content' =>
         'El documento declara {declared} pero su contenido es {actual}',
+    'Invalid bytes in character encoding' =>
+        'Bytes inválidos en la codificación de caracteres',
     'Detected an entity reference loop' =>
         'Se detectó un ciclo de referencias de entidades',
     'Malformed declaration expecting version' =>
@@ -206,6 +208,12 @@ return [
         'Versión no soportada: \'\'{version}\'\'',
     'Name too long: {type}' =>
         'Nombre demasiado largo: {type}',
+    'Encoding \'\'{declared}\'\' doesn\'\'t match auto-detected \'\'{actual}\'\'' =>
+        'La codificación \'\'{declared}\'\' no coincide con la detectada \'\'{actual}\'\'',
+    'Buffer size limit exceeded, use the XML_PARSE_HUGE option' =>
+        'Se excedió el límite de tamaño del búfer, use la opción XML_PARSE_HUGE',
+    'Content error in the internal subset' =>
+        'Error en el contenido del subconjunto interno',
     '{declaration}: Empty XML namespace is not allowed' =>
         '{declaration}: no se permite un espacio de nombres XML vacío',
     'Redefinition of the xmlns prefix is forbidden' =>
@@ -222,6 +230,8 @@ return [
         'No fue posible leer el QName \'\'{qname}\'\'',
     'Namespaced attribute {attribute} in \'\'{namespace}\'\' redefined' =>
         'El atributo {attribute} del espacio de nombres \'\'{namespace}\'\' está repetido',
+    'Failed to load "{path}": {reason}' =>
+        'No fue posible cargar "{path}": {reason}',
     'Failed to load external entity "{path}"' =>
         'No fue posible cargar la entidad externa "{path}"',
     'Failed to locate the main schema resource at \'\'{path}\'\'.' =>

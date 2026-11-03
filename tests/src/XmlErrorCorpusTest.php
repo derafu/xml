@@ -35,7 +35,13 @@ use PHPUnit\Framework\TestCase;
 final class XmlErrorCorpusTest extends TestCase
 {
     /**
-     * @return array<string, array{string, string, int, string, string}>
+     * Each case says the input and what libxml says about it. libxml does not
+     * say the same in all its versions: the code, the text or both can change.
+     * Then the case has a list of the ways that libxml says it: the codes and
+     * the texts go in the same order, and a value that is not a list is the
+     * same for all of them. The error has to be one of them.
+     *
+     * @return array<string, array{string, string, int|list<int>, string|list<string>, string|list<string>}>
      */
     public static function corpusProvider(): array
     {
@@ -112,12 +118,16 @@ final class XmlErrorCorpusTest extends TestCase
         "63 cdata unclosed" => ["xml", "<a><![CDATA[x</a>", 63,
             "CData section not finished: x</",
             "Sección CDATA sin terminar: x</"],
-        "9 invalid utf8" => ["xml", "<a>\xFF</a>", 9,
-            "Input is not proper UTF-8, indicate encoding ! Bytes: 0xFF 0x3C 0x2F 0x61",
-            "La entrada no es UTF-8 válido, indique la codificación. Bytes: 0xFF 0x3C 0x2F 0x61"],
+        "9 invalid utf8" => ["xml", "<a>\xFF</a>", [9, 81],
+            ["Input is not proper UTF-8, indicate encoding ! Bytes: 0xFF 0x3C 0x2F 0x61",
+                "Invalid bytes in character encoding"],
+            ["La entrada no es UTF-8 válido, indique la codificación. Bytes: 0xFF 0x3C 0x2F 0x61",
+                "Bytes inválidos en la codificación de caracteres"]],
         "9 nonchar" => ["xml", "<a>￿</a>", 9,
-            "Char 0xFFFF out of allowed range",
-            "El carácter 0xFFFF está fuera del rango permitido"],
+            ["Char 0xFFFF out of allowed range",
+                "Invalid character in the content, the value 65535 is not an XML character"],
+            ["El carácter 0xFFFF está fuera del rango permitido",
+                "Carácter inválido en el contenido, el valor 65535 no es un carácter XML"]],
         "45 comment unclosed" => ["xml", "<a><!-- x</a>", 45,
             "Comment not terminated",
             "Comentario sin terminar"],
@@ -154,15 +164,21 @@ final class XmlErrorCorpusTest extends TestCase
         "78 standalone bad" => ["xml", "<?xml version=\"1.0\" standalone=\"maybe\"?><a/>", 78,
             "Standalone accepts only 'yes' or 'no'",
             "Standalone solo acepta 'yes' o 'no'"],
-        "81 decl enc mismatch" => ["xml", "<?xml version=\"1.0\" encoding=\"UTF-16\"?><a>x</a>", 81,
-            "Document labelled UTF-16 but has UTF-8 content",
-            "El documento declara UTF-16 pero su contenido es UTF-8"],
-        "1 doctype unclosed" => ["xml", "<!DOCTYPE a [<a/>", 1,
-            "Internal error: xmlParseInternalSubset: error detected in Markup declaration",
-            "Error interno: xmlParseInternalSubset: error detected in Markup declaration"],
-        "61 doctype unclosed" => ["xml", "<!DOCTYPE a [<a/>", 61,
-            "DOCTYPE improperly terminated",
-            "DOCTYPE mal terminado"],
+        "81 decl enc mismatch" => ["xml", "\xEF\xBB\xBF<?xml version=\"1.0\" encoding=\"UTF-16\"?><a>x</a>", [81, 113],
+            ["Document labelled UTF-16 but has UTF-8 content",
+                "Encoding 'UTF-16' doesn't match auto-detected 'UTF-8'"],
+            ["El documento declara UTF-16 pero su contenido es UTF-8",
+                "La codificación 'UTF-16' no coincide con la detectada 'UTF-8'"]],
+        "1 doctype unclosed" => ["xml", "<!DOCTYPE a [<a/>", [1, 118],
+            ["Internal error: xmlParseInternalSubset: error detected in Markup declaration",
+                "Content error in the internal subset"],
+            ["Error interno: xmlParseInternalSubset: error detected in Markup declaration",
+                "Error en el contenido del subconjunto interno"]],
+        "61 doctype unclosed" => ["xml", "<!DOCTYPE a [<a/>", [61, 118],
+            ["DOCTYPE improperly terminated",
+                "Content error in the internal subset"],
+            ["DOCTYPE mal terminado",
+                "Error en el contenido del subconjunto interno"]],
         "68 doctype bad" => ["xml", "<!DOCTYPE><a/>", 68,
             "No DOCTYPE name",
             "El DOCTYPE no tiene nombre"],
@@ -182,8 +198,8 @@ final class XmlErrorCorpusTest extends TestCase
             "Namespace prefix p for x on a is not defined",
             "El prefijo de espacio de nombres p del atributo x en a no está definido"],
         "202 ns two colons" => ["xml", "<a:b:c/>", 202,
-            "Failed to parse QName 'a:b:'",
-            "No fue posible leer el QName 'a:b:'"],
+            ["Failed to parse QName 'a:b:'", "Failed to parse QName 'a:b:c'"],
+            ["No fue posible leer el QName 'a:b:'", "No fue posible leer el QName 'a:b:c'"]],
         "200 ns empty prefix value" => ["xml", "<a xmlns:p=\"\"/>", 200,
             "xmlns:p: Empty XML namespace is not allowed",
             "xmlns:p: no se permite un espacio de nombres XML vacío"],
@@ -205,15 +221,15 @@ final class XmlErrorCorpusTest extends TestCase
         "203 attrs same expanded name" => ["xml", "<a xmlns:p=\"x\" xmlns:q=\"x\" p:a=\"1\" q:a=\"2\"/>", 203,
             "Namespaced attribute a in 'x' redefined",
             "El atributo a del espacio de nombres 'x' está repetido"],
-        "1 depth 300" => ["xml", str_repeat('<a>', 300) . str_repeat('</a>', 300), 1,
+        "1 depth 300" => ["xml", str_repeat('<a>', 300) . str_repeat('</a>', 300), [1, 114],
             "Excessive depth in document: 256, use the XML_PARSE_HUGE option",
             "Profundidad excesiva en el documento: 256, use la opción XML_PARSE_HUGE"],
         "110 name too long" => ["xml", '<' . str_repeat('a', 60000) . '/>', 110,
             "Name too long: NCName",
             "Nombre demasiado largo: NCName"],
-        "40 attr value huge" => ["xml", '<a x="' . str_repeat('x', 11000000) . '"/>', 40,
-            "AttValue length too long",
-            "El valor del atributo es demasiado largo"],
+        "40 attr value huge" => ["xml", '<a x="' . str_repeat('x', 11000000) . '"/>', [40, 114],
+            ["AttValue length too long", "Buffer size limit exceeded, use the XML_PARSE_HUGE option"],
+            ["El valor del atributo es demasiado largo", "Se excedió el límite de tamaño del búfer, use la opción XML_PARSE_HUGE"]],
         "1839 pattern" => ["xsd", "<root><pat>abc</pat><emp/><elo><c>1</c></elo></root>", 1839,
             "Element 'pat': The value 'abc' is not accepted by the pattern '[A-Z]{3}'.",
             "Elemento 'pat': el valor 'abc' no es válido según el patrón '[A-Z]{3}'."],
@@ -313,9 +329,11 @@ final class XmlErrorCorpusTest extends TestCase
         "1955 relative namespace" => ["c14n", "<a xmlns=\"relative\"/>", 1955,
             "Relative namespace URI is invalid here",
             "La URI de un espacio de nombres relativo no es válida aquí"],
-        "1549 schema missing" => ["schema", "missing", 1549,
-            "Failed to load external entity \"/nonexistent.xsd\"",
-            "No fue posible cargar la entidad externa \"/nonexistent.xsd\""],
+        "1549 schema missing" => ["schema", "missing", [1549, 1524],
+            ["Failed to load external entity \"/nonexistent.xsd\"",
+                "Failed to load \"/nonexistent.xsd\": No such file or directory"],
+            ["No fue posible cargar la entidad externa \"/nonexistent.xsd\"",
+                "No fue posible cargar \"/nonexistent.xsd\": No such file or directory"]],
         "1757 schema missing" => ["schema", "missing", 1757,
             "Failed to locate the main schema resource at '/nonexistent.xsd'.",
             "No fue posible encontrar el recurso principal del esquema en '/nonexistent.xsd'."],
@@ -328,24 +346,62 @@ final class XmlErrorCorpusTest extends TestCase
         ];
     }
 
+    /**
+     * @param int|list<int> $codes
+     * @param string|list<string> $english
+     * @param string|list<string> $spanish
+     */
     #[DataProvider('corpusProvider')]
     public function testTheErrorIsExplainedFromItsCode(
         string $kind,
         string $input,
-        int $code,
-        string $english,
-        string $spanish
+        int|array $codes,
+        string|array $english,
+        string|array $spanish
     ): void {
-        $error = $this->errorWithTheCode($kind, $input, $code);
-        $english = str_replace('{path}', $this->schemaPath(), $english);
-        $spanish = str_replace('{path}', $this->schemaPath(), $spanish);
-
-        $message = XmlErrorExplainer::explain($error);
-
-        $this->assertNotNull($message, 'The error is not explained: ' . $error->message);
-        $this->assertSame($english, (string) $message);
         $translator = TranslatorFactory::create('es', [], [new XmlTranslationResourceProvider()]);
-        $this->assertSame($spanish, $message->trans($translator));
+        $errors = $this->errorsOf($kind, $input);
+
+        $way = static fn (int|string|array $value, int $i): int|string => is_array($value) ? $value[$i] : $value;
+        $ways = max(
+            is_array($codes) ? count($codes) : 1,
+            is_array($english) ? count($english) : 1,
+            is_array($spanish) ? count($spanish) : 1
+        );
+
+        for ($i = 0; $i < $ways; $i++) {
+            $code = $way($codes, $i);
+            $expectedEnglish = str_replace('{path}', $this->schemaPath(), (string) $way($english, $i));
+            $expectedSpanish = str_replace('{path}', $this->schemaPath(), (string) $way($spanish, $i));
+
+            foreach ($errors as $error) {
+                if ($error->code !== $code) {
+                    continue;
+                }
+                $message = XmlErrorExplainer::explain($error);
+                if ($message === null || (string) $message !== $expectedEnglish) {
+                    continue;
+                }
+                $this->assertSame($expectedSpanish, $message->trans($translator));
+
+                return;
+            }
+        }
+
+        $this->fail(sprintf(
+            "libxml %s did not say the error in any of the ways that are known (codes %s).\nIt said:\n%s",
+            LIBXML_DOTTED_VERSION,
+            implode(', ', (array) $codes),
+            implode("\n", array_map(
+                static fn (XmlError $error): string => sprintf(
+                    '  %d "%s" explained as "%s"',
+                    $error->code,
+                    trim($error->message),
+                    ($message = XmlErrorExplainer::explain($error)) === null ? '-' : (string) $message
+                ),
+                $errors
+            ))
+        ));
     }
 
     private function schemaPath(): string
@@ -391,20 +447,5 @@ final class XmlErrorCorpusTest extends TestCase
         libxml_use_internal_errors($useInternalErrors);
 
         return $errors;
-    }
-
-    private function errorWithTheCode(string $kind, string $input, int $code): XmlError
-    {
-        foreach ($this->errorsOf($kind, $input) as $error) {
-            if ($error->code === $code) {
-                return $error;
-            }
-        }
-
-        $this->fail(sprintf(
-            'libxml %s did not say the error %d for the input.',
-            LIBXML_DOTTED_VERSION,
-            $code
-        ));
     }
 }
