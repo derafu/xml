@@ -33,6 +33,9 @@ jobs:
       - name: Display PHP version
         run: php -v
 
+      - name: Display libxml version
+        run: php -r 'echo "libxml ", LIBXML_DOTTED_VERSION, PHP_EOL;'
+
       - name: Install Dependencies
         run: composer install --no-progress --no-suggest --prefer-dist
 

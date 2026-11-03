@@ -46,7 +46,7 @@ final class XmlErrorCorpusTest extends TestCase
         "68 lt only" => ["xml", "<", 68,
             "Invalid element name in the start tag",
             "Nombre de elemento inválido en la etiqueta de apertura"],
-        "5 lt gt" => ["xml", "<>", 5,
+        "5 two roots" => ["xml", "<a/><b/>", 5,
             "Extra content at the end of the document",
             "Contenido extra al final del documento"],
         "77 unclosed root" => ["xml", "<a><b>x</b>", 77,
@@ -401,6 +401,10 @@ final class XmlErrorCorpusTest extends TestCase
             }
         }
 
-        $this->fail('libxml did not say the error ' . $code . ' for the input.');
+        $this->fail(sprintf(
+            'libxml %s did not say the error %d for the input.',
+            LIBXML_DOTTED_VERSION,
+            $code
+        ));
     }
 }
