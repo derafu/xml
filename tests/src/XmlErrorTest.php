@@ -178,7 +178,9 @@ final class XmlErrorTest extends TestCase
     }
 
     /**
-     * @param list<string> $errors Level, code and line of each error.
+     * @param list<string>|list<list<string>> $errors Level, code and line of
+     * each error. libxml does not say the same errors in all its versions, then
+     * it can be a list of the ways that it says them, and it has to be one.
      */
     #[DataProvider('loadProvider')]
     public function testAnXmlThatCanNotBeLoadedSaysTheErrorThatCausedIt(
@@ -193,15 +195,21 @@ final class XmlErrorTest extends TestCase
         } catch (XmlParseException $e) {
             $this->assertSame($english, $e->getMessage());
             $this->assertSame($spanish, $e->trans($this->translator()));
-            $this->assertSame($errors, array_map(
+            $said = array_map(
                 fn (XmlError $error) => $error->level->name . ':' . $error->code . '@' . $error->line,
                 $e->getErrors()
+            );
+            $ways = is_array($errors[0] ?? null) ? $errors : [$errors];
+            $this->assertContains($said, $ways, sprintf(
+                'libxml %s did not say the errors in any of the ways that are known; it said: %s',
+                LIBXML_DOTTED_VERSION,
+                implode(', ', $said)
             ));
         }
     }
 
     /**
-     * @return array<string, array{string, string, string, list<string>}>
+     * @return array<string, array{string, string, string, list<string>|list<list<string>>}>
      */
     public static function loadProvider(): array
     {
@@ -210,7 +218,7 @@ final class XmlErrorTest extends TestCase
                 '<root><unclosed></root>',
                 'Failed to load the XML: Line 1, column 24: Opening and ending tag mismatch: unclosed (line 1) and root',
                 'Error al cargar el XML: Línea 1, columna 24: La etiqueta de apertura unclosed (línea 1) no coincide con la de cierre root',
-                ['Fatal:76@1', 'Fatal:77@1'],
+                [['Fatal:76@1', 'Fatal:77@1'], ['Fatal:76@1']],
             ],
             'an ampersand' => [
                 '<a>&amp</a>',
@@ -228,13 +236,13 @@ final class XmlErrorTest extends TestCase
                 '<a xmlns="relative"><b></a>',
                 'Failed to load the XML: Line 1, column 28: Opening and ending tag mismatch: b (line 1) and a',
                 'Error al cargar el XML: Línea 1, columna 28: La etiqueta de apertura b (línea 1) no coincide con la de cierre a',
-                ['Warning:100@1', 'Fatal:76@1', 'Fatal:77@1'],
+                [['Warning:100@1', 'Fatal:76@1', 'Fatal:77@1'], ['Warning:100@1', 'Fatal:76@1']],
             ],
             'an error of namespace before the fatal error' => [
                 '<p:a><b></p:a>',
                 'Failed to load the XML: Line 1, column 15: Opening and ending tag mismatch: b (line 1) and p:a',
                 'Error al cargar el XML: Línea 1, columna 15: La etiqueta de apertura b (línea 1) no coincide con la de cierre p:a',
-                ['Error:201@1', 'Fatal:76@1', 'Fatal:77@1'],
+                [['Error:201@1', 'Fatal:76@1', 'Fatal:77@1'], ['Error:201@1', 'Fatal:76@1']],
             ],
             'an error in a line that is not the first one' => [
                 "<a>\n  <b>\n    <c>x</b>\n  </c>\n</a>",
@@ -246,7 +254,7 @@ final class XmlErrorTest extends TestCase
                 '<a x=1/>',
                 'Failed to load the XML: Line 1, column 6: AttValue: " or \' expected',
                 'Error al cargar el XML: Línea 1, columna 6: Valor de atributo: se esperaba " o \'',
-                ['Fatal:39@1', 'Fatal:65@1', 'Fatal:73@1', 'Fatal:5@1'],
+                [['Fatal:39@1', 'Fatal:65@1', 'Fatal:73@1', 'Fatal:5@1'], ['Fatal:39@1', 'Fatal:65@1', 'Fatal:73@1']],
             ],
         ];
     }
