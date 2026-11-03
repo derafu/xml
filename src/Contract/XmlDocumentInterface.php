@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\Xml\Contract;
 
 use Derafu\Xml\Exception\XmlException;
+use Derafu\Xml\XPathReader;
 use DOMElement;
 use DOMNameSpaceNode;
 use DOMNode;
@@ -192,6 +193,17 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
      * @return string|array<int|string, mixed>|null
      */
     public function query(string $query, array $params = []): string|array|null;
+
+    /**
+     * Creates a typed reader of the document, selected by XPath.
+     *
+     * @param array<string, string> $namespaces Prefix and URI of the namespaces
+     * that the XPath expressions use. Without them the namespaces are ignored.
+     * @param string|null $source Where the document comes from (a file, a
+     * request, anything that says it), for the errors.
+     * @return XPathReader
+     */
+    public function getReader(array $namespaces = [], ?string $source = null): XPathReader;
 
     /**
      * Executes an XPath query on the XML document.

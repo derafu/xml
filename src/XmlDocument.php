@@ -181,6 +181,10 @@ final class XmlDocument implements XmlDocumentInterface
         // Load the XML.
         $status = $this->dom->loadXml($source, $options);
 
+        // The queries are bound to the content that the document had when
+        // they were created: the one of the previous load is not valid anymore.
+        unset($this->xPathQuery);
+
         // Get errors, clear them and restore the libxml error state.
         $errors = XmlError::fromLibxmlErrors(libxml_get_errors());
         libxml_clear_errors();
@@ -314,6 +318,14 @@ final class XmlDocument implements XmlDocumentInterface
         }
 
         return $this->xPathQuery->get($query, $params);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getReader(array $namespaces = [], ?string $source = null): XPathReader
+    {
+        return XPathReader::fromDocument($this, $namespaces, $source);
     }
 
     /**

@@ -21,6 +21,7 @@ use Derafu\Xml\XmlError;
 use Derafu\Xml\XmlErrorExplainer;
 use Derafu\Xml\XmlHelper;
 use Derafu\Xml\XPathQuery;
+use Derafu\Xml\XPathReader;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -36,6 +37,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(XmlParseException::class)]
 #[UsesClass(XmlError::class)]
 #[UsesClass(XmlErrorExplainer::class)]
+#[UsesClass(XPathReader::class)]
 class XmlTest extends TestCase
 {
     /**
@@ -677,5 +679,30 @@ class XmlTest extends TestCase
             // What libxml said is in the errors, it is not emitted as a warning.
             $this->assertStringContainsString('Relative namespace', implode(' ', $e->getErrors()));
         }
+    }
+
+    /**
+     * A document that is loaded again is queried as the new one, not as the
+     * one it had.
+     */
+    public function testTheQueriesSeeTheDocumentLoadedAgain(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<a><b>1</b></a>');
+        $this->assertSame('1', $doc->query('//b'));
+        $this->assertSame(1, $doc->getNodes('//b')->length);
+
+        $doc->loadXml('<a><b>2</b><b>3</b></a>');
+
+        $this->assertSame(['2', '3'], $doc->query('//b'));
+        $this->assertSame(2, $doc->getNodes('//b')->length);
+    }
+
+    public function testTheDocumentGivesItsReader(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<a><b>1</b></a>');
+
+        $this->assertSame(1, $doc->getReader()->requireAsInt('//b'));
     }
 }

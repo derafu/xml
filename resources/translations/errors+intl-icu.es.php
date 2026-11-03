@@ -51,6 +51,24 @@ return [
     'The XPath expression could not be prepared.' =>
         'No fue posible preparar la expresión XPath.',
 
+    // XPathReader.
+    'The XPath "{xpath}" is required: it matched no node.' =>
+        'El XPath "{xpath}" es obligatorio: no coincidió con ningún nodo.',
+    'The XPath "{xpath}" of {source} is required: it matched no node.' =>
+        'El XPath "{xpath}" de {source} es obligatorio: no coincidió con ningún nodo.',
+    'The XPath "{xpath}" must match one node, {count} matched.' =>
+        'El XPath "{xpath}" debe coincidir con un solo nodo, coincidió con {count}.',
+    'The XPath "{xpath}" of {source} must match one node, {count} matched.' =>
+        'El XPath "{xpath}" de {source} debe coincidir con un solo nodo, coincidió con {count}.',
+    'The element "{xpath}" is not allowed; the allowed elements are: {allowed}.' =>
+        'El elemento "{xpath}" no está permitido; los elementos permitidos son: {allowed}.',
+    'The element "{xpath}" of {source} is not allowed; the allowed elements are: {allowed}.' =>
+        'El elemento "{xpath}" de {source} no está permitido; los elementos permitidos son: {allowed}.',
+    'The value of the XPath "{path}" must be of type {expected}, {given} given.' =>
+        'El valor del XPath "{path}" debe ser de tipo {expected}, se recibió {given}.',
+    'The value of the XPath "{path}" of {source} must be of type {expected}, {given} given.' =>
+        'El valor del XPath "{path}" de {source} debe ser de tipo {expected}, se recibió {given}.',
+
     // XmlValidator.
     'The XML validation failed using the schema {schema}.' =>
         'La validación del XML falló usando el esquema {schema}.',

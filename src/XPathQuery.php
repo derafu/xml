@@ -256,14 +256,7 @@ final class XPathQuery
     {
         // If the namespaces are disabled, adapt the XPath query.
         if (!$this->registerNodeNS) {
-            $query = preg_replace_callback(
-                '/(?<=\/|^)(\w+)/',
-                fn ($matches) => '*[local-name()="' . $matches[1] . '"]',
-                $query
-            );
-            if ($query === null) {
-                throw new XmlQueryException('The XPath expression could not be prepared.');
-            }
+            $query = $this->ignoreNamespaces($query);
         }
 
         // Replace parameters.
@@ -275,6 +268,112 @@ final class XPathQuery
 
         // Return the resolved query.
         return $query;
+    }
+
+    /**
+     * Adapts an XPath query so that its names match the elements by their local
+     * name, whatever their namespace: each name test (`a`) is written as
+     * `*[local-name()="a"]`.
+     *
+     * Only the name tests are changed. Everything else is what XPath says and
+     * stays as it is: the string literals, the numbers, the functions and node
+     * tests (`count(...)`, `text()`), the names of the axes (`following-sibling::`),
+     * the attributes (`@id`, `attribute::id`), the operators (`and`, `or`, `div`,
+     * `mod`, `*`), the names that have a prefix and the markers of the
+     * parameters (`:id`). A name is an operator name or a name test by the rule
+     * of XPath: after something that ends an operand it is an operator.
+     *
+     * @param string $query XPath query.
+     * @return string XPath query that ignores the namespaces.
+     * @throws XmlQueryException If the query can not be read.
+     */
+    private function ignoreNamespaces(string $query): string
+    {
+        $name = '[\p{L}_][\p{L}\p{N}_.\-]*+';
+
+        $found = preg_match_all(
+            '~(?<ws>\s+)'
+            . '|(?<literal>"[^"]*"|\'[^\']*\')'
+            . '|(?<number>\d+(?:\.\d*)?|\.\d+)'
+            . '|(?<name>' . $name . '(?::(?!:)' . $name . ')?)'
+            . '|(?<param>:(?!:)' . $name . ')'
+            . '|(?<symbol>//|/|::|\.\.|\.|!=|<=|>=|[()\[\]@,|+\-=<>*$])'
+            . '|(?<other>.)~us',
+            $query,
+            $tokens,
+            PREG_SET_ORDER | PREG_UNMATCHED_AS_NULL
+        );
+        if ($found === false) {
+            throw new XmlQueryException('The XPath expression could not be prepared.');
+        }
+
+        $count = count($tokens);
+        $result = '';
+        // The previous token ends an operand (a name, a literal, a number, `)`,
+        // `]`, `.`, `..` or a wildcard), so what follows is an operator.
+        $afterOperand = false;
+        // The previous token that is not a space, and the last axis.
+        $previous = '';
+        $axis = '';
+
+        foreach ($tokens as $index => $token) {
+            $text = (string) $token[0];
+
+            if ($token['ws'] !== null) {
+                $result .= $text;
+                continue;
+            }
+
+            if ($token['name'] !== null) {
+                $next = '';
+                for ($j = $index + 1; $j < $count; $j++) {
+                    if ($tokens[$j]['ws'] === null) {
+                        $next = (string) $tokens[$j][0];
+                        break;
+                    }
+                }
+
+                if ($next === '(') {
+                    // A function or a node test.
+                    $afterOperand = false;
+                } elseif ($next === '::') {
+                    // The name of an axis.
+                    $axis = $text;
+                    $afterOperand = false;
+                } elseif ($afterOperand) {
+                    // An operator: and, or, div or mod.
+                    $afterOperand = false;
+                } elseif (
+                    str_contains($text, ':')
+                    || $previous === '@'
+                    || $previous === '$'
+                    || ($previous === '::' && in_array($axis, ['attribute', 'namespace'], true))
+                ) {
+                    // A name with a prefix, an attribute or a variable.
+                    $afterOperand = true;
+                } else {
+                    $text = '*[local-name()="' . $text . '"]';
+                    $afterOperand = true;
+                }
+            } elseif ($token['symbol'] !== null) {
+                $afterOperand = match ($text) {
+                    ')', ']', '.', '..' => true,
+                    // A wildcard ends an operand, a multiplication does not.
+                    '*' => !$afterOperand,
+                    default => false,
+                };
+            } else {
+                // A literal, a number, a parameter or anything else.
+                $afterOperand = $token['literal'] !== null
+                    || $token['number'] !== null
+                    || $token['param'] !== null;
+            }
+
+            $result .= $text;
+            $previous = $token['name'] !== null || $token['symbol'] !== null ? (string) $token[0] : $text;
+        }
+
+        return $result;
     }
 
     /**
