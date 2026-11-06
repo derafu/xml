@@ -359,7 +359,6 @@ final class XmlErrorCorpusTest extends TestCase
         $translator = TranslatorFactory::create('es', [], [new XmlTranslationResourceProvider()]);
         $errors = $this->errorsOf($kind, $input);
 
-        $way = static fn (int|string|array $value, int $i): int|string => is_array($value) ? $value[$i] : $value;
         $ways = max(
             is_array($codes) ? count($codes) : 1,
             is_array($english) ? count($english) : 1,
@@ -367,9 +366,9 @@ final class XmlErrorCorpusTest extends TestCase
         );
 
         for ($i = 0; $i < $ways; $i++) {
-            $code = $way($codes, $i);
-            $expectedEnglish = str_replace('{path}', $this->schemaPath(), (string) $way($english, $i));
-            $expectedSpanish = str_replace('{path}', $this->schemaPath(), (string) $way($spanish, $i));
+            $code = self::way($codes, $i);
+            $expectedEnglish = str_replace('{path}', $this->schemaPath(), (string) self::way($english, $i));
+            $expectedSpanish = str_replace('{path}', $this->schemaPath(), (string) self::way($spanish, $i));
 
             foreach ($errors as $error) {
                 if ($error->code !== $code) {
@@ -399,6 +398,17 @@ final class XmlErrorCorpusTest extends TestCase
                 $errors
             ))
         ));
+    }
+
+    /**
+     * Returns the value of the way `$i`: a value that is not a list is the same
+     * for all the ways.
+     *
+     * @param int|string|list<int|string> $value
+     */
+    private static function way(int|string|array $value, int $i): int|string
+    {
+        return is_array($value) ? $value[$i] : $value;
     }
 
     private function schemaPath(): string

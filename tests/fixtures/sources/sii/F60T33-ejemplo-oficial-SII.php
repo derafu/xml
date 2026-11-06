@@ -10,6 +10,8 @@ declare(strict_types=1);
  * See LICENSE file for more details.
  */
 
+use Derafu\Array\ArrayReader;
+use Derafu\Value\ValueType;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -18,81 +20,70 @@ use PHPUnit\Framework\TestCase;
  * Receives the full decoded array of the XML and runs the validations.
  */
 return function (TestCase $test, array $xml): void {
-    $env = $xml['EnvioDTE'];
-    $doc = $env['SetDTE']['DTE']['Documento'];
-    $enc = $doc['Encabezado'];
-    $totales = $enc['Totales'];
-    $detalle = $doc['Detalle'];
+    $reader = ArrayReader::fromArray($xml, 'F60T33-ejemplo-oficial-SII.xml');
+    $env = ArrayReader::fromArray($reader->require('EnvioDTE', ValueType::array()));
+    $doc = ArrayReader::fromArray(
+        $reader->require('EnvioDTE.SetDTE.DTE.Documento', ValueType::array())
+    );
 
     // --- EnvioDTE header ---
-    $test->assertArrayHasKey('@attributes', $env);
-    $test->assertSame('1.0', $env['@attributes']['version']);
+    $test->assertTrue($env->hasKey('@attributes'));
+    $test->assertSame('1.0', $env->requireString('@attributes.version'));
 
     // --- IdDoc ---
-    $test->assertSame('33', $enc['IdDoc']['TipoDTE']);
-    $test->assertSame('60', $enc['IdDoc']['Folio']);
-    $test->assertSame('2003-10-13', $enc['IdDoc']['FchEmis']);
+    $test->assertSame('33', $doc->requireString('Encabezado.IdDoc.TipoDTE'));
+    $test->assertSame('60', $doc->requireString('Encabezado.IdDoc.Folio'));
+    $test->assertSame('2003-10-13', $doc->requireString('Encabezado.IdDoc.FchEmis'));
 
     // --- Emisor ---
-    $test->assertSame('97975000-5', $enc['Emisor']['RUTEmisor']);
-    $test->assertSame('RUT DE PRUEBA', $enc['Emisor']['RznSoc']);
-    $test->assertSame('Santiago', $enc['Emisor']['CmnaOrigen']);
+    $test->assertSame('97975000-5', $doc->requireString('Encabezado.Emisor.RUTEmisor'));
+    $test->assertSame('RUT DE PRUEBA', $doc->requireString('Encabezado.Emisor.RznSoc'));
+    $test->assertSame('Santiago', $doc->requireString('Encabezado.Emisor.CmnaOrigen'));
 
     // --- Receptor ---
-    $test->assertSame('77777777-7', $enc['Receptor']['RUTRecep']);
-    $test->assertSame('EMPRESA  LTDA', $enc['Receptor']['RznSocRecep']);
+    $test->assertSame('77777777-7', $doc->requireString('Encabezado.Receptor.RUTRecep'));
+    $test->assertSame('EMPRESA  LTDA', $doc->requireString('Encabezado.Receptor.RznSocRecep'));
 
     // --- Totales ---
-    $test->assertSame('100000', $totales['MntNeto']);
-    $test->assertSame('19', $totales['TasaIVA']);
-    $test->assertSame('19000', $totales['IVA']);
-    $test->assertSame('119000', $totales['MntTotal']);
+    $test->assertSame('100000', $doc->requireString('Encabezado.Totales.MntNeto'));
+    $test->assertSame('19', $doc->requireString('Encabezado.Totales.TasaIVA'));
+    $test->assertSame('19000', $doc->requireString('Encabezado.Totales.IVA'));
+    $test->assertSame('119000', $doc->requireString('Encabezado.Totales.MntTotal'));
 
-    // --- Detalle: must be an array of complex nodes, not strings ---
-    $test->assertIsArray($detalle, 'Detalle must be an array.');
+    // --- Detalle: must be a list of complex nodes, not strings ---
+    // The reader fails if Detalle is not a list of arrays.
+    $detalle = $doc->getReaders('Detalle') ?? [];
     $test->assertCount(3, $detalle, 'There must be 3 Detalle lines.');
 
-    // Each item must be an array with the expected keys, not a string.
+    // Each item must have the expected keys.
     foreach ($detalle as $i => $item) {
-        $test->assertIsArray($item, "Detalle[$i] must be an array, not a string.");
-        $test->assertArrayHasKey('NroLinDet', $item, "Detalle[$i] must have NroLinDet.");
-        $test->assertArrayHasKey('NmbItem', $item, "Detalle[$i] must have NmbItem.");
-        $test->assertArrayHasKey('QtyItem', $item, "Detalle[$i] must have QtyItem.");
-        $test->assertArrayHasKey('PrcItem', $item, "Detalle[$i] must have PrcItem.");
-        $test->assertArrayHasKey('MontoItem', $item, "Detalle[$i] must have MontoItem.");
+        foreach (['NroLinDet', 'NmbItem', 'QtyItem', 'PrcItem', 'MontoItem'] as $key) {
+            $test->assertTrue($item->hasKey($key), "Detalle[$i] must have $key.");
+        }
     }
 
     // Specific assertions for each line.
-    $test->assertIsArray($detalle[0]);
-    $test->assertSame('1', $detalle[0]['NroLinDet']);
-    $test->assertSame('Parlantes Multimedia 180W.', $detalle[0]['NmbItem']);
-    $test->assertSame('20', $detalle[0]['QtyItem']);
-    $test->assertSame('4500', $detalle[0]['PrcItem']);
-    $test->assertSame('90000', $detalle[0]['MontoItem']);
-
-    $test->assertIsArray($detalle[1]);
-    $test->assertSame('2', $detalle[1]['NroLinDet']);
-    $test->assertSame('Mouse Inalambrico PS/2', $detalle[1]['NmbItem']);
-    $test->assertSame('1', $detalle[1]['QtyItem']);
-    $test->assertSame('5000', $detalle[1]['PrcItem']);
-    $test->assertSame('5000', $detalle[1]['MontoItem']);
-
-    $test->assertIsArray($detalle[2]);
-    $test->assertSame('3', $detalle[2]['NroLinDet']);
-    $test->assertSame('Caja de Diskettes 10 Unidades', $detalle[2]['NmbItem']);
-    $test->assertSame('5', $detalle[2]['QtyItem']);
-    $test->assertSame('1000', $detalle[2]['PrcItem']);
-    $test->assertSame('5000', $detalle[2]['MontoItem']);
+    $lines = [
+        ['1', 'Parlantes Multimedia 180W.', '20', '4500', '90000'],
+        ['2', 'Mouse Inalambrico PS/2', '1', '5000', '5000'],
+        ['3', 'Caja de Diskettes 10 Unidades', '5', '1000', '5000'],
+    ];
+    foreach ($lines as $i => [$nroLinDet, $nmbItem, $qtyItem, $prcItem, $montoItem]) {
+        $test->assertSame($nroLinDet, $detalle[$i]->requireString('NroLinDet'));
+        $test->assertSame($nmbItem, $detalle[$i]->requireString('NmbItem'));
+        $test->assertSame($qtyItem, $detalle[$i]->requireString('QtyItem'));
+        $test->assertSame($prcItem, $detalle[$i]->requireString('PrcItem'));
+        $test->assertSame($montoItem, $detalle[$i]->requireString('MontoItem'));
+    }
 
     // Each Detalle has CdgItem with a nested structure (not a string).
-    $test->assertIsArray($detalle[0]['CdgItem']);
-    $test->assertSame('INT1', $detalle[0]['CdgItem']['TpoCodigo']);
-    $test->assertSame('011', $detalle[0]['CdgItem']['VlrCodigo']);
+    $test->assertSame('INT1', $detalle[0]->requireString('CdgItem.TpoCodigo'));
+    $test->assertSame('011', $detalle[0]->requireString('CdgItem.VlrCodigo'));
 
     // --- TED ---
-    $test->assertArrayHasKey('TED', $doc);
-    $test->assertSame('97975000-5', $doc['TED']['DD']['RE']);
-    $test->assertSame('33', $doc['TED']['DD']['TD']);
-    $test->assertSame('60', $doc['TED']['DD']['F']);
-    $test->assertSame('119000', $doc['TED']['DD']['MNT']);
+    $test->assertTrue($doc->hasKey('TED'));
+    $test->assertSame('97975000-5', $doc->requireString('TED.DD.RE'));
+    $test->assertSame('33', $doc->requireString('TED.DD.TD'));
+    $test->assertSame('60', $doc->requireString('TED.DD.F'));
+    $test->assertSame('119000', $doc->requireString('TED.DD.MNT'));
 };

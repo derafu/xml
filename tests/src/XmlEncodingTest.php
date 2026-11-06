@@ -62,7 +62,9 @@ class XmlEncodingTest extends TestCase
             new XmlValidator()
         );
 
-        $this->iso88591Xml = require __DIR__ . '/../fixtures/encoding/iso88591-comprehensive.php';
+        /** @var string $iso88591Xml */
+        $iso88591Xml = require __DIR__ . '/../fixtures/encoding/iso88591-comprehensive.php';
+        $this->iso88591Xml = $iso88591Xml;
     }
 
     // -------------------------------------------------------------------------

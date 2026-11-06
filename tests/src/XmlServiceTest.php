@@ -75,7 +75,9 @@ class XmlServiceTest extends TestCase
     {
         if (!isset(self::$testCases)) {
             $testCasesFile = __DIR__ . '/../fixtures/encode_and_decode.php';
-            self::$testCases = require $testCasesFile;
+            /** @var array<string, array<string, array<int|string, mixed>>> $testCases */
+            $testCases = require $testCasesFile;
+            self::$testCases = $testCases;
         }
 
         if (!isset(self::$testCases[$testName])) {

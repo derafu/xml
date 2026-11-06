@@ -53,7 +53,7 @@ class XmlSourcesTest extends TestCase
 
         foreach ($files as $xmlPath) {
             $name = basename($xmlPath, '.xml');
-            $assertionsFile = $fixturesPath . '/' . $name . '.php';
+            $assertionsFile = dirname($xmlPath) . '/' . $name . '.php';
 
             $source = basename(dirname($xmlPath));
             $testCaseName = $source . ':' . $name;

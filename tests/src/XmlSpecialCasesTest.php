@@ -73,7 +73,9 @@ class XmlSpecialCasesTest extends TestCase
     {
         if (!isset(self::$testCases)) {
             $testCasesFile = __DIR__ . '/../fixtures/special_cases.php';
-            self::$testCases = require $testCasesFile;
+            /** @var array<string, array<string, array<int|string, mixed>>> $testCases */
+            $testCases = require $testCasesFile;
+            self::$testCases = $testCases;
         }
 
         if (!isset(self::$testCases[$testName])) {
