@@ -55,6 +55,34 @@ class XmlSerializationTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // Case 0: the format of the XML that the document saves
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies that a document that is unserialized does not format the XML
+     * that it saves, as any other document, and that it saves the same XML that
+     * the serialized one saved.
+     */
+    public function testUnserializedDocumentDoesNotFormatTheXmlItSaves(): void
+    {
+        $compact = new XmlDocument();
+        $compact->loadXml('<root><a>1</a></root>');
+
+        $formatted = new XmlDocument();
+        $formatted->setFormatOutput(true)->loadXml('<root><a>1</a></root>');
+
+        /** @var XmlDocument $restoredCompact */
+        $restoredCompact = unserialize(serialize($compact));
+        /** @var XmlDocument $restoredFormatted */
+        $restoredFormatted = unserialize(serialize($formatted));
+
+        $this->assertFalse($restoredCompact->getDomDocument()->formatOutput);
+        $this->assertSame('<root><a>1</a></root>', $restoredCompact->getXml());
+        $this->assertFalse($restoredFormatted->getDomDocument()->formatOutput);
+        $this->assertSame($formatted->getXml(), $restoredFormatted->getXml());
+    }
+
+    // -------------------------------------------------------------------------
     // Case 1: UTF-8 document serialize/unserialize
     // -------------------------------------------------------------------------
 

@@ -43,7 +43,13 @@ interface XmlDocumentInterface extends DOMDocumentInterface, JsonSerializable
     /**
      * Sets the format output of the XML document.
      *
-     * @param bool $formatOutput The format output of the XML document.
+     * With the format the XML is saved with line breaks and indentation, in the
+     * places where the document has no spaces between its elements. Without it
+     * the XML is saved as the document has it: a document that was loaded as it
+     * was loaded, and a document that was built with all its elements in one
+     * line. A document does not have the format unless it is asked to have it.
+     *
+     * @param bool $formatOutput If the XML is saved with format.
      * @return static
      */
     public function setFormatOutput(bool $formatOutput): static;

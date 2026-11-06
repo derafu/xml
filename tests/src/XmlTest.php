@@ -537,8 +537,86 @@ class XmlTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml('<?xml version="1.0" encoding="UTF-8"?><root><element>Value</element></root>');
 
-        $this->assertSame("<root>\n  <element>Value</element>\n</root>", $doc->getXml());
+        $this->assertSame('<root><element>Value</element></root>', $doc->getXml());
         $this->assertStringStartsWith('<?xml version="1.0" encoding="UTF-8"?>', $doc->saveXml());
+    }
+
+    /**
+     * Verifies that a document does not format the XML that it saves unless it
+     * is asked to: a document that was loaded is saved as it was loaded, with or
+     * without spaces between its elements.
+     */
+    public function testLoadedDocumentIsSavedAsItWasLoaded(): void
+    {
+        $withoutSpaces = '<root><a>1</a><b>2</b></root>';
+        $withSpaces = "<root>\n    <a>1</a>\n\t<b>2</b>\n</root>";
+
+        foreach ([$withoutSpaces, $withSpaces] as $xml) {
+            $doc = new XmlDocument();
+            $doc->loadXml($xml);
+
+            $this->assertFalse($doc->getDomDocument()->formatOutput);
+            $this->assertSame($xml, $doc->getXml());
+        }
+    }
+
+    /**
+     * Verifies that a document that is asked to format the XML that it saves
+     * adds line breaks and indentation where it has no spaces between its
+     * elements, and does not change the spaces that it has.
+     */
+    public function testDocumentThatIsAskedToFormatTheXmlFormatsIt(): void
+    {
+        $doc = new XmlDocument();
+        $doc->loadXml('<root><a>1</a><b>2</b></root>');
+        $this->assertSame($doc, $doc->setFormatOutput(true));
+
+        $this->assertSame("<root>\n  <a>1</a>\n  <b>2</b>\n</root>", $doc->getXml());
+
+        $withSpaces = "<root>\n    <a>1</a>\n\t<b>2</b>\n</root>";
+        $doc = new XmlDocument();
+        $doc->setFormatOutput(true)->loadXml($withSpaces);
+
+        $this->assertSame($withSpaces, $doc->getXml());
+    }
+
+    /**
+     * Verifies that the document that is built element by element is saved in
+     * one line, since it has no spaces between its elements, unless it is asked
+     * to format the XML.
+     */
+    public function testDocumentThatIsBuiltIsSavedInOneLine(): void
+    {
+        $doc = new XmlDocument();
+        $dom = $doc->getDomDocument();
+        $root = $dom->appendChild($dom->createElement('root'));
+        $root->appendChild($dom->createElement('a', '1'));
+
+        $this->assertSame('<root><a>1</a></root>', $doc->getXml());
+
+        $doc->setFormatOutput(true);
+
+        $this->assertSame("<root>\n  <a>1</a>\n</root>", $doc->getXml());
+    }
+
+    /**
+     * Verifies that the setting of the format output does not depend on the
+     * moment it is made, before or after loading the XML.
+     */
+    public function testFormatOutputDoesNotDependOnTheMomentItIsSet(): void
+    {
+        $xml = '<root><a>1</a></root>';
+
+        $before = new XmlDocument();
+        $before->setFormatOutput(true);
+        $before->loadXml($xml);
+
+        $after = new XmlDocument();
+        $after->loadXml($xml);
+        $after->setFormatOutput(true);
+
+        $this->assertSame("<root>\n  <a>1</a>\n</root>", $before->getXml());
+        $this->assertSame($before->getXml(), $after->getXml());
     }
 
     /**
@@ -564,7 +642,7 @@ class XmlTest extends TestCase
         $doc = new XmlDocument();
         $doc->loadXml($xml);
 
-        $this->assertSame("<root>\n  <a>1</a>\n</root>", $doc->getXml());
+        $this->assertSame('<root><a>1</a></root>', $doc->getXml());
     }
 
     /**

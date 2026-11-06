@@ -300,6 +300,23 @@ class XmlServiceTest extends TestCase
     }
 
     /**
+     * The document that the encoder builds has no spaces between its elements,
+     * so it is asked to format the XML that it saves: it is not saved in one
+     * line unless it is asked not to.
+     */
+    public function testEncodedDocumentIsAskedToFormatTheXml(): void
+    {
+        $doc = $this->xmlService->encode(['root' => ['a' => '1', 'b' => ['c' => '2']]]);
+
+        $this->assertTrue($doc->getDomDocument()->formatOutput);
+        $this->assertSame("<root>\n  <a>1</a>\n  <b>\n    <c>2</c>\n  </b>\n</root>", $doc->getXml());
+
+        $doc->setFormatOutput(false);
+
+        $this->assertSame('<root><a>1</a><b><c>2</c></b></root>', $doc->getXml());
+    }
+
+    /**
      * Converts an XML string to XML and saves it as an XML string
      * with saveXml(), ensuring encoding and content are correct.
      *

@@ -48,6 +48,10 @@ final class XmlDocument implements XmlDocumentInterface
      * loading an XML string, this parameters are ignored and will be determined
      * by the header of the XML string.
      *
+     * The document does not format the XML that it saves (no line breaks nor
+     * indentation are added) unless `setFormatOutput(true)` is called. A
+     * document that is loaded is saved as it was loaded.
+     *
      * @param string $encoding XML encoding to generate the XML header.
      * @param string $version XML version to generate the XML header.
      */
@@ -57,7 +61,7 @@ final class XmlDocument implements XmlDocumentInterface
     ) {
         $this->dom = new DOMDocument($version, $encoding);
 
-        $this->dom->formatOutput = true;
+        $this->dom->formatOutput = false;
         $this->dom->preserveWhiteSpace = true;
     }
 
@@ -420,7 +424,7 @@ final class XmlDocument implements XmlDocumentInterface
     {
         $this->dom = new DOMDocument();
 
-        $this->dom->formatOutput = true;
+        $this->dom->formatOutput = false;
         $this->dom->preserveWhiteSpace = true;
 
         $this->loadXml($data['xml']);

@@ -330,42 +330,40 @@ return [
 
     // Cases for testXmlToSaveXml().
     'testXmlToSaveXml' => [
-        // Simple XML with a single element (ISO-8859-1).
+        // Simple XML with a single element (ISO-8859-1), saved as it was loaded.
         'simple_element_iso' => [
             'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><element>value</element></root>',
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n" . '<root>'
-                . "\n" . '  <element>value</element>' . "\n" . '</root>' . "\n",
+            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n"
+                . '<root><element>value</element></root>' . "\n",
             'expectedException' => null,
         ],
         // XML with multiple elements (ISO-8859-1).
         'multiple_elements_iso' => [
             'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><element1>value1</element1><element2>value2</element2></root>',
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n" . '<root>'
-                . "\n" . '  <element1>value1</element1>'
-                . "\n" . '  <element2>value2</element2>' . "\n" . '</root>' . "\n",
+            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n"
+                . '<root><element1>value1</element1><element2>value2</element2></root>' . "\n",
             'expectedException' => null,
         ],
         // XML with escaped special characters (ISO-8859-1).
         'special_characters_iso' => [
             'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><element>Special: &amp; &lt; &gt; &quot; &apos;</element></root>',
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n" . '<root>'
-                . "\n" . '  <element>Special: &amp; &lt; &gt; &quot; &apos;</element>'
-                . "\n" . '</root>' . "\n",
+            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n"
+                . '<root><element>Special: &amp; &lt; &gt; &quot; &apos;</element></root>' . "\n",
             'expectedException' => null,
         ],
         // XML in UTF-8 with special characters (e.g. accents, ñ).
         'utf8_characters' => [
             'xmlContent' => '<?xml version="1.0" encoding="UTF-8"?><root><element>Árbol</element></root>',
-            'expected' => '<?xml version="1.0" encoding="UTF-8"?>' . "\n" . '<root>'
-                . "\n" . '  <element>Árbol</element>' . "\n" . '</root>' . "\n",
+            'expected' => '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+                . '<root><element>Árbol</element></root>' . "\n",
             'expectedException' => null,
         ],
         // XML in ISO-8859-1 with special characters (e.g. accents, ñ).
         'iso_characters' => [
             'xmlContent' => '<?xml version="1.0" encoding="ISO-8859-1"?><root><element>' . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8') . '</element></root>',
-            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n" . '<root>'
-                . "\n" . '  <element>' . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8')
-                . '</element>' . "\n" . '</root>' . "\n",
+            'expected' => '<?xml version="1.0" encoding="ISO-8859-1"?>' . "\n"
+                . '<root><element>' . mb_convert_encoding('Árbol', 'ISO-8859-1', 'UTF-8')
+                . '</element></root>' . "\n",
             'expectedException' => null,
         ],
         // Malformed (invalid) XML, expecting an exception.

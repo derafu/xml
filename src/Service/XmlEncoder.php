@@ -56,7 +56,9 @@ final class XmlEncoder implements XmlEncoderInterface
      */
     public function encode(array $data): XmlDocumentInterface
     {
-        $doc = new XmlDocument();
+        // The document is built without spaces between its elements: it is
+        // asked to be saved with format, so it is not saved in one line.
+        $doc = (new XmlDocument())->setFormatOutput(true);
 
         $this->encodeNode($data, $doc, $doc->getDomDocument(), []);
 
