@@ -159,11 +159,10 @@ final class XmlDocument implements XmlDocumentInterface
             'xsi:schemaLocation'
         );
 
-        if (!$schemaLocation || !str_contains($schemaLocation, ' ')) {
-            return null;
-        }
+        // The parts are separated by white space, of any length.
+        $parts = preg_split('/\s+/', $schemaLocation, -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
-        return explode(' ', $schemaLocation)[1];
+        return $parts[1] ?? null;
     }
 
     /**

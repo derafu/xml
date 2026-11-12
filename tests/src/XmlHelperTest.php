@@ -22,6 +22,7 @@ use DOMDocument;
 use DOMNode;
 use DOMNodeList;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
@@ -299,5 +300,177 @@ class XmlHelperTest extends TestCase
         } finally {
             libxml_use_internal_errors($before);
         }
+    }
+
+    /**
+     * A number is not touched, whatever it has around it that XML would not
+     * accept.
+     */
+    public function testXmlSanitizeLeavesANumberAsItIs(): void
+    {
+        $this->assertSame("12\x0B", XmlHelper::sanitize("12\x0B"));
+        $this->assertSame("5\r", XmlHelper::sanitize("5\r"));
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function entitiesProvider(): array
+    {
+        return [
+            'the ampersand' => ['a &amp; b', 'a &amp; b'],
+            'the ampersand as a number' => ['a &#38; b', 'a &amp; b'],
+            'less than' => ['a &lt; b', 'a < b'],
+            'less than as a number' => ['a &#60; b', 'a < b'],
+            'greater than' => ['a &gt; b', 'a > b'],
+            'greater than as a number' => ['a &#62; b', 'a > b'],
+            'the double quote' => ['a &quot; b', 'a " b'],
+            'the double quote as a number' => ['a &#34; b', 'a " b'],
+            'the apostrophe' => ['a &apos; b', "a ' b"],
+            'the apostrophe as a number' => ['a &#39; b', "a ' b"],
+        ];
+    }
+
+    #[DataProvider('entitiesProvider')]
+    public function testXmlSanitizeConvertsTheEntitiesThatAreAlreadyThere(string $input, string $expected): void
+    {
+        $this->assertSame($expected, XmlHelper::sanitize($input));
+    }
+
+    public function testXmlFixEntitiesDoesNotChangeTheTextBeforeTheFirstTag(): void
+    {
+        $this->assertSame('"x"<r>&quot;y&quot;</r>', XmlHelper::fixEntities('"x"<r>"y"</r>'));
+    }
+
+    public function testXmlFixEntitiesReadsAnEqualSignAtTheEndOfTheXml(): void
+    {
+        $this->assertSame('<a b=', XmlHelper::fixEntities('<a b='));
+    }
+
+    /**
+     * A value of an attribute is not converted, whatever quote it has.
+     */
+    public function testXmlFixEntitiesKeepsTheAttributesWithSingleQuotes(): void
+    {
+        $this->assertSame("<a b='1>2'>&quot;t&quot;</a>", XmlHelper::fixEntities("<a b='1>2'>\"t\"</a>"));
+    }
+
+    /**
+     * What follows an equal sign that is not a quote is not an attribute.
+     */
+    public function testXmlFixEntitiesDoesNotTakeAnEqualSignWithoutQuotesForAnAttribute(): void
+    {
+        $this->assertSame('<a b=x>&quot;t&quot;</a>', XmlHelper::fixEntities('<a b=x>"t"</a>'));
+    }
+
+    /**
+     * The errors that were in libxml before are not the ones of the
+     * canonicalization.
+     */
+    public function testTheErrorsThatLibxmlHadBeforeAreNotThoseOfTheCanonicalization(): void
+    {
+        $document = $this->documentThatCanNotBeCanonicalized();
+        $before = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        try {
+            (new DOMDocument())->loadXML('<bad');
+            $this->assertNotEmpty(libxml_get_errors());
+
+            XmlHelper::canonicalize($document);
+            $this->fail('It should have failed.');
+        } catch (XmlException $e) {
+            $this->assertSame('The XML could not be canonicalized: Relative namespace URI is invalid here', $e->getMessage());
+            $this->assertStringNotContainsString('Start Tag', implode(' ', $e->getErrors()));
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($before);
+        }
+    }
+
+    public function testTheErrorsOfTheCanonicalizationAreCleanedWhenLibxmlWasUsingInternalErrors(): void
+    {
+        $document = $this->documentThatCanNotBeCanonicalized();
+        $before = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        try {
+            XmlHelper::canonicalize($document);
+            $this->fail('It should have failed.');
+        } catch (XmlException) {
+            $this->assertSame([], libxml_get_errors());
+        } finally {
+            libxml_use_internal_errors($before);
+        }
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function markupProvider(): array
+    {
+        return [
+            'a comment' => ['<r><!-- a > "q" --><t>"x"</t></r>', '<r><!-- a > "q" --><t>&quot;x&quot;</t></r>'],
+            'a CDATA section' => ['<r><![CDATA[ a > "q" \'s\' ]]><t>"x"</t></r>', '<r><![CDATA[ a > "q" \'s\' ]]><t>&quot;x&quot;</t></r>'],
+            'a processing instruction' => ['<r><?php a > "q" ?><t>"x"</t></r>', '<r><?php a > "q" ?><t>&quot;x&quot;</t></r>'],
+            'the declaration of the XML' => ['<?xml version="1.0"?><r>"x"</r>', '<?xml version="1.0"?><r>&quot;x&quot;</r>'],
+            'an attribute with a >' => ['<r a="x>y" b="z"><t>"x"</t></r>', '<r a="x>y" b="z"><t>&quot;x&quot;</t></r>'],
+            'an attribute with a > and single quotes' => ["<r a='x>y' b='z'>\"x\"</r>", "<r a='x>y' b='z'>&quot;x&quot;</r>"],
+            'an attribute with a quote of the other kind' => ['<r a="it\'s" b=\'say "x"\'>"x"</r>', '<r a="it\'s" b=\'say "x"\'>&quot;x&quot;</r>'],
+            'a DOCTYPE with an entity that has a >' => [
+                '<!DOCTYPE r [<!ENTITY e "a > b">]><r>"x"</r>',
+                '<!DOCTYPE r [<!ENTITY e "a > b">]><r>&quot;x&quot;</r>',
+            ],
+            'a tag without a name' => ['<>"x"', '<>&quot;x&quot;'],
+            'text after the last tag' => ['<r/>"x"', '<r/>&quot;x&quot;'],
+            'two markups together' => ['<r><!-- a --><!-- b -->"x"</r>', '<r><!-- a --><!-- b -->&quot;x&quot;</r>'],
+        ];
+    }
+
+    #[DataProvider('markupProvider')]
+    public function testXmlFixEntitiesOnlyChangesTheContent(string $xml, string $expected): void
+    {
+        $this->assertSame($expected, XmlHelper::fixEntities($xml));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function unclosedProvider(): array
+    {
+        return [
+            'a tag' => ['<r>"x"</r><a b="1" c="'],
+            'a tag with an open quote' => ['<r>"x"</r><a b=\'1'],
+            'a tag without the end' => ['<r>"x"</r><a b="1"'],
+            'a comment' => ['<r>"x"</r><!-- "q"'],
+            'a CDATA section' => ['<r>"x"</r><![CDATA[ "q"'],
+            'a processing instruction' => ['<r>"x"</r><?php "q"'],
+        ];
+    }
+
+    /**
+     * What is not closed is not content: it is left as it is, with the rest of
+     * the XML.
+     */
+    #[DataProvider('unclosedProvider')]
+    public function testXmlFixEntitiesLeavesWhatIsNotClosed(string $xml): void
+    {
+        $this->assertSame('<r>&quot;x&quot;</r>' . substr($xml, strlen('<r>"x"</r>')), XmlHelper::fixEntities($xml));
+    }
+
+    public function testXmlFixEntitiesDoesNotChangeAnXmlWithoutTags(): void
+    {
+        $this->assertSame('He said "x" > \'y\'', XmlHelper::fixEntities('He said "x" > \'y\''));
+    }
+
+    /**
+     * A big CDATA section, with the quotes that it has, is not a problem.
+     */
+    public function testXmlFixEntitiesGoesThroughAVeryBigDocument(): void
+    {
+        $cdata = str_repeat('a > "b" ', 400000);
+        $xml = '<r><![CDATA[' . $cdata . ']]><t>"x"</t></r>';
+
+        $this->assertSame('<r><![CDATA[' . $cdata . ']]><t>&quot;x&quot;</t></r>', XmlHelper::fixEntities($xml));
     }
 }

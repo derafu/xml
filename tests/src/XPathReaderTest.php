@@ -967,4 +967,62 @@ class XPathReaderTest extends TestCase
 
         $this->assertSame('F-1', $document->getReader()->requireString('//ID'));
     }
+
+    public function testAKeyThatIsANumberCanBeAllowed(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r><a>1</a></r>');
+
+        $reader = $document->getReader();
+
+        $this->assertSame($reader, $reader->assertOnlyKeys('r', 7));
+    }
+
+    /**
+     * A node that is not an element has no structure, even if it has no text.
+     */
+    public function testANodeThatIsNotAnElementIsNotAReader(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r e="" f="v"/>');
+        $reader = $document->getReader();
+
+        foreach (['/r/@e', '/r/@f'] as $xpath) {
+            $exception = $this->exception(fn () => $reader->requireReader($xpath));
+
+            $this->assertSame('The value of the XPath "' . $xpath . '" must be of type array, string given.', $exception->getMessage());
+        }
+    }
+
+    /**
+     * The error says what failed inside of the list, not the list.
+     */
+    public function testTheErrorOfAnItemSaysTheTypeOfTheItemAndTheValueThatFailed(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r><pos>1</pos><pos>x</pos></r>');
+
+        $exception = $this->exception(fn () => $document->getReader()->getListOf('//pos', ValueType::int()));
+
+        $this->assertSame('The value of the XPath "//pos.0" must be of type int, string given.', $exception->getMessage());
+    }
+
+    /**
+     * An empty element is an empty structure only for the items whose type is a
+     * structure: `bool|map` and `map|null` are other types.
+     */
+    public function testAnEmptyElementIsNotAnEmptyStructureForATypeThatOnlyHasOneInIt(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r><item/></r>');
+        $reader = $document->getReader();
+
+        $this->assertSame([[]], $reader->getListOf('//item', ValueType::map()));
+
+        $union = $this->exception(fn () => $reader->getListOf('//item', ValueType::oneOf(ValueType::bool(), ValueType::map())));
+        $nullable = $this->exception(fn () => $reader->getListOf('//item', ValueType::map()->nullable()));
+
+        $this->assertStringContainsString('must be of type bool|map, string given', $union->getMessage());
+        $this->assertStringContainsString('must be of type map, string given', $nullable->getMessage());
+    }
 }

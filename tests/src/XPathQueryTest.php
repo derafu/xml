@@ -620,4 +620,83 @@ class XPathQueryTest extends TestCase
         $this->assertSame('500', $detalle[2]['PrcItem']);
         $this->assertSame('1500', $detalle[2]['MontoItem']);
     }
+
+    public function testGetValueIsNullWhenNothingMatches(): void
+    {
+        $this->assertNull((new XPathQuery('<r><a>1</a></r>'))->getValue('//none'));
+    }
+
+    /**
+     * The name of a parameter can be given with or without the colon of its
+     * marker.
+     */
+    public function testTheNameOfAParameterCanHaveTheColon(): void
+    {
+        $query = new XPathQuery('<r><b id="5">x</b><b id="6">y</b></r>');
+
+        $this->assertSame('x', $query->get('//b[@id=:id]', [':id' => '5']));
+        $this->assertSame('y', $query->get('//b[@id=:id]', ['id' => '6']));
+    }
+
+    public function testAnExpressionThatIsNotValidSaysWhatLibxmlSaid(): void
+    {
+        try {
+            (new XPathQuery('<r><a/></r>'))->get('//a[');
+            $this->fail('An expression that is not valid was accepted.');
+        } catch (XmlQueryException $e) {
+            $this->assertSame(
+                'An error occurred while executing the XPath expression: //*[local-name()="a"][. Invalid expression.',
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * XPathQuery leaves the state of the errors of libxml as it found it, and
+     * without the errors that it found.
+     */
+    public function testTheErrorsOfLibxmlAreCleanedWhenTheQueryFails(): void
+    {
+        $query = new XPathQuery('<r><a/></r>');
+        $before = libxml_use_internal_errors(true);
+
+        try {
+            $query->get('//a[');
+            $this->fail('An expression that is not valid was accepted.');
+        } catch (XmlQueryException) {
+            $this->assertSame([], libxml_get_errors());
+        } finally {
+            libxml_use_internal_errors($before);
+        }
+    }
+
+    public function testTheStateOfLibxmlIsRestoredWhenTheQueryFails(): void
+    {
+        $query = new XPathQuery('<r><a/></r>');
+        $before = libxml_use_internal_errors(false);
+
+        try {
+            $query->get('//a[');
+        } catch (XmlQueryException) {
+            // What it says is tested above.
+        } finally {
+            $after = libxml_use_internal_errors($before);
+        }
+
+        $this->assertFalse($after);
+    }
+
+    public function testTheStateOfLibxmlIsRestoredWhenTheQueryWorks(): void
+    {
+        $query = new XPathQuery('<r><a>1</a></r>');
+        $before = libxml_use_internal_errors(false);
+
+        try {
+            $query->get('//a');
+        } finally {
+            $after = libxml_use_internal_errors($before);
+        }
+
+        $this->assertFalse($after);
+    }
 }

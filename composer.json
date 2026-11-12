@@ -37,11 +37,13 @@
         "phpunit/phpunit": "^13.4",
         "symfony/dependency-injection": "^8.1",
         "symfony/config": "^8.1",
-        "derafu/array": "dev-main"
+        "derafu/array": "dev-main",
+        "infection/infection": "^0.35.10"
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",
         "tests": "XDEBUG_MODE=coverage vendor/bin/phpunit --configuration=phpunit.xml",
+        "infection": "XDEBUG_MODE=coverage vendor/bin/infection --threads=max --no-progress --with-uncovered",
         "phpcs-fix": "vendor/bin/php-cs-fixer fix -v --config=php-cs-fixer.php",
         "phpcs": "vendor/bin/php-cs-fixer fix -v --dry-run --diff --config=php-cs-fixer.php",
         "phpstan": "vendor/bin/phpstan analyse --configuration=phpstan.neon --memory-limit=1G",
@@ -49,5 +51,10 @@
         "build": "npm run build"
     },
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "infection/extension-installer": true
+        }
+    }
 }

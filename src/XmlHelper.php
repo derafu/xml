@@ -137,7 +137,7 @@ final class XmlHelper
             '&lt;' => '<',
             '&#60;' => '<',
             '&gt;' => '>',
-            '&#62' => '>',
+            '&#62;' => '>',
             '&quot;' => '"',
             '&#34;' => '"',
             '&apos;' => '\'',
@@ -159,71 +159,86 @@ final class XmlHelper
     }
 
     /**
-     * Fixes the entities '&apos;' and '&quot;' in the XML.
+     * Writes the quotes of the content of the XML as the entities `&apos;` and
+     * `&quot;`.
      *
-     * The correction is done in the content of the XML tags, and also in the
-     * attributes of the tags.
+     * Only the character data is converted: the text between the tags. The
+     * attributes, the comments, the CDATA sections, the processing
+     * instructions and the declarations are left as they are, whatever they
+     * have inside (a `>` in a value, for example), and so is what is not closed
+     * and the text before the first tag.
      *
      * @param string $xml XML to fix.
      * @return string Fixed XML.
      */
     public static function fixEntities(string $xml): string
     {
-        $replace = [
-            '\'' => '&apos;',
-            '"' => '&quot;',
-        ];
-        $replaceFrom = array_keys($replace);
-        $replaceTo = array_values($replace);
+        $length = strlen($xml);
+        $result = '';
+        $offset = 0;
 
-        $newXml = '';
-        $n_chars = strlen($xml);
-        $convert = false;
-        $inAttribute = false;
-        $attributeDelimiter = null;
+        while ($offset < $length) {
+            $start = strpos($xml, '<', $offset);
+            $text = substr($xml, $offset, ($start === false ? $length : $start) - $offset);
 
-        for ($i = 0; $i < $n_chars; ++$i) {
-            $char = $xml[$i];
+            // What is before the first tag is not content of an element.
+            $result .= $offset === 0
+                ? $text
+                : str_replace(['\'', '"'], ['&apos;', '&quot;'], $text);
 
-            // Detect when we enter/exit attribute values.
-            if (
-                !$convert
-                && $char === '='
-                && $i + 1 < $n_chars
-                && ($xml[$i + 1] === '"' || $xml[$i + 1] === "'")
-            ) {
-                $inAttribute = true;
-                $attributeDelimiter = $xml[$i + 1];
-                $i++; // Skip the delimiter.
-                $newXml .= $char . $attributeDelimiter;
-                continue;
+            if ($start === false) {
+                break;
             }
 
-            // Detect when we exit attribute values.
-            if ($inAttribute && $char === $attributeDelimiter) {
-                $inAttribute = false;
-                $attributeDelimiter = null;
-                $newXml .= $char;
-                continue;
-            }
+            $offset = self::markupEnd($xml, $start);
+            $result .= substr($xml, $start, $offset - $start);
+        }
 
-            // Toggle convert mode for tag content.
-            if ($char === '>') {
-                $convert = true;
-            }
-            if ($char === '<') {
-                $convert = false;
-            }
+        return $result;
+    }
 
-            // Only convert entities if we're in tag content and not in an
-            // attribute.
-            if ($convert && !$inAttribute) {
-                $newXml .= str_replace($replaceFrom, $replaceTo, $char);
-            } else {
-                $newXml .= $char;
+    /**
+     * Gives where the markup that starts at a `<` ends: the position after it,
+     * or the end of the XML if it is not closed.
+     *
+     * @param string $xml The XML.
+     * @param int $start Position of the `<`.
+     * @return int Position after the markup.
+     */
+    private static function markupEnd(string $xml, int $start): int
+    {
+        $length = strlen($xml);
+
+        // A comment, a CDATA section and a processing instruction end with
+        // what they say, whatever is inside.
+        foreach ([['<!--', '-->'], ['<![CDATA[', ']]>'], ['<?', '?>']] as [$open, $close]) {
+            if (substr_compare($xml, $open, $start, strlen($open)) === 0) {
+                $end = strpos($xml, $close, $start + strlen($open));
+
+                return $end === false ? $length : $end + strlen($close);
             }
         }
 
-        return $newXml;
+        // A tag or a declaration ends with the first `>` that is not in a
+        // value between quotes.
+        $position = $start + 1;
+        while ($position < $length) {
+            $position += strcspn($xml, '>"\'', $position);
+            if ($position >= $length) {
+                break;
+            }
+
+            if ($xml[$position] === '>') {
+                return $position + 1;
+            }
+
+            $closing = strpos($xml, $xml[$position], $position + 1);
+            if ($closing === false) {
+                break;
+            }
+            $position = $closing + 1;
+        }
+
+        return $length;
     }
 }

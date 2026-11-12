@@ -258,4 +258,87 @@ final class XmlErrorTest extends TestCase
             ],
         ];
     }
+
+    /**
+     * @return array<string, array{int, string, string, array<string, string>}>
+     */
+    public static function explainedProvider(): array
+    {
+        return [
+            'depth, with the code of the limit' => [
+                114,
+                'Excessive depth in document: 300, use XML_PARSE_HUGE option',
+                'Excessive depth in document: {depth}, use the XML_PARSE_HUGE option',
+                ['depth' => '300'],
+            ],
+            'a char out of the allowed range' => [
+                9,
+                'Char 0x1F out of allowed range',
+                'Char {char} out of allowed range',
+                ['char' => '0x1F'],
+            ],
+            'a value of an attribute that is too long' => [
+                40,
+                'AttValue length too long',
+                'AttValue length too long',
+                [],
+            ],
+            'invalid bytes in the encoding' => [
+                81,
+                'Invalid bytes in character encoding',
+                'Invalid bytes in character encoding',
+                [],
+            ],
+            'an encoding that does not match' => [
+                113,
+                "Encoding 'UTF-8' doesn't match auto-detected 'UTF-16'",
+                "Encoding ''{declared}'' doesn''t match auto-detected ''{actual}''",
+                ['declared' => 'UTF-8', 'actual' => 'UTF-16'],
+            ],
+            'a buffer that is too big' => [
+                114,
+                'Resource limit exceeded: Buffer size limit exceeded, try XML_PARSE_HUGE',
+                'Buffer size limit exceeded, use the XML_PARSE_HUGE option',
+                [],
+            ],
+            'an error in the internal subset' => [
+                118,
+                'Content error in the internal subset',
+                'Content error in the internal subset',
+                [],
+            ],
+            'a file that failed to load' => [
+                1524,
+                'failed to load "/x.xsd": No such file or directory',
+                'Failed to load "{path}": {reason}',
+                ['path' => '/x.xsd', 'reason' => 'No such file or directory'],
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, string> $parameters
+     */
+    #[DataProvider('explainedProvider')]
+    public function testAnErrorOfLibxmlIsExplainedByItsCodeAndItsText(
+        int $code,
+        string $text,
+        string $message,
+        array $parameters
+    ): void {
+        $explanation = XmlErrorExplainer::explain(new XmlError(XmlErrorLevel::Fatal, $code, 1, 1, $text . "\n"));
+
+        $this->assertNotNull($explanation);
+        $this->assertSame($message, $explanation->getMessage());
+        $this->assertSame($parameters, $explanation->getParameters());
+        $this->assertSame('errors', $explanation->getDomain());
+    }
+
+    public function testTheErrorIsAMessageThatSaysWhereItIs(): void
+    {
+        $message = (new XmlError(XmlErrorLevel::Fatal, 9999, 3, 14, "Some text\n"))->toMessage();
+
+        $this->assertSame('Line {line}, column {column}: {message}', $message->getMessage());
+        $this->assertSame(['line' => 3, 'column' => 14, 'message' => 'Some text'], $message->getParameters());
+    }
 }

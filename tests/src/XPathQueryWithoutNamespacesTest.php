@@ -77,6 +77,20 @@ class XPathQueryWithoutNamespacesTest extends TestCase
             'a name without namespace in the document' => ['//q', 'pp'],
             'a name that does not exist' => ['//zzz', null],
 
+            // The first name of an expression is a name test, not an operator.
+            'a name at the start' => ['a2', 't'],
+
+            // What ends an operand is followed by an operator, not by a name test.
+            'an operator after an attribute' => ['//my-el[@id and @data-x]', 'x'],
+            'an operator after a function' => ['//a[last() and b]/b', ['1', '2']],
+            'an operator after a predicate' => ['//a[b[1] and b[2]]/b', ['1', '2']],
+            'an operator after the context' => ['//b[. and text()]', ['1', '2']],
+            'an operator after the parent' => ['//b[.. and .]', ['1', '2']],
+            'an operator after a wildcard' => ['//a[* and b]/b', ['1', '2']],
+            'an operator after a literal' => ['//b[text()="2" and .="2"]', '2'],
+            'a name after a multiplication' => ['//a[2 * b = 2]/b', ['1', '2']],
+            'a name after the axis of an attribute' => ['//my-el/attribute::id | //a2', ['7', 't']],
+
             // Names that are the same as the operators.
             'an element named and' => ['//and', 'z'],
             'an element named or' => ['/r/or', 'o'],
@@ -149,5 +163,55 @@ class XPathQueryWithoutNamespacesTest extends TestCase
         $document->loadXml(self::XML);
 
         return new XPathQuery($document);
+    }
+
+    /**
+     * An attribute is the one that has that name and no namespace: the one of
+     * another namespace with the same local name is another attribute.
+     */
+    public function testAnAttributeIsTheOneWithoutNamespace(): void
+    {
+        $query = new XPathQuery('<r xmlns="urn:d"><l xml:lang="en" lang="es"/></r>');
+
+        $this->assertSame('es', $query->get('//l/@lang'));
+        $this->assertSame('es', $query->get('//l/attribute::lang'));
+        $this->assertSame('es', $query->get('//l[@lang and @xml:lang]/@lang'));
+    }
+
+    /**
+     * What is not a name test stays as it is, so libxml says it in the words of
+     * the expression: the error has the expression that was run.
+     */
+    public function testAPrefixedNameIsLeftAsItIs(): void
+    {
+        try {
+            $this->query()->get('//p:q');
+            $this->fail('A prefix that is not registered was accepted.');
+        } catch (XmlQueryException $e) {
+            $this->assertSame(
+                'An error occurred while executing the XPath expression: //p:q. Undefined namespace prefix.',
+                $e->getMessage()
+            );
+        }
+    }
+
+    public function testAVariableIsLeftAsItIs(): void
+    {
+        try {
+            $this->query()->get('//a[b=$v]');
+            $this->fail('A variable that is not defined was accepted.');
+        } catch (XmlQueryException $e) {
+            $this->assertStringContainsString('=$v].', $e->getMessage());
+        }
+    }
+
+    public function testWhatFollowsAnythingElseIsANameTest(): void
+    {
+        try {
+            $this->query()->get('//a#b');
+            $this->fail('An expression that is not valid was accepted.');
+        } catch (XmlQueryException $e) {
+            $this->assertStringContainsString('#*[local-name()="b"]', $e->getMessage());
+        }
     }
 }

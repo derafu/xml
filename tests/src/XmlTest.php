@@ -783,4 +783,92 @@ class XmlTest extends TestCase
 
         $this->assertSame(1, $doc->getReader()->requireAsInt('//b'));
     }
+
+    public function testTheEncodingIsInCapitals(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<?xml version="1.0" encoding="iso-8859-1"?><r/>');
+
+        $this->assertSame('ISO-8859-1', $document->getEncoding());
+    }
+
+    /**
+     * @return array<string, array{string, string|null}>
+     */
+    public static function schemaLocationProvider(): array
+    {
+        return [
+            'a namespace and a schema' => ['urn:x /a/s.xsd', '/a/s.xsd'],
+            'two spaces between them' => ['urn:x  /a/s.xsd', '/a/s.xsd'],
+            'a space before them' => [' urn:x /a/s.xsd', '/a/s.xsd'],
+            'a space after them' => ['urn:x /a/s.xsd ', '/a/s.xsd'],
+            'a line break between them' => ["urn:x\n/a/s.xsd", '/a/s.xsd'],
+            'a tab between them' => ["urn:x\t/a/s.xsd", '/a/s.xsd'],
+            'two pairs' => ['urn:x /a/s.xsd urn:y /b/t.xsd', '/a/s.xsd'],
+            'only a namespace' => ['urn:x', null],
+            'only a namespace with spaces around' => ['  urn:x  ', null],
+            'nothing' => ['', null],
+            'only spaces' => ['   ', null],
+        ];
+    }
+
+    #[DataProvider('schemaLocationProvider')]
+    public function testTheSchemaIsTheSecondPartOfTheSchemaLocation(string $location, ?string $expected): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="' . $location . '"/>');
+
+        $this->assertSame($expected, $document->getSchema());
+    }
+
+    public function testADocumentWithoutSchemaLocationHasNoSchema(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r/>');
+
+        $this->assertNull($document->getSchema());
+    }
+
+    public function testTheErrorsOfLoadingAreCleanedWhenLibxmlWasUsingInternalErrors(): void
+    {
+        $document = new XmlDocument();
+        $before = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        try {
+            $document->loadXml('<r>');
+            $this->fail('An XML that is not valid was accepted.');
+        } catch (XmlParseException) {
+            $this->assertSame([], libxml_get_errors());
+        } finally {
+            libxml_use_internal_errors($before);
+        }
+    }
+
+    public function testTheStateOfLibxmlIsTheOneThatWasAfterLoading(): void
+    {
+        $document = new XmlDocument();
+        $before = libxml_use_internal_errors(false);
+
+        try {
+            $document->loadXml('<r/>');
+        } finally {
+            $after = libxml_use_internal_errors($before);
+        }
+
+        $this->assertFalse($after);
+    }
+
+    /**
+     * The canonical XML is the inclusive one, without comments, unless the
+     * options say otherwise.
+     */
+    public function testTheCanonicalXmlIsInclusiveAndWithoutCommentsByDefault(): void
+    {
+        $document = new XmlDocument();
+        $document->loadXml('<r xmlns:p="urn:p"><!-- c --><x>1</x></r>');
+
+        $this->assertSame('<r xmlns:p="urn:p"><x>1</x></r>', $document->C14N());
+        $this->assertSame('<r><!-- c --><x>1</x></r>', $document->C14N(exclusive: true, withComments: true));
+    }
 }

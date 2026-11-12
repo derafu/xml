@@ -116,4 +116,38 @@ final class XmlValidatorTest extends TestCase
             $this->assertSame($document, $e->getXmlDocument());
         }
     }
+
+    /**
+     * The errors that the validation found are the ones of the exception, and
+     * are not left in libxml.
+     */
+    public function testTheErrorsOfTheValidationAreCleanedWhenLibxmlWasUsingInternalErrors(): void
+    {
+        $document = $this->document('<wrong>Value</wrong>');
+        $before = libxml_use_internal_errors(true);
+        libxml_clear_errors();
+
+        try {
+            (new XmlValidator())->validate($document, $this->schemaPath);
+            $this->fail('An XML that is not valid was accepted.');
+        } catch (XmlException) {
+            $this->assertSame([], libxml_get_errors());
+        } finally {
+            libxml_use_internal_errors($before);
+        }
+    }
+
+    public function testTheStateOfLibxmlIsTheOneThatWasAfterValidating(): void
+    {
+        $document = $this->document('<element>Value</element>');
+        $before = libxml_use_internal_errors(false);
+
+        try {
+            (new XmlValidator())->validate($document, $this->schemaPath);
+        } finally {
+            $after = libxml_use_internal_errors($before);
+        }
+
+        $this->assertFalse($after);
+    }
 }

@@ -154,4 +154,10 @@ final class XmlExceptionTest extends TestCase
             unlink($schemaPath);
         }
     }
+
+    public function testTheDefaultCodeOfTheExceptionsIsZero(): void
+    {
+        $this->assertSame(0, (new XmlException('Failed.'))->getCode());
+        $this->assertSame(0, (new XmlQueryException('Failed.'))->getCode());
+    }
 }
