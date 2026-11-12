@@ -271,6 +271,36 @@ final class XmlErrorTest extends TestCase
                 'Excessive depth in document: {depth}, use the XML_PARSE_HUGE option',
                 ['depth' => '300'],
             ],
+            'depth, with the generic code' => [
+                1,
+                'Excessive depth in document: 256 use XML_PARSE_HUGE option',
+                'Excessive depth in document: {depth}, use the XML_PARSE_HUGE option',
+                ['depth' => '256'],
+            ],
+            'an internal error' => [
+                1,
+                'Internal error: xmlParseInternalSubset: error detected in Markup declaration',
+                'Internal error: {detail}',
+                ['detail' => 'xmlParseInternalSubset: error detected in Markup declaration'],
+            ],
+            'an input that is not proper UTF-8' => [
+                9,
+                "Input is not proper UTF-8, indicate encoding !\nBytes: 0xFF 0x3C 0x2F 0x61",
+                'Input is not proper UTF-8, indicate encoding ! Bytes: {bytes}',
+                ['bytes' => '0xFF 0x3C 0x2F 0x61'],
+            ],
+            'a doctype that is improperly terminated' => [
+                61,
+                'DOCTYPE improperly terminated',
+                'DOCTYPE improperly terminated',
+                [],
+            ],
+            'a document labelled with another encoding' => [
+                81,
+                'Document labelled UTF-16 but has UTF-8 content',
+                'Document labelled {declared} but has {actual} content',
+                ['declared' => 'UTF-16', 'actual' => 'UTF-8'],
+            ],
             'a char out of the allowed range' => [
                 9,
                 'Char 0x1F out of allowed range',
