@@ -188,10 +188,11 @@ class XPathQueryWithoutNamespacesTest extends TestCase
             $this->query()->get('//p:q');
             $this->fail('A prefix that is not registered was accepted.');
         } catch (XmlQueryException $e) {
-            $this->assertSame(
+            // libxml 2.9 says the error without the prefix, libxml 2.15 adds it.
+            $this->assertContains($e->getMessage(), [
                 'An error occurred while executing the XPath expression: //p:q. Undefined namespace prefix.',
-                $e->getMessage()
-            );
+                'An error occurred while executing the XPath expression: //p:q. Undefined namespace prefix: p.',
+            ]);
         }
     }
 
